@@ -1,47 +1,104 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
+import { generateMagicLinkAction } from "@/app/admin/magic-link/actions";
+import { useLocale } from "@/components/locale-provider";
 import { formatCredentials } from "@/lib/credentials";
-import { Button } from "@/components/ui/button";
 
 export function CredentialActions({
+  userId,
   role,
   login,
   password,
 }: {
+  userId: string;
   role: string;
   login: string;
   password: string;
 }) {
+  const { admin } = useLocale();
+  const [pending, setPending] = useState(false);
   const text = formatCredentials({ role, login, password });
 
   const onCopy = async () => {
     await navigator.clipboard.writeText(text);
-    toast.success("Credentials copied");
+    toast.success(admin.copyCredentials);
   };
 
-  const onShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ text });
-        toast.success("Shared");
-        return;
-      } catch {
-        // fall through to clipboard
+  const onMagicLink = async () => {
+    setPending(true);
+    try {
+      const url = await generateMagicLinkAction(userId);
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: admin.magicLink, url });
+          toast.success(admin.magicLinkCopied);
+          return;
+        } catch {
+          // fall through to clipboard
+        }
       }
+
+      await navigator.clipboard.writeText(url);
+      toast.success(admin.magicLinkCopied);
+    } catch {
+      toast.error(admin.magicLinkFailed);
+    } finally {
+      setPending(false);
     }
-    await navigator.clipboard.writeText(text);
-    toast.success("Copied for sharing");
   };
 
   return (
-    <div className="mt-3 flex gap-2">
-      <Button type="button" variant="outline" onClick={onCopy}>
-        Copy Credentials
-      </Button>
-      <Button type="button" variant="outline" onClick={onShare}>
-        Share / Magic Link
-      </Button>
+    <div className="mt-6 flex gap-3">
+      <button
+        className="flex flex-1 items-center justify-center gap-2 rounded border border-tertiary px-4 py-2 text-body-sm font-semibold text-tertiary transition-all hover:bg-tertiary hover:text-on-tertiary"
+        onClick={onCopy}
+        type="button"
+      >
+        <span className="material-symbols-outlined text-[18px]">key</span>
+        {admin.copyCredentials}
+      </button>
+      <button
+        className="flex flex-1 items-center justify-center gap-2 rounded bg-surface-container-high px-4 py-2 text-body-sm font-semibold text-on-surface transition-all hover:bg-surface-container-highest disabled:opacity-60"
+        disabled={pending}
+        onClick={onMagicLink}
+        type="button"
+      >
+        <span className="material-symbols-outlined text-[18px]">auto_fix_high</span>
+        {pending ? "..." : admin.magicLink}
+      </button>
+    </div>
+  );
+}
+
+export function CredentialField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  const onCopy = async () => {
+    await navigator.clipboard.writeText(value);
+    toast.success("Copied");
+  };
+
+  return (
+    <div>
+      <label className="mb-1 block font-display text-label-md text-on-surface-variant">{label}</label>
+      <div className="flex items-center justify-between rounded border border-outline-variant/20 bg-surface-container-low px-3 py-2 font-mono text-sm text-on-surface">
+        <span className="truncate">{value}</span>
+        <button
+          className="text-tertiary transition-colors hover:text-white"
+          onClick={onCopy}
+          title={`Copy ${label}`}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[18px]">content_copy</span>
+        </button>
+      </div>
     </div>
   );
 }

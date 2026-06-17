@@ -12,7 +12,20 @@ Project: `4139161588628616929`
 - Admin sessions: `f3c62eb393d74211b14458d98342016d`
 - Admin mediators: `27c3a600e85a40fc8824fb686d3f7501`
 
-## Design Tokens (initial)
+## Asset Files
+
+Downloaded via `node scripts/fetch-stitch.mjs`:
+
+- `prism-concept.png` — hero background art
+- `logo.png` — brand mark
+- `landing-how-it-works.html` + `.png` — landing page reference
+- `admin-settings.html` + `.png`
+- `admin-sessions.html` + `.png`
+- `admin-mediators.html` + `.png`
+
+Runtime copies in `public/stitch/` for Next.js image serving.
+
+## Design Tokens (from Stitch)
 
 - Background: `#070f2b`
 - Surface/Card: `#0f1a3f`

@@ -1,0 +1,83 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
+import { useLocale } from "@/components/locale-provider";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { href: "/admin/sessions", key: "navSessions" as const, icon: "gavel" },
+  { href: "/admin/mediators", key: "navMediators" as const, icon: "group" },
+  { href: "/admin/settings", key: "navSettings" as const, icon: "settings" },
+];
+
+export function AdminSidebar() {
+  const pathname = usePathname();
+  const { admin } = useLocale();
+
+  return (
+    <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-outline-variant/10 bg-surface-container py-stack-md shadow-sm">
+      <div className="mb-10 px-6">
+        <h1 className="font-display text-headline-md font-bold text-tertiary">PsyLex</h1>
+        <p className="mt-1 font-display text-label-md uppercase tracking-widest text-on-surface-variant">
+          {admin.adminConsole}
+        </p>
+      </div>
+
+      <nav className="flex-1 space-y-2">
+        {navItems.map((item) => {
+          const active = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 transition-all",
+                active
+                  ? "border-l-4 border-tertiary bg-tertiary/10 text-tertiary"
+                  : "text-on-surface-variant hover:bg-white/5 hover:text-on-surface",
+              )}
+              href={item.href}
+            >
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span className="text-body-md">{admin[item.key]}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto space-y-3 px-4">
+        <div className="flex justify-center rounded-lg border border-outline-variant/20 py-3">
+          <LocaleSwitcher />
+        </div>
+        <button
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/30 px-4 py-3 font-bold text-on-surface-variant transition-colors hover:border-tertiary hover:text-tertiary"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          type="button"
+        >
+          <span className="material-symbols-outlined">logout</span>
+          {admin.logout}
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export function AdminTopBar() {
+  const { admin } = useLocale();
+
+  return (
+    <header className="fixed left-64 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/10 bg-surface px-gutter">
+      <h2 className="font-display text-headline-md text-on-surface">{admin.portalTitle}</h2>
+      <div className="flex items-center gap-6">
+        <button className="text-on-surface-variant transition-colors hover:text-tertiary-container" type="button">
+          <span className="material-symbols-outlined">notifications</span>
+        </button>
+        <button className="text-on-surface-variant transition-colors hover:text-tertiary-container" type="button">
+          <span className="material-symbols-outlined">help_outline</span>
+        </button>
+      </div>
+    </header>
+  );
+}

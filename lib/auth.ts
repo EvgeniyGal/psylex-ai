@@ -1,14 +1,9 @@
 import { eq } from "drizzle-orm";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
-
-const loginSchema = z.object({
-  login: z.string().regex(/^psylex_[0-9a-fA-F-]{36}$/),
-  password: z.string().min(1),
-});
+import { credentialsSchema } from "@/lib/login-schema";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -25,7 +20,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
+        const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
         const [user] = await db

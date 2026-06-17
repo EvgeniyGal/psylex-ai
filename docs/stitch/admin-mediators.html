@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mediators | Mediation Pro Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#2d3133",
+                    "tertiary-container": "#c9a84c",
+                    "on-primary-fixed": "#001847",
+                    "on-tertiary-container": "#503d00",
+                    "tertiary-fixed": "#ffe08f",
+                    "on-tertiary": "#3d2e00",
+                    "surface-container-low": "#021a42",
+                    "on-surface-variant": "#c5c6d0",
+                    "tertiary": "#e6c364",
+                    "primary-fixed-dim": "#b2c5fe",
+                    "on-background": "#d9e2ff",
+                    "surface-container-highest": "#20345c",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-fixed-variant": "#584400",
+                    "primary-container": "#1a2f5e",
+                    "error-container": "#93000a",
+                    "surface": "#001234",
+                    "surface-container-high": "#142951",
+                    "on-secondary-container": "#b3b5b8",
+                    "secondary": "#c4c7ca",
+                    "inverse-surface": "#d9e2ff",
+                    "secondary-fixed-dim": "#c4c7ca",
+                    "on-primary": "#192e5d",
+                    "surface-dim": "#001234",
+                    "on-tertiary-fixed": "#241a00",
+                    "error": "#ffb4ab",
+                    "tertiary-fixed-dim": "#e6c364",
+                    "on-primary-fixed-variant": "#324575",
+                    "surface-variant": "#20345c",
+                    "background": "#001234",
+                    "secondary-container": "#44474a",
+                    "secondary-fixed": "#e0e3e6",
+                    "on-surface": "#d9e2ff",
+                    "on-primary-container": "#8598cd",
+                    "on-error": "#690005",
+                    "surface-container": "#071e46",
+                    "on-secondary-fixed-variant": "#44474a",
+                    "on-secondary-fixed": "#191c1e",
+                    "outline": "#8f909a",
+                    "surface-tint": "#b2c5fe",
+                    "on-error-container": "#ffdad6",
+                    "primary": "#b2c5fe",
+                    "inverse-primary": "#4a5d8f",
+                    "outline-variant": "#44464f",
+                    "inverse-on-surface": "#1b2f58",
+                    "surface-container-lowest": "#000d29",
+                    "surface-bright": "#253861"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "24px",
+                    "stack-lg": "48px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "margin-mobile": "20px",
+                    "unit": "8px",
+                    "stack-sm": "12px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "display-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #001234;
+            color: #d9e2ff;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .ai-insight-border {
+            border-left: 2px solid #e6c364;
+            background: rgba(230, 195, 100, 0.03);
+            backdrop-filter: blur(8px);
+        }
+        .glass-card {
+            background: rgba(42, 61, 102, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #001234;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #20345c;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #324575;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container dark:bg-surface-container border-r border-outline-variant/10 shadow-sm flex flex-col py-stack-md z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold text-tertiary">Mediation Pro</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-70">Admin Console</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-body-md text-body-md">Sessions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-tertiary/10 text-tertiary border-l-4 border-tertiary transition-transform active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Mediators</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full py-3 px-4 bg-tertiary text-on-tertiary font-bold rounded-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">add</span>
+                New Session
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center h-16 px-gutter bg-surface border-b border-outline-variant/10 sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Mediator Management</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant">search</span>
+<input class="bg-surface-container-high border-none rounded-full pl-10 pr-4 py-1.5 text-body-sm focus:ring-1 focus:ring-tertiary w-64" placeholder="Search mediators..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-tertiary-container transition-colors">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-tertiary-container transition-colors">help_outline</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-tertiary/20">
+<img alt="Admin User" class="w-full h-full object-cover" data-alt="A professional close-up portrait of a high-level legal administrator in a dark navy tailored suit, positioned against a blurred background of a modern architectural law firm with warm gold ambient lighting. The atmosphere is serious, focused, and exudes quiet authority and professional reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtoL2AaX30wrAjjEa3nJwE4rwWlsfV8HatTXmLw1KusNM2dNpzx71cVqy4YzoE93qBjzfWoPoJkus717zcexOeMt5BybfZP_1XYxtstqsANn_MZCAQ9P46tqZgcnspl_hQBSTmU_q6fy6ffcTqsYu-hUg__f4PtQ7VBWXYF8lEszWOuNLoZDVt1X-3UrUnR7guOn5CBZacYwLmnEQtyIo_R1hFQpDWoa0lrXKJXW9SiPGNfUat7FvZe1ZVngQCnldSpXGcTEYmfwE"/>
+</div>
+</div>
+</div>
+</header>
+<!-- View Content -->
+<section class="p-gutter max-w-container-max mx-auto">
+<!-- Page Header Actions -->
+<div class="flex justify-between items-end mb-stack-lg">
+<div>
+<h3 class="font-display-lg text-display-lg text-on-surface mb-2">Registry</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage credentials and access for accredited legal mediators.</p>
+</div>
+<button class="bg-tertiary text-on-tertiary px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-tertiary/10 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_add</span>
+                    Create Mediator
+                </button>
+</div>
+<!-- Bento Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-stack-lg">
+<div class="glass-card p-6 rounded-xl">
+<p class="font-label-md text-label-md text-tertiary mb-2 uppercase">Active Mediators</p>
+<p class="font-headline-lg text-headline-lg">24</p>
+<div class="mt-4 flex items-center text-emerald-400 gap-1 text-label-md">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+2 this month</span>
+</div>
+</div>
+<div class="glass-card p-6 rounded-xl">
+<p class="font-label-md text-label-md text-tertiary mb-2 uppercase">Total Sessions</p>
+<p class="font-headline-lg text-headline-lg">142</p>
+<div class="mt-4 flex items-center text-on-surface-variant gap-1 text-label-md opacity-60">
+<span class="material-symbols-outlined text-[16px]">history</span>
+<span>View Archive</span>
+</div>
+</div>
+<div class="glass-card md:col-span-2 p-6 rounded-xl ai-insight-border relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary">auto_awesome</span>
+<p class="font-label-md text-label-md text-tertiary uppercase">AI Registry Insight</p>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                            Current mediator availability is high for high-stakes corporate disputes. Consider assigning "Mediator-092" to the pending "TechMerge Alpha" session based on historical success in M&amp;A conflict resolution.
+                        </p>
+</div>
+<div class="absolute -right-10 -bottom-10 opacity-5">
+<span class="material-symbols-outlined text-[120px] text-tertiary">balance</span>
+</div>
+</div>
+</div>
+<!-- Mediators Table -->
+<div class="glass-card rounded-xl overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-white/5 bg-white/5">
+<th class="px-6 py-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">Mediator Name</th>
+<th class="px-6 py-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">Role</th>
+<th class="px-6 py-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">Login / Creds</th>
+<th class="px-6 py-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">Linked Session ID</th>
+<th class="px-6 py-4 font-label-md text-label-md text-tertiary uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Row 1 -->
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Julian Sterling</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Accredited Senior Mediator</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 rounded border border-tertiary/30 text-tertiary text-label-md">Mediator</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-body-sm text-on-surface">
+<span class="opacity-50">L:</span>
+<code class="bg-surface-container p-1 rounded">j.sterling_psylex</code>
+</div>
+<div class="flex items-center gap-2 text-body-sm text-on-surface">
+<span class="opacity-50">P:</span>
+<code class="bg-surface-container p-1 rounded">••••••••••••</code>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container text-on-primary-container text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                    SESS-99402
+                                </span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" onclick="copyToClipboard('Julian Creds')" title="Copy Credentials">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Magic Link">
+<span class="material-symbols-outlined text-[20px]">auto_fix</span>
+</button>
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Share Access">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Elena Rodriguez</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Conflict Resolution Specialist</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 rounded border border-tertiary/30 text-tertiary text-label-md">Mediator</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-body-sm text-on-surface">
+<span class="opacity-50">L:</span>
+<code class="bg-surface-container p-1 rounded">e.rod_psylex</code>
+</div>
+<div class="flex items-center gap-2 text-body-sm text-on-surface">
+<span class="opacity-50">P:</span>
+<code class="bg-surface-container p-1 rounded">••••••••••••</code>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-label-md">
+                                    SESS-88129
+                                </span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Copy Credentials">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Magic Link">
+<span class="material-symbols-outlined text-[20px]">auto_fix</span>
+</button>
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Share Access">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-white/5 transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Marcus Thorne</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Corporate Negotiator</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 rounded border border-tertiary/30 text-tertiary text-label-md">Mediator</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-body-sm text-on-surface">
+<span class="opacity-50">L:</span>
+<code class="bg-surface-container p-1 rounded">m.thorne_psylex</code>
+</div>
+<div class="flex items-center gap-2 text-body-sm text-on-surface">
+<span class="opacity-50">P:</span>
+<code class="bg-surface-container p-1 rounded">••••••••••••</code>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="font-body-sm text-body-sm text-on-surface-variant italic">Unassigned</span>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Copy Credentials">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</button>
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Magic Link">
+<span class="material-symbols-outlined text-[20px]">auto_fix</span>
+</button>
+<button class="p-2 rounded hover:bg-tertiary/10 text-tertiary transition-colors border border-tertiary/10" title="Share Access">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Table Footer/Pagination -->
+<div class="px-6 py-4 bg-white/5 border-t border-white/5 flex justify-between items-center">
+<p class="font-body-sm text-body-sm text-on-surface-variant">Showing 3 of 24 mediators</p>
+<div class="flex gap-2">
+<button class="p-2 rounded border border-white/10 hover:bg-white/5 text-on-surface-variant transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-2 rounded border border-white/10 hover:bg-white/5 text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Toast Notification (Hidden by default) -->
+<div class="fixed bottom-10 right-10 translate-y-20 opacity-0 bg-surface-container-highest text-tertiary border border-tertiary/20 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50" id="toast">
+<span class="material-symbols-outlined">check_circle</span>
+<span class="font-body-md text-body-md" id="toast-message">Credentials copied to clipboard</span>
+</div>
+<script>
+        function copyToClipboard(name) {
+            const toast = document.getElementById('toast');
+            const message = document.getElementById('toast-message');
+            
+            message.innerText = `${name} credentials copied to clipboard`;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // Add subtle hover effects for the background
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            // This would normally be handled by a shader, but we can do a simple radial gradient movement for micro-interaction
+            // No direct background modification as per instructions, but keeping interactive spirit
+        });
+    </script>
+</body></html>

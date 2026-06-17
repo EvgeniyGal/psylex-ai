@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mediation Pro - Sessions Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#2d3133",
+                    "tertiary-container": "#c9a84c",
+                    "on-primary-fixed": "#001847",
+                    "on-tertiary-container": "#503d00",
+                    "tertiary-fixed": "#ffe08f",
+                    "on-tertiary": "#3d2e00",
+                    "surface-container-low": "#021a42",
+                    "on-surface-variant": "#c5c6d0",
+                    "tertiary": "#e6c364",
+                    "primary-fixed-dim": "#b2c5fe",
+                    "on-background": "#d9e2ff",
+                    "surface-container-highest": "#20345c",
+                    "primary-fixed": "#dae2ff",
+                    "on-tertiary-fixed-variant": "#584400",
+                    "primary-container": "#1a2f5e",
+                    "error-container": "#93000a",
+                    "surface": "#001234",
+                    "surface-container-high": "#142951",
+                    "on-secondary-container": "#b3b5b8",
+                    "secondary": "#c4c7ca",
+                    "inverse-surface": "#d9e2ff",
+                    "secondary-fixed-dim": "#c4c7ca",
+                    "on-primary": "#192e5d",
+                    "surface-dim": "#001234",
+                    "on-tertiary-fixed": "#241a00",
+                    "error": "#ffb4ab",
+                    "tertiary-fixed-dim": "#e6c364",
+                    "on-primary-fixed-variant": "#324575",
+                    "surface-variant": "#20345c",
+                    "background": "#001234",
+                    "secondary-container": "#44474a",
+                    "secondary-fixed": "#e0e3e6",
+                    "on-surface": "#d9e2ff",
+                    "on-primary-container": "#8598cd",
+                    "on-error": "#690005",
+                    "surface-container": "#071e46",
+                    "on-secondary-fixed-variant": "#44474a",
+                    "on-secondary-fixed": "#191c1e",
+                    "outline": "#8f909a",
+                    "surface-tint": "#b2c5fe",
+                    "on-error-container": "#ffdad6",
+                    "primary": "#b2c5fe",
+                    "inverse-primary": "#4a5d8f",
+                    "outline-variant": "#44464f",
+                    "inverse-on-surface": "#1b2f58",
+                    "surface-container-lowest": "#000d29",
+                    "surface-bright": "#253861"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "24px",
+                    "stack-lg": "48px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "margin-mobile": "20px",
+                    "unit": "8px",
+                    "stack-sm": "12px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "display-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #001234;
+            color: #d9e2ff;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(42, 61, 102, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .session-card-glow {
+            transition: all 0.3s ease;
+        }
+        .session-card-glow:hover {
+            box-shadow: 0 0 40px rgba(230, 195, 100, 0.05);
+            border-color: rgba(230, 195, 100, 0.3);
+        }
+        .mediation-highlight {
+            background: linear-gradient(180deg, rgba(230, 195, 100, 0.05) 0%, rgba(230, 195, 100, 0) 100%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .status-chip-active {
+            border: 1px solid #e6c364;
+            color: #e6c364;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container dark:bg-surface-container border-r border-outline-variant/10 shadow-sm flex flex-col h-full py-stack-md z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold text-tertiary">Mediation Pro</h1>
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-widest mt-1">Admin Console</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Sessions Tab: ACTIVE -->
+<a class="flex items-center gap-3 px-4 py-3 bg-tertiary/10 text-tertiary border-l-4 border-tertiary active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-body-md text-body-md">Sessions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Mediators</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+<img alt="Legal Administrator Profile" class="w-10 h-10 rounded-full border border-outline-variant/30" data-alt="A professional headshot of a mature legal administrator with graying hair and a confident expression, wearing a tailored navy blue suit and a crisp white shirt. The background is a soft-focus office interior with warm wood tones and professional lighting, conveying authority and trust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlo6Akyaae-_MHBb9p-SSnfRtX_fDnijCbUHFt3WkqZFKRi7ysH_qQeByrMNjBSnpQv6QS6ApFo65m8GvvJYBI1EYU2bccuIKGWeOJBaPcHaN-ZW-9hKbWEtyLt2xdGYeRWMftBW7r8u__eNSnaSxttsuv7UKcwqwgVKQ0hEXiEjusu1Ydl8cwFN-ajeeJ7i9kB31lq2g38YInPAKeo2uBIzxkxexH-ls9_7URDwA7GAqBfcvsEx-tn7jYoa7ZIK0raGVPhEkdAEs"/>
+<div class="overflow-hidden">
+<p class="text-on-surface font-semibold truncate">Alex Thorne</p>
+<p class="text-on-surface-variant text-label-md font-label-md">Chief Administrator</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top App Bar -->
+<header class="flex justify-between items-center h-16 ml-64 px-gutter fixed top-0 right-0 left-0 bg-surface dark:bg-surface border-b border-outline-variant/10 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Mediation Portal</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="bg-surface-container-high border-outline-variant/20 rounded-full pl-10 pr-4 py-2 text-sm focus:ring-tertiary focus:border-tertiary text-on-surface w-64" placeholder="Search case or ID..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-tertiary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:text-tertiary-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-stack-lg px-gutter min-h-screen relative overflow-hidden">
+<!-- Ambient Decorative Glows -->
+<div class="absolute top-0 right-0 -mr-64 -mt-64 w-[600px] h-[600px] bg-tertiary/5 blur-[120px] rounded-full pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 -ml-32 -mb-32 w-[400px] h-[400px] bg-primary/5 blur-[100px] rounded-full pointer-events-none"></div>
+<div class="max-w-container-max mx-auto relative z-10">
+<!-- Page Header Action Area -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-stack-lg">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-2">Active Sessions</h3>
+<p class="text-on-surface-variant max-w-xl">Oversee and manage secure mediation environments. Monitor credentials and distribute access links to participating legal parties.</p>
+</div>
+<button class="bg-tertiary text-on-tertiary px-8 py-3 rounded-lg font-bold flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-tertiary/10">
+<span class="material-symbols-outlined">add</span>
+                    New Session
+                </button>
+</div>
+<!-- Bento-ish Grid for Sessions -->
+<div class="grid grid-cols-1 gap-stack-md">
+<!-- Session Card 1 -->
+<div class="glass-panel rounded-xl overflow-hidden session-card-glow mediation-highlight">
+<div class="px-6 py-4 bg-surface-container-highest/30 border-b border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="status-chip-active px-3 py-1 rounded-[4px] font-label-md text-label-md flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                                ACTIVE
+                            </span>
+<span class="font-headline-md text-headline-md">Case #PL-8829: Corporate Restructuring</span>
+</div>
+<div class="text-on-surface-variant flex items-center gap-2 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                            Oct 24, 2023 • 2:00 PM
+                        </div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-outline-variant/10">
+<!-- Plaintiff Column -->
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div>
+<h4 class="font-headline-md text-body-lg font-bold text-on-surface">Plaintiff</h4>
+<p class="text-on-surface-variant text-body-sm">Lead Counsel: Sarah Jenkins</p>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Login (UUID)</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>psylex_8829_p_aff92</span>
+<button class="text-tertiary hover:text-white transition-colors" title="Copy Login">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Password</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>Alpha-77-Omega</span>
+<button class="text-tertiary hover:text-white transition-colors" title="Copy Password">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-6 flex gap-3">
+<button class="flex-1 border border-tertiary text-tertiary hover:bg-tertiary hover:text-on-tertiary transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">key</span>
+                                    Copy Credentials
+                                </button>
+<button class="flex-1 bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+                                    Magic Link
+                                </button>
+</div>
+</div>
+<!-- Defendant Column -->
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-on-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">balance</span>
+</div>
+<div>
+<h4 class="font-headline-md text-body-lg font-bold text-on-surface">Defendant</h4>
+<p class="text-on-surface-variant text-body-sm">Lead Counsel: Mark Vance</p>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Login (UUID)</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>psylex_8829_d_ff321</span>
+<button class="text-tertiary hover:text-white transition-colors" title="Copy Login">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Password</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>Beta-22-Sigma</span>
+<button class="text-tertiary hover:text-white transition-colors" title="Copy Password">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-6 flex gap-3">
+<button class="flex-1 border border-tertiary text-tertiary hover:bg-tertiary hover:text-on-tertiary transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">key</span>
+                                    Copy Credentials
+                                </button>
+<button class="flex-1 bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+                                    Magic Link
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Session Card 2 -->
+<div class="glass-panel rounded-xl overflow-hidden session-card-glow mediation-highlight opacity-90 hover:opacity-100 transition-opacity">
+<div class="px-6 py-4 bg-surface-container-highest/30 border-b border-outline-variant/10 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="status-chip-active px-3 py-1 rounded-[4px] font-label-md text-label-md flex items-center gap-1 border-on-surface-variant text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>
+                                WAITING
+                            </span>
+<span class="font-headline-md text-headline-md">Case #PL-9011: Intellectual Property Claim</span>
+</div>
+<div class="text-on-surface-variant flex items-center gap-2 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                            Oct 25, 2023 • 10:00 AM
+                        </div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-outline-variant/10">
+<!-- Plaintiff Column -->
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div>
+<h4 class="font-headline-md text-body-lg font-bold text-on-surface">Plaintiff</h4>
+<p class="text-on-surface-variant text-body-sm">Lead Counsel: David Wright</p>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Login (UUID)</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>psylex_9011_p_de221</span>
+<button class="text-tertiary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Password</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>Gamma-11-Echo</span>
+<button class="text-tertiary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-6 flex gap-3">
+<button class="flex-1 border border-outline-variant text-on-surface-variant hover:text-tertiary hover:border-tertiary transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">key</span>
+                                    Copy Credentials
+                                </button>
+<button class="flex-1 bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+                                    Magic Link
+                                </button>
+</div>
+</div>
+<!-- Defendant Column -->
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded bg-on-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">balance</span>
+</div>
+<div>
+<h4 class="font-headline-md text-body-lg font-bold text-on-surface">Defendant</h4>
+<p class="text-on-surface-variant text-body-sm">Lead Counsel: Elena Moretti</p>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Login (UUID)</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>psylex_9011_d_cc009</span>
+<button class="text-tertiary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+<div>
+<label class="text-label-md font-label-md text-on-surface-variant block mb-1">Password</label>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded px-3 py-2 text-on-surface font-mono text-sm flex items-center justify-between">
+<span>Delta-99-Zeta</span>
+<button class="text-tertiary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-6 flex gap-3">
+<button class="flex-1 border border-outline-variant text-on-surface-variant hover:text-tertiary hover:border-tertiary transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">key</span>
+                                    Copy Credentials
+                                </button>
+<button class="flex-1 bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-all px-4 py-2 rounded font-semibold text-body-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+                                    Magic Link
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Stats or AI Insights Placeholder -->
+<div class="mt-stack-lg border-t border-outline-variant/10 pt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden">
+<div class="absolute left-0 top-0 w-1 h-full bg-tertiary"></div>
+<h5 class="text-tertiary font-label-md tracking-wider mb-4">SYSTEM HEALTH</h5>
+<div class="flex items-end gap-2">
+<span class="text-4xl font-bold">100%</span>
+<span class="text-emerald-500 mb-1 flex items-center text-sm"><span class="material-symbols-outlined text-sm">trending_up</span> Stable</span>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-2">All mediation nodes operational in Northern Europe.</p>
+</div>
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden md:col-span-2">
+<div class="absolute left-0 top-0 w-1 h-full bg-primary"></div>
+<h5 class="text-primary font-label-md tracking-wider mb-4">AI INSIGHT PANEL</h5>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-4xl text-primary/50">psychology</span>
+<p class="text-body-md text-on-surface/80 italic font-light leading-relaxed">
+                            "Optimal resolution window detected for PL-8829 within the next 48 hours based on negotiation sentiment analysis. Recommend facilitating the next session promptly."
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                if(this.textContent.trim().toLowerCase().includes('copy')) {
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span> Copied!';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                }
+            });
+        });
+
+        // Hover effect for credentials
+        const credentialBlocks = document.querySelectorAll('.font-mono');
+        credentialBlocks.forEach(block => {
+            block.addEventListener('mouseenter', () => {
+                block.classList.add('bg-surface-container-highest');
+            });
+            block.addEventListener('mouseleave', () => {
+                block.classList.remove('bg-surface-container-highest');
+            });
+        });
+    </script>
+</body></html>

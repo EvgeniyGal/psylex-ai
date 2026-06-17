@@ -2,16 +2,21 @@
 
 ### Requirement: Login format
 
-The system SHALL authenticate users using a login string in the format `psylex_<UUID>` where the UUID segment is a valid UUID v4.
+The system SHALL authenticate users using a login string that starts with `psylex_` followed by one or more alphanumeric characters, underscores, or hyphens.
 
-#### Scenario: Valid login accepted
+#### Scenario: Valid UUID login accepted
 
 - **WHEN** a user submits login `psylex_550e8400-e29b-41d4-a716-446655440000` with the matching password
 - **THEN** authentication succeeds
 
+#### Scenario: Valid custom login accepted
+
+- **WHEN** a user submits login `psylex_admin_anatoliy` with the matching password
+- **THEN** authentication succeeds
+
 #### Scenario: Invalid login format rejected
 
-- **WHEN** a user submits a login that does not match the `psylex_<UUID>` pattern
+- **WHEN** a user submits a login that does not start with `psylex_` or contains invalid characters
 - **THEN** authentication fails with an error message
 
 ### Requirement: Plain-text password verification

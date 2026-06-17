@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PsyLex - Professional Legal Resolution</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#e0e3e6",
+                        "primary-fixed-dim": "#b2c5fe",
+                        "on-secondary-container": "#b3b5b8",
+                        "on-secondary": "#2d3133",
+                        "surface-dim": "#001234",
+                        "inverse-on-surface": "#1b2f58",
+                        "on-primary-fixed": "#001847",
+                        "on-error": "#690005",
+                        "on-surface": "#d9e2ff",
+                        "outline": "#8f909a",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "background": "#001234",
+                        "on-primary-fixed-variant": "#324575",
+                        "on-tertiary": "#3d2e00",
+                        "surface-container": "#071e46",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#000d29",
+                        "secondary": "#c4c7ca",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-bright": "#253861",
+                        "tertiary": "#e6c364",
+                        "surface-variant": "#20345c",
+                        "on-surface-variant": "#c5c6d0",
+                        "surface": "#001234",
+                        "on-background": "#d9e2ff",
+                        "outline-variant": "#44464f",
+                        "error": "#ffb4ab",
+                        "tertiary-container": "#c9a84c",
+                        "inverse-surface": "#d9e2ff",
+                        "on-tertiary-fixed": "#241a00",
+                        "primary-fixed": "#dae2ff",
+                        "on-tertiary-container": "#503d00",
+                        "surface-container-highest": "#20345c",
+                        "tertiary-fixed-dim": "#e6c364",
+                        "primary-container": "#1a2f5e",
+                        "primary": "#b2c5fe",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-container-low": "#021a42",
+                        "on-tertiary-fixed-variant": "#584400",
+                        "surface-tint": "#b2c5fe",
+                        "tertiary-fixed": "#ffe08f",
+                        "secondary-container": "#44474a",
+                        "on-primary-container": "#8598cd",
+                        "on-primary": "#192e5d",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#4a5d8f",
+                        "surface-container-high": "#142951"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "stack-md": "24px",
+                        "margin-desktop": "64px",
+                        "stack-lg": "48px",
+                        "margin-mobile": "20px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #001234;
+            color: #d9e2ff;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at center, rgba(42, 61, 102, 0.4) 0%, rgba(0, 18, 52, 1) 70%);
+        }
+        .card-subtle {
+            background-color: #2A3D66;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card-glow {
+            background: linear-gradient(180deg, rgba(201, 168, 76, 0.05) 0%, rgba(42, 61, 102, 0) 100%), #2A3D66;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px -10px rgba(0, 18, 52, 0.5);
+        }
+        .btn-primary {
+            background-color: #c9a84c;
+            color: #1a2f5e;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid #c9a84c;
+            color: #c9a84c;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface w-full top-0 sticky z-50 transition-all duration-300" id="topAppBar">
+<div class="bg-surface/90 backdrop-blur-md">
+<div class="max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center h-20">
+<div class="flex items-center gap-4">
+<span class="text-headline-md font-headline-md font-bold text-primary dark:text-primary">PsyLex</span>
+</div>
+<div class="flex items-center gap-4"><div class="flex items-center gap-6">
+<div class="flex items-center gap-2 font-label-md text-label-md">
+<button class="text-tertiary font-bold">EN</button>
+<span class="text-outline-variant">|</span>
+<button class="text-primary-fixed-dim hover:text-tertiary transition-colors">UA</button>
+</div>
+<button class="hidden md:block font-label-md text-label-md text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity">Login</button>
+<button class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-surface-variant transition-colors text-primary-fixed-dim">
+<span class="material-symbols-outlined text-[20px]">light_mode</span>
+</button>
+</div></div>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<!-- Hero Section -->
+<section class="relative bg-primary-container overflow-hidden pt-stack-lg pb-stack-lg flex items-center min-h-[80vh]">
+<div class="absolute inset-0 z-0 flex items-center justify-center">
+<div class="absolute w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-tertiary/20 rounded-full blur-[120px] mix-blend-screen"></div>
+<img alt="Cinematic Prism Resolution" class="w-full h-full object-cover opacity-40 mix-blend-screen absolute inset-0 z-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByLKU0DYK3CRvk616XcS_AgPH9_S5zV6rn77Ss6fwDXIv53ENHpnzLTa5c6XsIbYBwIOCmZNXYw7ojERtFZfACj8BGanCGTKFsjMpzQYubV8jlS97W3fNZ5avaJD4hVVHdXotNt_30XzhxQM_3-239zlhOEmuYZqU_QTX0ErnEHr2IrPSMl8xwuusK98d5b182sl42jZMjSUk_Qnc68uvRWD74yid-MwY7Y68aFtHEy_lHM4azSXXgG25Nj9lPRKK5Xcu9jAVeCa4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary-container to-transparent z-20"></div>
+</div>
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop relative z-30 text-center w-full">
+<h1 class="text-[40px] md:text-[64px] font-display-lg font-bold text-on-surface mb-stack-md max-w-5xl mx-auto leading-tight tracking-tight">
+                    Conflict doesn't need a winner.<br/><span class="text-tertiary">It needs a solution.</span>
+</h1>
+<p class="font-body-lg text-on-surface-variant mb-stack-lg max-w-2xl mx-auto">
+                    AI helps both sides find what they really need — together.</p>
+<div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+<button class="btn-primary px-8 py-4 font-body-md w-full sm:w-auto hover:opacity-90 transition-opacity">Start on my own</button>
+<button class="btn-secondary px-8 py-4 font-body-md w-full sm:w-auto hover:bg-tertiary hover:text-primary-container transition-colors">For Mediators →</button>
+</div>
+</div>
+</section>
+<!-- Win-Win-Win Section -->
+<section class="py-stack-lg bg-surface">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-stack-md">
+<div class="card-glow rounded-xl p-stack-md flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-tertiary text-4xl mb-4" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<p class="font-body-md text-on-surface">Side A gets what they truly need.</p>
+</div>
+<div class="card-glow rounded-xl p-stack-md flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-tertiary text-4xl mb-4" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<p class="font-body-md text-on-surface">Side B gets what they truly need.</p>
+</div>
+<div class="card-glow rounded-xl p-stack-md flex flex-col items-center text-center">
+<span class="material-symbols-outlined text-tertiary text-4xl mb-4" style="font-variation-settings: 'FILL' 1;">draw</span>
+<p class="font-body-md text-on-surface">Agreement is real and signed.</p>
+</div>
+</div>
+<p class="font-body-md text-on-surface-variant text-center max-w-3xl mx-auto italic text-2xl">
+                    "Mediation is not a compromise for the sake of compromise. It is a search for a solution where each party receives what is important."
+                </p>
+</div>
+</section>
+<!-- Comparison Section -->
+<section class="py-stack-lg" style="background-color: #F5F7FA;">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-stack-lg">
+<!-- PsyLex Column -->
+<div class="lg:col-span-3 bg-[#1a2f5e] rounded-xl p-stack-md shadow-lg border border-[#2A3D66] relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-tertiary opacity-10 rounded-bl-full blur-2xl"></div>
+<div class="flex items-center justify-center w-16 h-16 rounded-full bg-[#2A3D66] mb-6 mx-auto border border-tertiary/30">
+<span class="material-symbols-outlined text-tertiary text-3xl">handshake</span>
+</div>
+<h3 class="font-headline-md text-tertiary text-center mb-stack-sm">PsyLex Resolution</h3>
+<ul class="space-y-4 relative z-10 max-w-sm mx-auto">
+<li class="flex items-start text-on-surface font-body-md">
+<span class="material-symbols-outlined mr-3 text-tertiary mt-1">check</span>
+                                Affordable for everyone
+                            </li>
+<li class="flex items-start text-on-surface font-body-md">
+<span class="material-symbols-outlined mr-3 text-tertiary mt-1">check</span>
+                                Both sides find a way out
+                            </li>
+<li class="flex items-start text-on-surface font-body-md">
+<span class="material-symbols-outlined mr-3 text-tertiary mt-1">check</span>
+                                Goal is to agree
+                            </li>
+<li class="flex items-start text-on-surface font-body-md">
+<span class="material-symbols-outlined mr-3 text-tertiary mt-1">check</span>
+                                Solution in one session
+                            </li>
+<li class="flex items-start text-on-surface font-body-md">
+<span class="material-symbols-outlined mr-3 text-tertiary mt-1">check</span>
+                                Working together for a solution
+                            </li>
+</ul>
+</div>
+<!-- Attorney Column -->
+<div class="lg:col-span-2 bg-white rounded-xl p-stack-md shadow-sm border border-gray-200">
+<div class="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-6 mx-auto">
+<span class="material-symbols-outlined text-[#1a2f5e] text-3xl">gavel</span>
+</div>
+<h3 class="font-headline-md text-[#1a2f5e] text-center mb-stack-sm">Traditional Attorney</h3>
+<ul class="space-y-4 max-w-sm mx-auto">
+<li class="flex items-start text-[#1a2f5e] font-body-md">
+<span class="material-symbols-outlined mr-3 text-error mt-1">close</span>
+                                $300–700 per hour
+                            </li>
+<li class="flex items-start text-[#1a2f5e] font-body-md">
+<span class="material-symbols-outlined mr-3 text-error mt-1">close</span>
+                                Someone loses
+                            </li>
+<li class="flex items-start text-[#1a2f5e] font-body-md">
+<span class="material-symbols-outlined mr-3 text-error mt-1">close</span>
+                                Goal is to win
+                            </li>
+<li class="flex items-start text-[#1a2f5e] font-body-md">
+<span class="material-symbols-outlined mr-3 text-error mt-1">close</span>
+                                Conflict for months
+                            </li>
+<li class="flex items-start text-[#1a2f5e] font-body-md">
+<span class="material-symbols-outlined mr-3 text-error mt-1">close</span>
+                                You against them
+                            </li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<section class="py-stack-lg bg-[#1a2f5e] text-on-surface" id="how-it-works">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+<h2 class="text-headline-lg font-headline-lg text-center mb-stack-lg">How It Works</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-lg">
+<!-- Mode A: Self-Resolution -->
+<div class="bg-surface-container-high/30 p-stack-md rounded-xl border border-tertiary/20">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 rounded-full bg-tertiary flex items-center justify-center text-[#1a2f5e]">
+<span class="material-symbols-outlined">person</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-tertiary">Mode A: Self-Resolution</h3>
+</div>
+<div class="space-y-8 relative">
+<!-- Step 1 -->
+<div class="flex gap-6 relative">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-tertiary flex items-center justify-center font-bold text-tertiary bg-[#1a2f5e] z-10">1</div>
+<div class="w-0.5 h-full bg-tertiary/30 absolute top-8"></div>
+</div>
+<div class="pb-8">
+<h4 class="font-bold mb-1">Initial Assessment</h4>
+<p class="text-on-surface-variant font-body-md">Describe your conflict and take a short test to help AI understand the context.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex gap-6 relative">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-tertiary flex items-center justify-center font-bold text-tertiary bg-[#1a2f5e] z-10">2</div>
+<div class="w-0.5 h-full bg-tertiary/30 absolute top-8"></div>
+</div>
+<div class="pb-8">
+<h4 class="font-bold mb-1">AI Dialogue</h4>
+<p class="text-on-surface-variant font-body-md">AI creates a profile and starts a structured dialogue to uncover underlying needs.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex gap-6">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-tertiary flex items-center justify-center font-bold text-tertiary bg-[#1a2f5e] z-10">3</div>
+</div>
+<div>
+<h4 class="font-bold mb-1">Resolution Plan</h4>
+<p class="text-on-surface-variant font-body-md">Get a resolution plan that you can present to the other party for final agreement.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Mode B: Professional Mediation -->
+<div class="bg-surface-container-high/30 p-stack-md rounded-xl border border-tertiary/20">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 rounded-full bg-tertiary flex items-center justify-center text-[#1a2f5e]">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-tertiary">Mode B: For Mediators</h3>
+</div>
+<div class="space-y-8 relative">
+<!-- Step 1 -->
+<div class="flex gap-6 relative">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-tertiary flex items-center justify-center font-bold text-tertiary bg-[#1a2f5e] z-10">1</div>
+<div class="w-0.5 h-full bg-tertiary/30 absolute top-8"></div>
+</div>
+<div class="pb-8">
+<h4 class="font-bold mb-1">Setup &amp; Intake</h4>
+<p class="text-on-surface-variant font-body-md">The mediator takes a test and adds both parties to the secure digital workspace.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex gap-6 relative">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-tertiary flex items-center justify-center font-bold text-tertiary bg-[#1a2f5e] z-10">2</div>
+<div class="w-0.5 h-full bg-tertiary/30 absolute top-8"></div>
+</div>
+<div class="pb-8">
+<h4 class="font-bold mb-1">Psychological Analysis</h4>
+<p class="text-on-surface-variant font-body-md">AI analyzes the psychological profiles of all three and warns about potential risks.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex gap-6">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-tertiary flex items-center justify-center font-bold text-tertiary bg-[#1a2f5e] z-10">3</div>
+</div>
+<div>
+<h4 class="font-bold mb-1">Guided Session</h4>
+<p class="text-on-surface-variant font-body-md">The mediator conducts the session with AI support and receives a comprehensive report.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section><footer class="bg-surface-container-lowest dark:bg-surface-container-lowest w-full py-stack-lg mt-auto relative z-10">
+<div class="max-w-[1280px] mx-auto px-margin-desktop grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<div class="flex flex-col gap-4">
+<span class="text-headline-md font-headline-md text-primary dark:text-primary">PsyLex</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-md">
+                    PsyLex provides general information only. Not legal advice. Not therapy.
+                </p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-auto">
+                    © 2026 AI Innovation Management LLC. </p>
+</div>
+<div class="flex flex-col md:items-end gap-2">
+<nav class="flex flex-col gap-2 md:text-right">
+<a class="font-label-md text-on-surface-variant hover:text-tertiary transition-colors text-body-md" href="#">Disclaimer</a>
+<a class="font-label-md text-on-surface-variant hover:text-tertiary transition-colors text-body-md" href="#">Privacy</a>
+<a class="font-label-md text-on-surface-variant hover:text-tertiary transition-colors text-body-md" href="#">How it works</a>
+</nav>
+</div>
+</div>
+</footer>
+<script>
+        // Simple scroll effect for top app bar shadow
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('topAppBar');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-md');
+            } else {
+                header.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body></html>

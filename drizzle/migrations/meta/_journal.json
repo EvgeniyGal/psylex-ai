@@ -8,6 +8,20 @@
       "when": 1781688970017,
       "tag": "0000_perfect_squadron_supreme",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781692448113,
+      "tag": "0001_furry_vargas",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781700906359,
+      "tag": "0002_fuzzy_namora",
+      "breakpoints": true
     }
   ]
 }
