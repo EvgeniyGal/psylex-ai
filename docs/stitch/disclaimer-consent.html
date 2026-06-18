@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Disclaimer + Consent - LexMediate</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#b3b5b8",
+                        "on-primary-fixed": "#001847",
+                        "tertiary-fixed-dim": "#e6c364",
+                        "surface": "#001234",
+                        "background": "#001234",
+                        "on-surface": "#d9e2ff",
+                        "primary-fixed": "#dae2ff",
+                        "outline-variant": "#44464f",
+                        "secondary": "#c4c7ca",
+                        "primary-fixed-dim": "#b2c5fe",
+                        "inverse-surface": "#d9e2ff",
+                        "on-error": "#690005",
+                        "surface-container-high": "#142951",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#4a5d8f",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#000d29",
+                        "surface-container-low": "#021a42",
+                        "primary": "#b2c5fe",
+                        "on-primary": "#192e5d",
+                        "on-secondary-fixed": "#191c1e",
+                        "on-primary-fixed-variant": "#324575",
+                        "on-secondary": "#2d3133",
+                        "on-background": "#d9e2ff",
+                        "tertiary": "#e6c364",
+                        "on-tertiary-fixed": "#241a00",
+                        "on-tertiary": "#3d2e00",
+                        "error": "#ffb4ab",
+                        "surface-container": "#071e46",
+                        "inverse-on-surface": "#1b2f58",
+                        "surface-variant": "#20345c",
+                        "surface-tint": "#b2c5fe",
+                        "on-tertiary-fixed-variant": "#584400",
+                        "tertiary-container": "#c9a84c",
+                        "on-surface-variant": "#c5c6d0",
+                        "secondary-container": "#44474a",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "on-tertiary-container": "#503d00",
+                        "primary-container": "#1a2f5e",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "on-primary-container": "#8598cd",
+                        "tertiary-fixed": "#ffe08f",
+                        "surface-container-highest": "#20345c",
+                        "surface-bright": "#253861",
+                        "secondary-fixed": "#e0e3e6",
+                        "outline": "#8f909a",
+                        "surface-dim": "#001234"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "stack-md": "24px",
+                        "stack-lg": "48px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "stack-sm": "12px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        /* Soft Gold Gradient for active focus */
+        .mediation-highlight {
+            background: linear-gradient(180deg, rgba(230, 195, 100, 0.05) 0%, rgba(230, 195, 100, 0) 100%);
+        }
+        /* Custom Checkbox */
+        .custom-checkbox {
+            appearance: none;
+            background-color: transparent;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.5em;
+            height: 1.5em;
+            border: 1px solid theme('colors.outline-variant');
+            border-radius: 0.25rem;
+            display: grid;
+            place-content: center;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .custom-checkbox::before {
+            content: "";
+            width: 0.85em;
+            height: 0.85em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em theme('colors.surface');
+            background-color: theme('colors.surface');
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+
+        .custom-checkbox:checked {
+            background-color: theme('colors.tertiary');
+            border-color: theme('colors.tertiary');
+        }
+
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+
+        .custom-checkbox:focus {
+            outline: max(2px, 0.15em) solid theme('colors.tertiary');
+            outline-offset: max(2px, 0.15em);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+<!-- TopNavBar (Semantic Shell Supressed for Transactional Onboarding) -->
+<!-- Nav is suppressed based on the instruction: "Automatic Suppression: You MUST exclude the navigation shell if the page intent is: Linear/Transactional: Login, Sign-up, Onboarding, Checkout, or 'Success/Confirmation' splash screens." This is a Disclaimer/Consent screen, implying an onboarding/linear flow. -->
+<!-- Top Bar Alternative for Transactional Flow (Brand + Role Switcher) -->
+<header class="bg-surface dark:bg-surface border-b border-outline-variant/10 shadow-sm flex justify-between items-center px-margin-desktop w-full max-w-container-max mx-auto h-20 shrink-0">
+<div class="font-headline-md text-headline-md font-bold text-tertiary">
+            LexMediate
+        </div>
+<div class="flex items-center gap-4">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Role:</span>
+<div class="flex items-center bg-surface-container-high rounded-lg p-1 border border-outline-variant/10">
+<button class="px-4 py-1.5 rounded-md font-label-md text-label-md bg-primary-container text-on-primary-container shadow-sm transition-all">
+                    Plaintiff
+                </button>
+<button class="px-4 py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+                    Defendant
+                </button>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-md border border-outline-variant/20 hover:bg-surface-variant/50 transition-colors font-body-sm text-body-sm text-on-surface ml-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">swap_horiz</span>
+                Switch Role
+            </button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center p-gutter md:p-margin-desktop bg-[url('placeholder')] bg-cover bg-center" data-alt="A sophisticated, high-end abstract background in dark navy tones, featuring subtle, slow-moving geometric waves that evoke a sense of calm and structure. The aesthetic is corporate modern and cinematic, with soft, diffused lighting and no distracting elements, serving as a premium backdrop for legal technology interfaces." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAPIJQFv1Gkxa69Eur5HM-ujK0faB1IwCVaJrKJ2kDYazljVUQglwrG0t1b_g4z6Qq-L1_6hBp4rkuDwA7Ybuyb76SzEQZR26_bWxya_V2eAE0ipok9sc3dctl3ATCgEkdN8CqIBMevajXfy5LRjX790I-BBNCjyclXY801W0IsGhdyA5_Iuotl_BjjjVqoX_QWKWeV_5_qjsU5xgPgzgGEF3lo6p2_spSsEeWm5GDG5KXT_KLwCLYssP-avZr8dYZG0ckoZ4qdwEw')">
+<div class="absolute inset-0 bg-background/80 backdrop-blur-sm z-0"></div>
+<div class="relative z-10 w-full max-w-2xl mx-auto flex flex-col gap-stack-lg">
+<!-- Header Section -->
+<div class="text-center space-y-stack-sm">
+<span class="material-symbols-outlined text-tertiary text-5xl mb-2" style="font-variation-settings: 'FILL' 1;">gavel</span>
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">
+                    Disclaimer &amp; Consent
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl mx-auto">
+                    Please review the following information carefully before proceeding with the mediation process.
+                </p>
+</div>
+<!-- Disclaimer Card -->
+<div class="bg-[#2A3D66] border border-white/10 rounded-xl p-8 shadow-[0_20px_40px_-15px_rgba(0,13,41,0.5)] mediation-highlight relative overflow-hidden">
+<!-- Decorative element -->
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-tertiary shrink-0 mt-1">info</span>
+<div class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Important Information</h2>
+<div class="font-body-md text-body-md text-on-surface-variant space-y-4 leading-relaxed">
+<p>
+                                This service does not provide professional legal advice and is not a substitute for therapy. The tools and insights provided by LexMediate are intended to facilitate communication and structured negotiation.
+                            </p>
+<p>
+                                Participation in this platform is completely voluntary. You may choose to pause or exit the process at any time without penalty.
+                            </p>
+<p class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" style="font-size: 20px;">lock</span>
+                                All your responses remain strictly confidential and are protected by enterprise-grade encryption.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Consent Checkbox & Action -->
+<div class="bg-surface-container-high border border-outline-variant/10 rounded-xl p-6 shadow-sm flex flex-col items-center gap-stack-md">
+<label class="flex items-center gap-4 cursor-pointer group w-full max-w-md bg-surface border border-outline-variant/20 rounded-lg p-4 hover:border-tertiary/50 transition-colors">
+<input class="custom-checkbox shrink-0" id="consent-checkbox" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface select-none group-hover:text-primary transition-colors">
+                        I have read and agree to the terms of participation.
+                    </span>
+</label>
+<button class="bg-tertiary text-surface font-label-md text-label-md font-bold px-8 py-4 rounded-lg shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-tertiary-fixed-dim hover:-translate-y-0.5 active:translate-y-0 w-full max-w-xs flex justify-center items-center gap-2" disabled="" id="next-btn">
+                    Proceed to Next Step
+                    <span class="material-symbols-outlined" style="font-size: 20px;">arrow_forward</span>
+</button>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">shield_lock</span>
+                    Secure &amp; Confidential Environment
+                </div>
+</div>
+</div>
+</main>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkbox = document.getElementById('consent-checkbox');
+            const nextBtn = document.getElementById('next-btn');
+
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    nextBtn.removeAttribute('disabled');
+                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    nextBtn.setAttribute('disabled', 'true');
+                    nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        });
+    </script>
+</body></html>

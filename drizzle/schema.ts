@@ -4,6 +4,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -29,7 +30,23 @@ export const users = pgTable("users", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "set null" }),
+  welcomeSeenAt: timestamp("welcome_seen_at", { withTimezone: true }),
+  disclaimerAcceptedAt: timestamp("disclaimer_accepted_at", { withTimezone: true }),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
 });
+
+export const userTestCompletions = pgTable(
+  "user_test_completions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    testKey: text("test_key").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique("user_test_completions_user_test_unique").on(table.userId, table.testKey)],
+);
 
 export const magicTokens = pgTable("magic_tokens", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -52,6 +69,14 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [sessions.id],
   }),
   magicTokens: many(magicTokens),
+  testCompletions: many(userTestCompletions),
+}));
+
+export const userTestCompletionsRelations = relations(userTestCompletions, ({ one }) => ({
+  user: one(users, {
+    fields: [userTestCompletions.userId],
+    references: [users.id],
+  }),
 }));
 
 export const magicTokensRelations = relations(magicTokens, ({ one }) => ({

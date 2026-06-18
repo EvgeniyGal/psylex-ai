@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Locale, copy } from "@/lib/i18n";
-import { detectLocale, LOCALE_CHANGE_EVENT, setStoredLocale } from "@/lib/locale";
+import { useEffect, useState } from "react";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { useLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 function WorkflowSteps({
@@ -35,29 +35,14 @@ function WorkflowSteps({
 }
 
 export function LandingPage() {
-  const [locale, setLocale] = useState<Locale>("en");
+  const { landing: t } = useLocale();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const value = detectLocale();
-    setLocale(value);
-    const onChange = () => setLocale(detectLocale());
-    window.addEventListener(LOCALE_CHANGE_EVENT, onChange);
-
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
-    return () => {
-      window.removeEventListener(LOCALE_CHANGE_EVENT, onChange);
-      window.removeEventListener("scroll", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const t = useMemo(() => copy[locale], [locale]);
-
-  const handleLocale = (next: Locale) => {
-    setLocale(next);
-    setStoredLocale(next);
-  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -74,25 +59,7 @@ export function LandingPage() {
             <span className="font-display text-headline-md font-bold text-primary">PsyLex</span>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-label-md">
-              <button
-                className={cn(locale === "en" ? "font-bold text-tertiary" : "text-primary-fixed-dim")}
-                onClick={() => handleLocale("en")}
-                type="button"
-              >
-                EN
-              </button>
-              <span className="text-outline-variant">|</span>
-              <button
-                className={cn(
-                  locale === "uk" ? "font-bold text-tertiary" : "text-primary-fixed-dim hover:text-tertiary",
-                )}
-                onClick={() => handleLocale("uk")}
-                type="button"
-              >
-                UA
-              </button>
-            </div>
+            <LocaleSwitcher />
             <Link
               className="hidden text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80 md:block"
               href="/login"

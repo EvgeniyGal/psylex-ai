@@ -2,13 +2,16 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { adminCopy } from "@/lib/admin-i18n";
-import type { Locale } from "@/lib/i18n";
+import { copy, type Locale } from "@/lib/i18n";
 import { detectLocale, LOCALE_CHANGE_EVENT, setStoredLocale } from "@/lib/locale";
+import { portalCopy } from "@/lib/portal-i18n";
 
 type LocaleContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  landing: (typeof copy)[Locale];
   admin: (typeof adminCopy)[Locale];
+  portal: (typeof portalCopy)[Locale];
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
@@ -29,7 +32,13 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo(
-    () => ({ locale, setLocale, admin: adminCopy[locale] }),
+    () => ({
+      locale,
+      setLocale,
+      landing: copy[locale],
+      admin: adminCopy[locale],
+      portal: portalCopy[locale],
+    }),
     [locale],
   );
 

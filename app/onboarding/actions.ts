@@ -1,0 +1,102 @@
+"use server";
+
+import { eq } from "drizzle-orm";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { userTestCompletions, users } from "@/drizzle/schema";
+import { getUserOnboardingStatus } from "@/lib/onboarding";
+import { isParticipantRole } from "@/lib/participant-roles";
+import { TEST_KEYS, type TestKey } from "@/lib/test-keys";
+
+async function requireParticipantUser() {
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
+  let userId = session?.user?.id;
+
+  if (!userId && session?.user?.name) {
+    const [byLogin] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.login, session.user.name))
+      .limit(1);
+    userId = byLogin?.id;
+  }
+
+  if (!userId || !role || !isParticipantRole(role)) {
+    redirect("/login");
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) redirect("/login");
+
+  return { user, role };
+}
+
+export async function markWelcomeSeen() {
+  const { user } = await requireParticipantUser();
+  if (user.welcomeSeenAt) {
+    redirect("/onboarding/consent");
+  }
+
+  await db
+    .update(users)
+    .set({ welcomeSeenAt: new Date() })
+    .where(eq(users.id, user.id));
+
+  revalidatePath("/onboarding/welcome");
+  redirect("/onboarding/consent");
+}
+
+export async function acceptDisclaimer(formData: FormData) {
+  const { user } = await requireParticipantUser();
+  if (user.disclaimerAcceptedAt) redirect("/onboarding/tests");
+  if (formData.get("consent") !== "on") return;
+
+  const now = new Date();
+  await db
+    .update(users)
+    .set({
+      welcomeSeenAt: user.welcomeSeenAt ?? now,
+      disclaimerAcceptedAt: now,
+    })
+    .where(eq(users.id, user.id));
+
+  revalidatePath("/onboarding/consent");
+  revalidatePath("/onboarding/welcome");
+  redirect("/onboarding/tests");
+}
+
+export async function markTestComplete(testKey: TestKey) {
+  const { user } = await requireParticipantUser();
+  if (!user.disclaimerAcceptedAt) redirect("/onboarding/consent");
+  if (!TEST_KEYS.includes(testKey)) return;
+
+  await db
+    .insert(userTestCompletions)
+    .values({ userId: user.id, testKey })
+    .onConflictDoNothing({
+      target: [userTestCompletions.userId, userTestCompletions.testKey],
+    });
+
+  revalidatePath("/onboarding/tests");
+}
+
+export async function completeOnboarding() {
+  const { user } = await requireParticipantUser();
+  const status = await getUserOnboardingStatus(user.id);
+
+  if (!status.testsComplete) {
+    redirect("/onboarding/tests");
+  }
+
+  await db
+    .update(users)
+    .set({ onboardingCompletedAt: new Date() })
+    .where(eq(users.id, user.id));
+
+  revalidatePath("/onboarding/tests");
+  redirect("/dashboard");
+}

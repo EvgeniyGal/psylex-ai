@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { consumeMagicToken, redirectPathForRole } from "@/lib/magic-link";
+import { consumeMagicToken } from "@/lib/magic-link";
+import { getPostLoginRedirect } from "@/lib/onboarding";
 import { establishSession } from "@/lib/session";
 
 export async function GET(request: Request) {
@@ -21,5 +22,5 @@ export async function GET(request: Request) {
     role: user.role,
   });
 
-  redirect(redirectPathForRole(user.role));
+  redirect(await getPostLoginRedirect(user.id, user.role));
 }

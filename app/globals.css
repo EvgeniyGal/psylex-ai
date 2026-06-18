@@ -78,7 +78,57 @@ a {
   backdrop-filter: blur(8px);
 }
 
-/* Custom scrollbar — matches PsyLex dark + tertiary palette */
+.test-card {
+  transition: all 0.3s ease;
+}
+
+.test-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.test-card-active {
+  background-image: linear-gradient(180deg, rgba(230, 195, 100, 0.05) 0%, transparent 100%);
+}
+
+.consent-checkbox {
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+  width: 1.5em;
+  height: 1.5em;
+  border: 1px solid #44464f;
+  border-radius: 0.25rem;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.consent-checkbox::before {
+  content: "";
+  width: 0.85em;
+  height: 0.85em;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  background-color: #001234;
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.consent-checkbox:checked {
+  background-color: #e6c364;
+  border-color: #e6c364;
+}
+
+.consent-checkbox:checked::before {
+  transform: scale(1);
+}
+
+.consent-checkbox:focus {
+  outline: max(2px, 0.15em) solid #e6c364;
+  outline-offset: max(2px, 0.15em);
+}
+
 html {
   scrollbar-width: thin;
   scrollbar-color: rgba(230, 195, 100, 0.45) #142951;

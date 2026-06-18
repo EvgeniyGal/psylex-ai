@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { AppProviders } from "@/components/app-providers";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -30,7 +31,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${jakarta.variable} min-h-screen bg-surface font-sans text-on-surface antialiased`}>
-        {children}
+        <AppProviders>{children}</AppProviders>
         <Toaster richColors />
       </body>
     </html>

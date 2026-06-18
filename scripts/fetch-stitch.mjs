@@ -16,6 +16,9 @@ const screens = [
   { id: "c1d10cd876204d948c6f251dce359da5", name: "admin-settings" },
   { id: "f3c62eb393d74211b14458d98342016d", name: "admin-sessions" },
   { id: "27c3a600e85a40fc8824fb686d3f7501", name: "admin-mediators" },
+  { id: "e860d541e7cc46c3a554af3ad1ca549a", name: "welcome-screen" },
+  { id: "a44ea237b6ed4933b823d8ddffb3feda", name: "disclaimer-consent" },
+  { id: "e68406b2ae684411886bbebe2b284205", name: "testing-dashboard" },
 ];
 
 function getApiKey() {

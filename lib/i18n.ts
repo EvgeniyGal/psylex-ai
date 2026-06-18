@@ -24,6 +24,17 @@ type Copy = {
   modeBSteps: { title: string; body: string }[];
   disclaimer: string;
   footerLinks: { disclaimer: string; privacy: string; howItWorks: string };
+  signInTitle: string;
+  signInSubtitle: string;
+  loginLabel: string;
+  passwordLabel: string;
+  signInButton: string;
+  backToStart: string;
+  backToLanding: string;
+  invalidCredentials: string;
+  invalidLoginFormat: string;
+  magicLinkMissingToken: string;
+  magicLinkInvalid: string;
 };
 
 export const copy: Record<Locale, Copy> = {
@@ -88,6 +99,17 @@ export const copy: Record<Locale, Copy> = {
     ],
     disclaimer: "PsyLex provides general information only. Not legal advice. Not therapy.",
     footerLinks: { disclaimer: "Disclaimer", privacy: "Privacy", howItWorks: "How it works" },
+    signInTitle: "Sign in",
+    signInSubtitle: "Sign in to access your PsyLex mediation portal",
+    loginLabel: "Login",
+    passwordLabel: "Password",
+    signInButton: "Sign in",
+    backToStart: "Back to start",
+    backToLanding: "← Back to landing page",
+    invalidCredentials: "Invalid credentials",
+    invalidLoginFormat: "Invalid login format",
+    magicLinkMissingToken: "Magic link is missing a token.",
+    magicLinkInvalid: "This magic link is invalid or has expired.",
   },
   uk: {
     headline: "У спорі не повинно бути тих, хто програв.",
@@ -150,5 +172,16 @@ export const copy: Record<Locale, Copy> = {
     ],
     disclaimer: "PsyLex надає лише загальну інформацію. Це не юридична порада і не терапія.",
     footerLinks: { disclaimer: "Відмова", privacy: "Конфіденційність", howItWorks: "Як це працює" },
+    signInTitle: "Увійти",
+    signInSubtitle: "Увійдіть, щоб отримати доступ до порталу медіації PsyLex",
+    loginLabel: "Логін",
+    passwordLabel: "Пароль",
+    signInButton: "Увійти",
+    backToStart: "На головну",
+    backToLanding: "← На головну сторінку",
+    invalidCredentials: "Невірні облікові дані",
+    invalidLoginFormat: "Невірний формат логіну",
+    magicLinkMissingToken: "У magic-посиланні відсутній токен.",
+    magicLinkInvalid: "Це magic-посилання недійсне або прострочене.",
   },
 };

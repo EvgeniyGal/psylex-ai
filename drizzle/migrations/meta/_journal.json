@@ -22,6 +22,13 @@
       "when": 1781700906359,
       "tag": "0002_fuzzy_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781776240875,
+      "tag": "0003_magical_nightcrawler",
+      "breakpoints": true
     }
   ]
 }
