@@ -12,6 +12,8 @@ export type OnboardingStatus = {
   onboardingCompletedAt: Date | null;
   completedTests: TestKey[];
   testsComplete: boolean;
+  personalBotReady: boolean;
+  canProceed: boolean;
   nextStep: OnboardingStep;
   nextPath: string;
 };
@@ -25,6 +27,8 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
       onboardingCompletedAt: null,
       completedTests: [],
       testsComplete: false,
+      personalBotReady: false,
+      canProceed: false,
       nextStep: "welcome",
       nextPath: "/onboarding/welcome",
     };
@@ -41,6 +45,8 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
 
   const completedSet = new Set(completedTests);
   const testsComplete = TEST_KEYS.every((key) => completedSet.has(key));
+  const personalBotReady = !!user.personalBotReadyAt && !!user.personalBotPrompt?.trim();
+  const canProceed = testsComplete && personalBotReady;
 
   let nextStep: OnboardingStep = "complete";
   let nextPath = "/dashboard";
@@ -53,7 +59,7 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
       nextStep = "consent";
       nextPath = "/onboarding/consent";
     }
-  } else if (!testsComplete || !user.onboardingCompletedAt) {
+  } else if (!canProceed || !user.onboardingCompletedAt) {
     nextStep = "tests";
     nextPath = "/onboarding/tests";
   }
@@ -64,6 +70,8 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
     onboardingCompletedAt: user.onboardingCompletedAt,
     completedTests,
     testsComplete,
+    personalBotReady,
+    canProceed,
     nextStep,
     nextPath,
   };

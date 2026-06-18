@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { userTestCompletions, users } from "@/drizzle/schema";
+import { users } from "@/drizzle/schema";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { isParticipantRole } from "@/lib/participant-roles";
-import { TEST_KEYS, type TestKey } from "@/lib/test-keys";
+import { syncUserTestStatus } from "@/lib/test-status-sync";
 
 async function requireParticipantUser() {
   const session = await getServerSession(authOptions);
@@ -69,18 +69,11 @@ export async function acceptDisclaimer(formData: FormData) {
   redirect("/onboarding/tests");
 }
 
-export async function markTestComplete(testKey: TestKey) {
+export async function updateTestStatus() {
   const { user } = await requireParticipantUser();
   if (!user.disclaimerAcceptedAt) redirect("/onboarding/consent");
-  if (!TEST_KEYS.includes(testKey)) return;
 
-  await db
-    .insert(userTestCompletions)
-    .values({ userId: user.id, testKey })
-    .onConflictDoNothing({
-      target: [userTestCompletions.userId, userTestCompletions.testKey],
-    });
-
+  await syncUserTestStatus(user.id, user.login);
   revalidatePath("/onboarding/tests");
 }
 
@@ -88,7 +81,7 @@ export async function completeOnboarding() {
   const { user } = await requireParticipantUser();
   const status = await getUserOnboardingStatus(user.id);
 
-  if (!status.testsComplete) {
+  if (!status.canProceed) {
     redirect("/onboarding/tests");
   }
 

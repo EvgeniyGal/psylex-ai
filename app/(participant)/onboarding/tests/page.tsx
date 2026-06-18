@@ -1,9 +1,10 @@
 import { TestingDashboard } from "@/components/portal/testing-dashboard";
 import { getPlatformSettings } from "@/lib/platform-settings";
-import { getTestStatuses } from "@/lib/onboarding";
+import { getTestStatuses, getUserOnboardingStatus } from "@/lib/onboarding";
 import { guardOnboardingStep, requireParticipantSession } from "@/lib/portal-auth";
 import type { ParticipantRole } from "@/lib/participant-roles";
 import { resolveTestUrl } from "@/lib/default-test-urls";
+import { syncUserTestStatus } from "@/lib/test-status-sync";
 import type { TestKey } from "@/lib/test-keys";
 
 const TEST_URL_MAP: Record<TestKey, keyof Awaited<ReturnType<typeof getPlatformSettings>>> = {
@@ -14,9 +15,12 @@ const TEST_URL_MAP: Record<TestKey, keyof Awaited<ReturnType<typeof getPlatformS
 };
 
 export default async function TestsPage() {
-  const { status } = await guardOnboardingStep("tests");
-  const { role, login } = await requireParticipantSession();
+  await guardOnboardingStep("tests");
+  const { userId, role, login } = await requireParticipantSession();
   const settings = await getPlatformSettings();
+
+  await syncUserTestStatus(userId, login);
+  const status = await getUserOnboardingStatus(userId);
 
   const tests = getTestStatuses(status.completedTests).map((test) => ({
     key: test.key,
@@ -27,10 +31,12 @@ export default async function TestsPage() {
 
   return (
     <TestingDashboard
-      allComplete={status.testsComplete}
+      canProceed={status.canProceed}
       login={login}
+      personalBotReady={status.personalBotReady}
       role={role as ParticipantRole}
       tests={tests}
+      testsComplete={status.testsComplete}
     />
   );
 }

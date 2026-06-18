@@ -28,8 +28,15 @@ type PortalCopy = {
   notPassed: string;
   locked: string;
   pendingCompletion: string;
-  markComplete: string;
   openTest: string;
+  updateTestStatus: string;
+  updateBotStatus: string;
+  personalBoardTitle: string;
+  personalBoardReady: string;
+  personalBoardPending: string;
+  personalBoardReadySubtitle: string;
+  personalBoardPendingSubtitle: string;
+  personalBoardLockedSubtitle: string;
   testMeta: Record<TestKey, { title: string; subtitle: string; icon: string }>;
   participant: RoleCopy;
   mediator: RoleCopy;
@@ -55,14 +62,21 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     proceed: "Proceed to Next Step",
     secureEnv: "Secure & Confidential Environment",
     testsHint:
-      "You must complete all tests listed above to unlock further features and proceed.",
+      "Complete all tests and wait for your personal AI bot to be ready before proceeding. Results may take up to two hours to process after you submit a test.",
     nextStep: "Next Step",
     passed: "Passed",
     notPassed: "Not passed",
     locked: "Locked until prerequisites met",
     pendingCompletion: "Pending completion",
-    markComplete: "Mark complete",
     openTest: "Open test",
+    updateTestStatus: "Update test status",
+    updateBotStatus: "Update bot status",
+    personalBoardTitle: "Personal AI Bot",
+    personalBoardReady: "Ready",
+    personalBoardPending: "Pending",
+    personalBoardReadySubtitle: "Your personal AI bot is ready",
+    personalBoardPendingSubtitle: "Processing your profile — this may take up to two hours",
+    personalBoardLockedSubtitle: "Available after all tests are completed",
     testMeta: {
       personality_type: {
         title: "What is my personality type",
@@ -135,14 +149,21 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     proceed: "Перейти до наступного кроку",
     secureEnv: "Безпечне та конфіденційне середовище",
     testsHint:
-      "Щоб розблокувати подальші функції, потрібно пройти всі тести, перелічені вище.",
+      "Пройдіть усі тести та дочекайтеся готовності персонального ШІ-бота, перш ніж продовжити. Обробка результатів після надсилання тесту може тривати до двох годин.",
     nextStep: "Наступний крок",
     passed: "Пройдено",
     notPassed: "Не пройдено",
     locked: "Заблоковано до виконання попередніх",
     pendingCompletion: "Очікує завершення",
-    markComplete: "Позначити як пройдений",
     openTest: "Відкрити тест",
+    updateTestStatus: "Оновити статус тестів",
+    updateBotStatus: "Оновити статус бота",
+    personalBoardTitle: "Персональний ШІ-бот",
+    personalBoardReady: "Готово",
+    personalBoardPending: "Очікується",
+    personalBoardReadySubtitle: "Ваш персональний ШІ-бот готовий",
+    personalBoardPendingSubtitle: "Обробка профілю — це може зайняти до двох годин",
+    personalBoardLockedSubtitle: "Доступно після проходження всіх тестів",
     testMeta: {
       personality_type: {
         title: "Який мій тип характеру",

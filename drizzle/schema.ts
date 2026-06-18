@@ -33,6 +33,8 @@ export const users = pgTable("users", {
   welcomeSeenAt: timestamp("welcome_seen_at", { withTimezone: true }),
   disclaimerAcceptedAt: timestamp("disclaimer_accepted_at", { withTimezone: true }),
   onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+  personalBotPrompt: text("personal_bot_prompt"),
+  personalBotReadyAt: timestamp("personal_bot_ready_at", { withTimezone: true }),
 });
 
 export const userTestCompletions = pgTable(

@@ -22,6 +22,7 @@ const config: Config = {
         "tertiary-container": "#c9a84c",
         "on-tertiary": "#3d2e00",
         error: "#ffb4ab",
+        success: "#81c995",
         outline: "#8f909a",
         "outline-variant": "#44464f",
         "surface-container": "#071e46",
