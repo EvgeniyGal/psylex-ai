@@ -5,7 +5,9 @@ import {
 } from "@/lib/airtable-config";
 import { findAirtableRecordByLogin, hasAirtableRecordForLogin } from "@/lib/airtable";
 import { db } from "@/lib/db";
+import { finalizePersonalBotPrompt } from "@/lib/personal-bot-prompt";
 import { getPlatformSettings } from "@/lib/platform-settings";
+import { isParticipantRole } from "@/lib/participant-roles";
 import { TEST_KEYS, type TestKey } from "@/lib/test-keys";
 import { userTestCompletions, users } from "@/drizzle/schema";
 
@@ -37,23 +39,50 @@ export async function syncUserTestStatus(
   const settings = await getPlatformSettings();
   const apiKey = settings.airtableApiKey.trim();
   const completedSet = await getCompletedTestKeys(userId);
+  const testsComplete = TEST_KEYS.every((key) => completedSet.has(key));
+
+  const [user] = await db
+    .select({
+      role: users.role,
+      personalBotPrompt: users.personalBotPrompt,
+      personalBotReadyAt: users.personalBotReadyAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const userRole = user?.role && isParticipantRole(user.role) ? user.role : null;
+  let personalBotPrompt = user?.personalBotPrompt?.trim() ?? null;
+
+  if (personalBotPrompt && userRole) {
+    const finalized = finalizePersonalBotPrompt(personalBotPrompt, login, userRole);
+    if (finalized !== personalBotPrompt) {
+      personalBotPrompt = finalized;
+      await db
+        .update(users)
+        .set({ personalBotPrompt: finalized })
+        .where(eq(users.id, userId));
+    }
+  }
+
+  const personalBotReady = !!user?.personalBotReadyAt && !!personalBotPrompt;
+
+  if (testsComplete && personalBotReady) {
+    return {
+      completedTests: [...completedSet],
+      testsComplete: true,
+      personalBotReady: true,
+      personalBotPrompt,
+      synced: false,
+    };
+  }
 
   if (!apiKey) {
-    const [user] = await db
-      .select({
-        personalBotPrompt: users.personalBotPrompt,
-        personalBotReadyAt: users.personalBotReadyAt,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    const completedTests = [...completedSet];
     return {
-      completedTests,
-      testsComplete: TEST_KEYS.every((key) => completedSet.has(key)),
-      personalBotReady: !!user?.personalBotReadyAt,
-      personalBotPrompt: user?.personalBotPrompt ?? null,
+      completedTests: [...completedSet],
+      testsComplete,
+      personalBotReady,
+      personalBotPrompt,
       synced: false,
     };
   }
@@ -78,11 +107,11 @@ export async function syncUserTestStatus(
     updated = true;
   }
 
-  const testsComplete = TEST_KEYS.every((key) => completedSet.has(key));
-  let personalBotPrompt: string | null = null;
-  let personalBotReady = false;
+  const allTestsComplete = TEST_KEYS.every((key) => completedSet.has(key));
+  let syncedBotPrompt: string | null = personalBotPrompt;
+  let syncedBotReady = personalBotReady;
 
-  if (testsComplete) {
+  if (allTestsComplete) {
     const record = await findAirtableRecordByLogin(
       apiKey,
       PERSONAL_BOT_AIRTABLE_CONFIG,
@@ -96,43 +125,31 @@ export async function syncUserTestStatus(
           ? String(promptValue).trim()
           : "";
 
-    if (prompt) {
-      personalBotPrompt = prompt;
-      personalBotReady = true;
+    if (prompt && userRole) {
+      syncedBotPrompt = finalizePersonalBotPrompt(prompt, login, userRole);
+      syncedBotReady = true;
+    } else {
+      syncedBotPrompt = null;
+      syncedBotReady = false;
     }
 
-    const [existing] = await db
-      .select({
-        personalBotPrompt: users.personalBotPrompt,
-        personalBotReadyAt: users.personalBotReadyAt,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    const promptChanged = (existing?.personalBotPrompt ?? null) !== personalBotPrompt;
+    const promptChanged = (user?.personalBotPrompt ?? null) !== syncedBotPrompt;
     const readyChanged =
-      !!existing?.personalBotReadyAt !== personalBotReady ||
-      (personalBotReady && promptChanged);
+      !!user?.personalBotReadyAt !== syncedBotReady ||
+      (syncedBotReady && promptChanged);
 
     if (promptChanged || readyChanged) {
       await db
         .update(users)
         .set({
-          personalBotPrompt,
-          personalBotReadyAt: personalBotReady ? new Date() : null,
+          personalBotPrompt: syncedBotPrompt,
+          personalBotReadyAt: syncedBotReady ? new Date() : null,
         })
         .where(eq(users.id, userId));
       updated = true;
     }
   } else {
-    const [existing] = await db
-      .select({ personalBotReadyAt: users.personalBotReadyAt })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (existing?.personalBotReadyAt) {
+    if (user?.personalBotReadyAt) {
       await db
         .update(users)
         .set({
@@ -141,14 +158,16 @@ export async function syncUserTestStatus(
         })
         .where(eq(users.id, userId));
       updated = true;
+      syncedBotPrompt = null;
+      syncedBotReady = false;
     }
   }
 
   return {
     completedTests: [...completedSet],
-    testsComplete,
-    personalBotReady,
-    personalBotPrompt,
+    testsComplete: allTestsComplete,
+    personalBotReady: syncedBotReady,
+    personalBotPrompt: syncedBotPrompt,
     synced: updated,
   };
 }
