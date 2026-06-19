@@ -70,7 +70,7 @@ export function LoginForm() {
 
         <div className="relative z-10 w-full max-w-md">
           <div className="mb-8 flex flex-col items-center gap-3">
-            <Image alt="PsyLex" className="h-10 w-auto" height={40} src="/stitch/logo.png" width={140} />
+            <Image alt="PsyLex" className="h-10 w-auto" height={40} src="/logo.webp" unoptimized width={40} />
             <h1 className="font-display text-headline-lg text-on-surface">{t.signInTitle}</h1>
             <p className="text-center text-body-sm text-on-surface-variant">{t.signInSubtitle}</p>
           </div>

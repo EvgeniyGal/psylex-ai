@@ -49,7 +49,7 @@ export function SiteHeader({
     >
       <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
         <Link className="flex items-center gap-3 transition-opacity hover:opacity-90" href={brandHref}>
-          <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/stitch/logo.png" width={120} />
+          <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/logo.webp" unoptimized width={32} />
           <span className="font-display text-headline-md font-bold text-primary">PsyLex</span>
         </Link>
         {trailing ? <div className="flex items-center gap-6">{trailing}</div> : null}
