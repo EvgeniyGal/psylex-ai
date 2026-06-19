@@ -68,8 +68,12 @@ export function LandingPage() {
           <div className="relative z-30 mx-auto w-full max-w-container-max px-margin-mobile text-center md:px-margin-desktop">
             <h1 className="mx-auto mb-stack-md max-w-5xl font-display text-[40px] font-bold leading-tight tracking-tight text-on-surface md:text-[64px]">
               {t.headline}
-              <br />
-              <span className="text-tertiary">{t.headlineAccent}</span>
+              {t.headlineAccent ? (
+                <>
+                  <br />
+                  <span className="text-tertiary">{t.headlineAccent}</span>
+                </>
+              ) : null}
             </h1>
             <p className="mx-auto mb-stack-lg max-w-2xl text-body-lg text-on-surface-variant">{t.subheadline}</p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
