@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition } from "react";
 import { completeOnboarding, updateTestStatus } from "@/app/onboarding/actions";
-import { PortalHeader } from "@/components/portal/portal-header";
+import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
 import type { ParticipantRole } from "@/lib/participant-roles";
@@ -85,10 +85,8 @@ export function TestingDashboard({
   const showUpdateBotButton = testsComplete && !personalBotReady;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans text-on-background">
-      <PortalHeader />
-
-      <main className="mx-auto flex w-full max-w-container-max flex-grow flex-col items-center justify-center px-margin-mobile py-stack-lg pt-28 md:px-margin-desktop">
+    <PortalPageShell>
+      <main className="mx-auto flex w-full max-w-container-max flex-grow flex-col items-center justify-center px-margin-mobile py-stack-lg md:px-margin-desktop">
         <div className="flex w-full max-w-4xl flex-col gap-stack-md">
           <div className="mb-4 text-center">
             <h1 className="mb-2 font-display text-display-lg">{roleCopy.testsTitle}</h1>
@@ -260,6 +258,6 @@ export function TestingDashboard({
           </div>
         </div>
       </main>
-    </div>
+    </PortalPageShell>
   );
 }

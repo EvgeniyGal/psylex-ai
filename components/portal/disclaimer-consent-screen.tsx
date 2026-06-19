@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { acceptDisclaimer } from "@/app/onboarding/actions";
-import { PortalHeader } from "@/components/portal/portal-header";
+import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
 import type { ParticipantRole } from "@/lib/participant-roles";
@@ -17,11 +17,8 @@ export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) 
   const [consented, setConsented] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans text-on-background antialiased">
-      <PortalHeader />
-
+    <PortalPageShell className="antialiased">
       <main className="relative flex flex-grow flex-col items-center justify-center p-gutter md:p-margin-desktop">
-        <div className="absolute inset-0 z-0 bg-background/80 backdrop-blur-sm" />
         <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-stack-lg">
           <div className="space-y-stack-sm text-center">
             <span
@@ -95,6 +92,6 @@ export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) 
           </form>
         </div>
       </main>
-    </div>
+    </PortalPageShell>
   );
 }

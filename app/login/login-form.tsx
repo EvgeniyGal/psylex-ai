@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SiteHeader } from "@/components/site-header";
 import { useLocale } from "@/components/locale-provider";
 import { credentialsSchema, type CredentialsInput } from "@/lib/login-schema";
 
@@ -47,22 +48,21 @@ export function LoginForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden bg-surface">
-      <header className="relative z-20 flex h-20 items-center justify-between px-margin-mobile md:px-margin-desktop">
-        <Link href="/">
-          <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/stitch/logo.png" width={120} />
-        </Link>
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Link
-            className="hidden items-center gap-1.5 font-sans text-body-sm text-on-surface-variant transition-colors hover:text-tertiary sm:flex"
-            href="/"
-          >
-            <span className="material-symbols-outlined text-base">home</span>
-            {t.backToStart}
-          </Link>
-          <LocaleSwitcher />
-        </div>
-      </header>
+    <main className="relative flex min-h-screen flex-col overflow-hidden bg-surface-container-low">
+      <SiteHeader
+        trailing={
+          <>
+            <Link
+              className="hidden items-center gap-1.5 text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80 sm:flex"
+              href="/"
+            >
+              <span className="material-symbols-outlined text-base">home</span>
+              {t.backToStart}
+            </Link>
+            <LocaleSwitcher />
+          </>
+        }
+      />
 
       <div className="relative flex flex-grow items-center justify-center px-6">
         <div className="pointer-events-none absolute -right-32 -top-32 h-[400px] w-[400px] rounded-full bg-tertiary/10 blur-[100px]" />

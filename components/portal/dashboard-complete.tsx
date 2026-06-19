@@ -1,15 +1,14 @@
 "use client";
 
-import { PortalHeader } from "@/components/portal/portal-header";
+import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 
 export function DashboardComplete() {
   const { portal: t } = useLocale();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <PortalHeader />
-      <main className="flex flex-grow flex-col items-center justify-center px-6 pt-20 text-center">
+    <PortalPageShell>
+      <main className="flex flex-grow flex-col items-center justify-center px-6 text-center">
         <div className="max-w-lg space-y-4">
           <span
             className="material-symbols-outlined text-5xl text-tertiary"
@@ -21,6 +20,6 @@ export function DashboardComplete() {
           <p className="font-sans text-body-lg text-on-surface-variant">{t.dashboardBody}</p>
         </div>
       </main>
-    </div>
+    </PortalPageShell>
   );
 }

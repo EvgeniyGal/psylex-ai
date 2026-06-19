@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AppProviders } from "@/components/app-providers";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -31,7 +32,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${jakarta.variable} min-h-screen bg-surface font-sans text-on-surface antialiased`}>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <div className="flex min-h-screen flex-col">
+            <div className="flex-grow">{children}</div>
+            <SiteFooter />
+          </div>
+        </AppProviders>
         <Toaster richColors />
       </body>
     </html>

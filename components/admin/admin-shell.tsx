@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useLocale } from "@/components/locale-provider";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { siteHeaderSurfaceClassName, useHeaderScrolled } from "@/components/site-header";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -66,15 +67,21 @@ export function AdminSidebar() {
 
 export function AdminTopBar() {
   const { admin } = useLocale();
+  const scrolled = useHeaderScrolled();
 
   return (
-    <header className="fixed left-64 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/10 bg-surface px-gutter">
-      <h2 className="font-display text-headline-md text-on-surface">{admin.portalTitle}</h2>
+    <header
+      className={siteHeaderSurfaceClassName(
+        scrolled,
+        "fixed left-64 right-0 top-0 z-40 flex h-20 items-center justify-between px-gutter",
+      )}
+    >
+      <h2 className="font-display text-headline-md text-primary">{admin.portalTitle}</h2>
       <div className="flex items-center gap-6">
-        <button className="text-on-surface-variant transition-colors hover:text-tertiary-container" type="button">
+        <button className="text-primary-fixed-dim transition-opacity hover:opacity-80" type="button">
           <span className="material-symbols-outlined">notifications</span>
         </button>
-        <button className="text-on-surface-variant transition-colors hover:text-tertiary-container" type="button">
+        <button className="text-primary-fixed-dim transition-opacity hover:opacity-80" type="button">
           <span className="material-symbols-outlined">help_outline</span>
         </button>
       </div>

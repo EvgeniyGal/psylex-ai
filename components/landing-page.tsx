@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SiteHeader } from "@/components/site-header";
 import { useLocale } from "@/components/locale-provider";
-import { cn } from "@/lib/utils";
 
 function WorkflowSteps({
   steps,
@@ -36,29 +35,12 @@ function WorkflowSteps({
 
 export function LandingPage() {
   const { landing: t } = useLocale();
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header
-        className={cn(
-          "sticky top-0 z-50 w-full bg-surface/90 backdrop-blur-md transition-shadow",
-          scrolled && "shadow-md",
-        )}
-        id="topAppBar"
-      >
-        <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
-          <div className="flex items-center gap-3">
-            <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/stitch/logo.png" width={120} />
-            <span className="font-display text-headline-md font-bold text-primary">PsyLex</span>
-          </div>
-          <div className="flex items-center gap-6">
+      <SiteHeader
+        trailing={
+          <>
             <LocaleSwitcher />
             <Link
               className="hidden text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80 md:block"
@@ -66,9 +48,9 @@ export function LandingPage() {
             >
               {t.login}
             </Link>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <main className="flex-grow">
         <section className="relative flex min-h-[80vh] items-center overflow-hidden bg-primary-container pb-stack-lg pt-stack-lg">
@@ -189,27 +171,6 @@ export function LandingPage() {
           </div>
         </section>
       </main>
-
-      <footer className="relative z-10 mt-auto w-full bg-surface-container-lowest py-stack-lg">
-        <div className="mx-auto grid max-w-container-max grid-cols-1 gap-stack-md px-margin-mobile md:grid-cols-2 md:px-margin-desktop">
-          <div className="flex flex-col gap-4">
-            <span className="font-display text-headline-md text-primary">PsyLex</span>
-            <p className="max-w-md text-body-sm text-on-surface-variant">{t.disclaimer}</p>
-            <p className="mt-auto text-body-sm text-on-surface-variant">© 2026 AI Innovation Management LLC</p>
-          </div>
-          <nav className="flex flex-col gap-2 md:items-end md:text-right">
-            <a className="text-body-md text-on-surface-variant transition-colors hover:text-tertiary" href="#">
-              {t.footerLinks.disclaimer}
-            </a>
-            <a className="text-body-md text-on-surface-variant transition-colors hover:text-tertiary" href="#">
-              {t.footerLinks.privacy}
-            </a>
-            <a className="text-body-md text-on-surface-variant transition-colors hover:text-tertiary" href="#how-it-works">
-              {t.footerLinks.howItWorks}
-            </a>
-          </nav>
-        </div>
-      </footer>
     </div>
   );
 }
