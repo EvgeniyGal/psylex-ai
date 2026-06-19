@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -21,7 +22,10 @@ export function AdminSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-outline-variant/10 bg-surface-container py-stack-md shadow-sm">
       <div className="mb-10 px-6">
-        <h1 className="font-display text-headline-md font-bold text-tertiary">PsyLex</h1>
+        <div className="flex items-center gap-3">
+          <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/logo.webp" unoptimized width={32} />
+          <span className="font-display text-headline-md font-bold text-primary">PsyLex</span>
+        </div>
         <p className="mt-1 font-display text-label-md uppercase tracking-widest text-on-surface-variant">
           {admin.adminConsole}
         </p>
