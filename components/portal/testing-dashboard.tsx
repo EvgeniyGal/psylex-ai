@@ -13,13 +13,17 @@ import type { TestKey } from "@/lib/test-keys";
 const STATUS_POLL_INTERVAL_MS = 30 * 60 * 1000;
 
 const openTestButtonClass =
-  "flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-tertiary bg-tertiary/15 px-3 py-1 text-tertiary transition-colors hover:bg-tertiary/25";
+  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded border border-tertiary bg-tertiary/15 px-3 py-2 text-tertiary transition-colors hover:bg-tertiary/25 sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
 const passedBadgeClass =
-  "flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-success bg-success/10 px-3 py-1 text-success";
+  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded border border-success bg-success/10 px-3 py-2 text-success sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
 const failedBadgeClass =
-  "flex shrink-0 items-center gap-2 whitespace-nowrap rounded border border-error bg-error/10 px-3 py-1 text-error";
-const testActionsColumnClass =
-  "flex w-[320px] shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end";
+  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded border border-error bg-error/10 px-3 py-2 text-error sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
+const testCardClass =
+  "test-card relative flex w-full flex-col gap-4 rounded-xl border border-white/10 bg-card p-6 text-left transition-all sm:flex-row sm:items-center";
+const testActionsClass =
+  "flex w-full flex-col items-stretch gap-2 border-t border-white/10 pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:justify-end sm:border-t-0 sm:pt-0";
+const testActionsEndClass =
+  "flex w-full flex-col items-stretch gap-2 border-t border-white/10 pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:justify-end sm:border-t-0 sm:pt-0";
 
 type TestDefinition = {
   key: TestKey;
@@ -98,12 +102,10 @@ export function TestingDashboard({
               const meta = t.testMeta[test.key];
               const testUrl = buildTestUrl(test.url, login);
               const isLocked = !test.unlocked;
+              const showOpenTest = !test.completed && !!testUrl;
 
               return (
-                <div
-                  key={test.key}
-                  className="test-card relative flex w-full items-center gap-4 rounded-xl border border-white/10 bg-card p-6 text-left transition-all"
-                >
+                <div key={test.key} className={testCardClass}>
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1 ${
                       test.completed ? "bg-success" : "bg-error"
@@ -133,8 +135,8 @@ export function TestingDashboard({
                     </div>
                   </div>
 
-                  <div className={testActionsColumnClass}>
-                    {!test.completed && testUrl ? (
+                  <div className={showOpenTest ? testActionsClass : testActionsEndClass}>
+                    {showOpenTest ? (
                       <button
                         className={openTestButtonClass}
                         onClick={() => openTest(testUrl)}
@@ -162,7 +164,7 @@ export function TestingDashboard({
               );
             })}
 
-            <div className="test-card relative flex w-full items-center gap-4 rounded-xl border border-white/10 bg-card p-6 text-left transition-all">
+            <div className={testCardClass}>
               <div
                 className={`absolute bottom-0 left-0 top-0 w-1 ${
                   personalBotReady ? "bg-success" : "bg-error"
@@ -200,7 +202,7 @@ export function TestingDashboard({
                 </div>
               </div>
 
-              <div className={testActionsColumnClass}>
+              <div className={testActionsEndClass}>
                 {personalBotReady ? (
                   <div className={passedBadgeClass}>
                     <span className="material-symbols-outlined text-sm">check_circle</span>
