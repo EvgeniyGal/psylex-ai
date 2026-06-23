@@ -46,6 +46,14 @@ export function LoginForm() {
     setError(t.invalidCredentials);
   };
 
+  const handleFormKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    if (!(event.target instanceof HTMLInputElement)) return;
+
+    event.preventDefault();
+    void form.handleSubmit(onSubmit)();
+  };
+
   return (
     <main className="relative flex min-h-screen flex-col overflow-hidden bg-surface-container-low">
       <SiteHeader
@@ -75,6 +83,7 @@ export function LoginForm() {
 
           <form
             className="glass-panel space-y-5 rounded-2xl p-8"
+            onKeyDown={handleFormKeyDown}
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <div>
@@ -82,7 +91,9 @@ export function LoginForm() {
                 {t.loginLabel}
               </label>
               <input
+                autoComplete="username"
                 className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 font-mono text-sm text-on-surface focus:border-tertiary focus:ring-tertiary"
+                enterKeyHint="next"
                 placeholder="psylex_..."
                 {...form.register("login")}
               />
@@ -95,7 +106,9 @@ export function LoginForm() {
                 {t.passwordLabel}
               </label>
               <input
+                autoComplete="current-password"
                 className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-on-surface focus:border-tertiary focus:ring-tertiary"
+                enterKeyHint="go"
                 type="password"
                 {...form.register("password")}
               />
