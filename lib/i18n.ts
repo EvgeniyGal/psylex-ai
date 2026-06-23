@@ -28,7 +28,10 @@ type Copy = {
   signInSubtitle: string;
   loginLabel: string;
   passwordLabel: string;
+  showPassword: string;
+  hidePassword: string;
   signInButton: string;
+  signInLoading: string;
   backToStart: string;
   backToLanding: string;
   invalidCredentials: string;
@@ -103,7 +106,10 @@ export const copy: Record<Locale, Copy> = {
     signInSubtitle: "Sign in to access your PsyLex mediation portal",
     loginLabel: "Login",
     passwordLabel: "Password",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     signInButton: "Sign in",
+    signInLoading: "Signing in…",
     backToStart: "Back to start",
     backToLanding: "← Back to landing page",
     invalidCredentials: "Invalid credentials",
@@ -176,7 +182,10 @@ export const copy: Record<Locale, Copy> = {
     signInSubtitle: "Увійдіть, щоб отримати доступ до порталу медіації PsyLex",
     loginLabel: "Логін",
     passwordLabel: "Пароль",
+    showPassword: "Показати пароль",
+    hidePassword: "Приховати пароль",
     signInButton: "Увійти",
+    signInLoading: "Вхід у систему…",
     backToStart: "На головну",
     backToLanding: "← На головну сторінку",
     invalidCredentials: "Невірні облікові дані",

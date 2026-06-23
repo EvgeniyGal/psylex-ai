@@ -24,10 +24,16 @@ export function LoginForm() {
   );
   const magicError = magicLinkErrors[searchParams.get("error") as keyof typeof magicLinkErrors];
   const [error, setError] = useState<string | null>(magicError ?? null);
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<CredentialsInput>({
     resolver: zodResolver(credentialsSchema),
     defaultValues: { login: "", password: "" },
   });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = form;
 
   const onSubmit = async (values: CredentialsInput) => {
     setError(null);
@@ -47,11 +53,11 @@ export function LoginForm() {
   };
 
   const handleFormKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
-    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    if (event.key !== "Enter" || event.nativeEvent.isComposing || isSubmitting) return;
     if (!(event.target instanceof HTMLInputElement)) return;
 
     event.preventDefault();
-    void form.handleSubmit(onSubmit)();
+    void handleSubmit(onSubmit)();
   };
 
   return (
@@ -84,7 +90,7 @@ export function LoginForm() {
           <form
             className="glass-panel space-y-5 rounded-2xl p-8"
             onKeyDown={handleFormKeyDown}
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmit)}
           >
             <div>
               <label className="mb-2 block font-display text-label-md text-on-surface-variant">
@@ -92,12 +98,13 @@ export function LoginForm() {
               </label>
               <input
                 autoComplete="username"
-                className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 font-mono text-sm text-on-surface focus:border-tertiary focus:ring-tertiary"
+                className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 font-mono text-sm text-on-surface focus:border-tertiary focus:ring-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSubmitting}
                 enterKeyHint="next"
                 placeholder="psylex_..."
-                {...form.register("login")}
+                {...register("login")}
               />
-              {form.formState.errors.login ? (
+              {errors.login ? (
                 <p className="mt-1 text-xs text-error">{t.invalidLoginFormat}</p>
               ) : null}
             </div>
@@ -105,20 +112,42 @@ export function LoginForm() {
               <label className="mb-2 block font-display text-label-md text-on-surface-variant">
                 {t.passwordLabel}
               </label>
-              <input
-                autoComplete="current-password"
-                className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-on-surface focus:border-tertiary focus:ring-tertiary"
-                enterKeyHint="go"
-                type="password"
-                {...form.register("password")}
-              />
+              <div className="relative">
+                <input
+                  autoComplete="current-password"
+                  className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low py-3 pl-4 pr-12 text-on-surface focus:border-tertiary focus:ring-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                  enterKeyHint="go"
+                  type={showPassword ? "text" : "password"}
+                  {...register("password")}
+                />
+                <button
+                  aria-label={showPassword ? t.hidePassword : t.showPassword}
+                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting}
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
             {error ? <p className="text-sm text-error">{error}</p> : null}
             <button
-              className="btn-primary w-full px-6 py-3 text-body-md transition-opacity hover:opacity-90"
+              className="btn-primary flex w-full items-center justify-center gap-2 px-6 py-3 text-body-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSubmitting}
               type="submit"
             >
-              {t.signInButton}
+              {isSubmitting ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                  {t.signInLoading}
+                </>
+              ) : (
+                t.signInButton
+              )}
             </button>
           </form>
 
