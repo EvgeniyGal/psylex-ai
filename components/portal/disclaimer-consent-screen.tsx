@@ -1,11 +1,42 @@
 "use client";
 
+import { useFormStatus } from "react-dom";
 import { useState } from "react";
 import { acceptDisclaimer } from "@/app/onboarding/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
 import type { ParticipantRole } from "@/lib/participant-roles";
+
+type ProceedButtonProps = {
+  consented: boolean;
+  label: string;
+  loadingLabel: string;
+};
+
+function ProceedButton({ consented, label, loadingLabel }: ProceedButtonProps) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      className="btn-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4 font-display text-label-md transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+      disabled={!consented || pending}
+      type="submit"
+    >
+      {pending ? (
+        <>
+          <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+          {loadingLabel}
+        </>
+      ) : (
+        <>
+          {label}
+          <span className="material-symbols-outlined text-xl">arrow_forward</span>
+        </>
+      )}
+    </button>
+  );
+}
 
 type DisclaimerConsentScreenProps = {
   role: ParticipantRole;
@@ -77,14 +108,7 @@ export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) 
                 {t.consentLabel}
               </span>
             </label>
-            <button
-              className="btn-primary flex w-full max-w-xs items-center justify-center gap-2 px-8 py-4 font-display text-label-md transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!consented}
-              type="submit"
-            >
-              {t.proceed}
-              <span className="material-symbols-outlined text-xl">arrow_forward</span>
-            </button>
+            <ProceedButton consented={consented} label={t.proceed} loadingLabel={t.proceedLoading} />
             <div className="mt-2 flex items-center gap-2 font-sans text-body-sm text-on-surface-variant">
               <span className="material-symbols-outlined text-base">shield_lock</span>
               {t.secureEnv}

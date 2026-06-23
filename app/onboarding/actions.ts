@@ -66,6 +66,10 @@ export async function acceptDisclaimer(formData: FormData) {
 
   revalidatePath("/onboarding/consent");
   revalidatePath("/onboarding/welcome");
+
+  await syncUserTestStatus(user.id, user.login);
+
+  revalidatePath("/onboarding/tests");
   redirect("/onboarding/tests");
 }
 

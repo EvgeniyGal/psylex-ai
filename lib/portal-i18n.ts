@@ -21,6 +21,7 @@ type PortalCopy = {
   importantInfo: string;
   consentLabel: string;
   proceed: string;
+  proceedLoading: string;
   secureEnv: string;
   testsHint: string;
   nextStep: string;
@@ -60,6 +61,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     importantInfo: "Important Information",
     consentLabel: "I have read and agree to the terms of participation.",
     proceed: "Proceed to Next Step",
+    proceedLoading: "Checking test completion…",
     secureEnv: "Secure & Confidential Environment",
     testsHint:
       "Complete all tests and wait for your personal AI bot to be ready before proceeding. Results may take up to two hours to process after you submit a test.",
@@ -147,6 +149,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     importantInfo: "Важлива інформація",
     consentLabel: "Я прочитав(ла) та погоджуюсь з умовами участі.",
     proceed: "Перейти до наступного кроку",
+    proceedLoading: "Перевіряємо проходження тестів…",
     secureEnv: "Безпечне та конфіденційне середовище",
     testsHint:
       "Пройдіть усі тести та дочекайтеся готовності персонального ШІ-бота, перш ніж продовжити. Обробка результатів після надсилання тесту може тривати до двох годин.",

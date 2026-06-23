@@ -232,8 +232,12 @@ export function TestingDashboard({
                 onClick={handleUpdateStatus}
                 type="button"
               >
-                <span className="material-symbols-outlined text-base">sync</span>
-                {t.updateTestStatus}
+                {isPending ? (
+                  <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                ) : (
+                  <span className="material-symbols-outlined text-base">sync</span>
+                )}
+                {isPending ? t.proceedLoading : t.updateTestStatus}
               </button>
             ) : null}
             {showUpdateBotButton ? (
@@ -243,17 +247,28 @@ export function TestingDashboard({
                 onClick={handleUpdateStatus}
                 type="button"
               >
-                <span className="material-symbols-outlined text-base">smart_toy</span>
-                {t.updateBotStatus}
+                {isPending ? (
+                  <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                ) : (
+                  <span className="material-symbols-outlined text-base">smart_toy</span>
+                )}
+                {isPending ? t.proceedLoading : t.updateBotStatus}
               </button>
             ) : null}
             <button
-              className="btn-primary mt-4 w-full px-8 py-4 font-sans text-body-lg font-bold disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
+              className="btn-primary mt-4 flex w-full items-center justify-center gap-2 px-8 py-4 font-sans text-body-lg font-bold disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
               disabled={!canProceed || isPending}
               onClick={handleNextStep}
               type="button"
             >
-              {t.nextStep}
+              {isPending ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                  {t.proceedLoading}
+                </>
+              ) : (
+                t.nextStep
+              )}
             </button>
           </div>
         </div>
