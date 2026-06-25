@@ -10,7 +10,7 @@ import { siteHeaderSurfaceClassName, useHeaderScrolled } from "@/components/site
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/admin/sessions", key: "navSessions" as const, icon: "gavel" },
+  { href: "/admin/rooms", key: "navRooms" as const, icon: "gavel" },
   { href: "/admin/mediators", key: "navMediators" as const, icon: "group" },
   { href: "/admin/settings", key: "navSettings" as const, icon: "settings" },
 ];

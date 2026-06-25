@@ -57,6 +57,6 @@ export async function consumeMagicToken(rawToken: string) {
 }
 
 export function redirectPathForRole(role: string) {
-  if (role === "admin") return "/admin/sessions";
+  if (role === "admin") return "/admin/rooms";
   return "/onboarding/welcome";
 }

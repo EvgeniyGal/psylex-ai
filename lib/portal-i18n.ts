@@ -52,8 +52,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     brand: "PsyLex",
     roleLabel: "Role",
     roles: {
-      plaintiff: "Plaintiff",
-      defendant: "Defendant",
+      side1: "Side 1",
+      side2: "Side 2",
       mediator: "Mediator",
     },
     confidential: "Your responses are strictly confidential",
@@ -140,8 +140,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     brand: "PsyLex",
     roleLabel: "Роль",
     roles: {
-      plaintiff: "Позивач",
-      defendant: "Відповідач",
+      side1: "Сторона 1",
+      side2: "Сторона 2",
       mediator: "Медіатор",
     },
     confidential: "Ваші відповіді суворо конфіденційні",

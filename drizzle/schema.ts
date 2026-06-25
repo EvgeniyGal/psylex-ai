@@ -11,11 +11,11 @@ import {
 export const userRole = pgEnum("user_role", [
   "admin",
   "mediator",
-  "plaintiff",
-  "defendant",
+  "side1",
+  "side2",
 ]);
 
-export const sessions = pgTable("sessions", {
+export const rooms = pgTable("rooms", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
@@ -29,7 +29,7 @@ export const users = pgTable("users", {
   role: userRole("role").notNull(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "set null" }),
+  roomId: uuid("room_id").references(() => rooms.id, { onDelete: "set null" }),
   welcomeSeenAt: timestamp("welcome_seen_at", { withTimezone: true }),
   disclaimerAcceptedAt: timestamp("disclaimer_accepted_at", { withTimezone: true }),
   onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
@@ -61,14 +61,14 @@ export const magicTokens = pgTable("magic_tokens", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const sessionsRelations = relations(sessions, ({ many }) => ({
+export const roomsRelations = relations(rooms, ({ many }) => ({
   participants: many(users),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
-  session: one(sessions, {
-    fields: [users.sessionId],
-    references: [sessions.id],
+  room: one(rooms, {
+    fields: [users.roomId],
+    references: [rooms.id],
   }),
   magicTokens: many(magicTokens),
   testCompletions: many(userTestCompletions),

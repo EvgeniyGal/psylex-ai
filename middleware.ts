@@ -7,6 +7,11 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    if (path.startsWith("/admin/sessions")) {
+      const roomsPath = path.replace(/^\/admin\/sessions/, "/admin/rooms");
+      return NextResponse.redirect(new URL(roomsPath, req.url));
+    }
+
     if (path.startsWith("/admin") && token?.role !== "admin") {
       return NextResponse.redirect(new URL("/login", req.url));
     }
@@ -15,7 +20,7 @@ export default withAuth(
       (path.startsWith("/onboarding") || path.startsWith("/dashboard")) &&
       token?.role === "admin"
     ) {
-      return NextResponse.redirect(new URL("/admin/sessions", req.url));
+      return NextResponse.redirect(new URL("/admin/rooms", req.url));
     }
 
     return NextResponse.next();

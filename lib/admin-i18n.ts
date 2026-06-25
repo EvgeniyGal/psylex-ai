@@ -2,39 +2,41 @@ import type { Locale } from "@/lib/i18n";
 
 export type AdminCopy = {
   adminConsole: string;
-  navSessions: string;
+  navRooms: string;
   navMediators: string;
   navSettings: string;
   logout: string;
   portalTitle: string;
   searchPlaceholder: string;
-  sessionsTitle: string;
-  sessionsSubtitle: string;
-  newSession: string;
-  createSession: string;
+  roomsTitle: string;
+  roomsSubtitle: string;
+  newRoom: string;
+  createRoom: string;
   cancel: string;
   close: string;
-  deleteSession: string;
-  deleteSessionConfirm: string;
-  returnToSessions: string;
-  createSessionSubtitle: string;
-  sessionDetails: string;
+  deleteRoom: string;
+  deleteRoomConfirm: string;
+  returnToRooms: string;
+  createRoomSubtitle: string;
+  roomDetails: string;
   participants: string;
-  sessionTitleLabel: string;
-  sessionDescriptionLabel: string;
-  plaintiffTitleLabel: string;
-  plaintiffDescriptionLabel: string;
-  defendantTitleLabel: string;
-  defendantDescriptionLabel: string;
+  roomTitleLabel: string;
+  roomDescriptionLabel: string;
+  side1TitleLabel: string;
+  side1DescriptionLabel: string;
+  side2TitleLabel: string;
+  side2DescriptionLabel: string;
   titleLabel: string;
   descriptionLabel: string;
-  noSessions: string;
+  noRooms: string;
   noSearchResults: string;
   tableCreatedAt: string;
+  tableSides: string;
   tableStatus: string;
   active: string;
   save: string;
   saveParticipant: string;
+  saveChanges: string;
   loginLabel: string;
   passwordLabel: string;
   copyCredentials: string;
@@ -56,11 +58,13 @@ export type AdminCopy = {
   mediatorDetails: string;
   deleteMediator: string;
   deleteMediatorConfirm: string;
-  selectSession: string;
+  selectRoom: string;
   mediatorTitlePlaceholder: string;
   mediatorDescPlaceholder: string;
   noMediators: string;
   saveMediator: string;
+  tableActions: string;
+  openCard: string;
   settingsTitle: string;
   settingsSubtitle: string;
   tabCredentials: string;
@@ -88,41 +92,43 @@ export type AdminCopy = {
 export const adminCopy: Record<Locale, AdminCopy> = {
   en: {
     adminConsole: "Admin Console",
-    navSessions: "Sessions",
+    navRooms: "Rooms",
     navMediators: "Mediators",
     navSettings: "Settings",
     logout: "Logout",
     portalTitle: "Mediation Portal",
     searchPlaceholder: "Search...",
-    sessionsTitle: "Active Sessions",
-    sessionsSubtitle:
-      "Oversee and manage secure mediation environments. Monitor credentials and distribute access links to participating legal parties.",
-    newSession: "New Session",
-    createSession: "Create Session",
+    roomsTitle: "Negotiation Rooms",
+    roomsSubtitle:
+      "Oversee and manage secure mediation environments. Monitor credentials and distribute access links to participating parties.",
+    newRoom: "New Room",
+    createRoom: "Create Room",
     cancel: "Cancel",
     close: "Close",
-    deleteSession: "Delete Session",
-    deleteSessionConfirm: "Delete this session and all its participants? This cannot be undone.",
-    returnToSessions: "Return to sessions",
-    createSessionSubtitle: "Set up the session and both parties. Credentials will be generated when you create the session.",
-    sessionDetails: "Session details",
+    deleteRoom: "Delete Room",
+    deleteRoomConfirm: "Delete this room and all its participants? This cannot be undone.",
+    returnToRooms: "Return to rooms",
+    createRoomSubtitle: "Set up the room and both sides. Credentials will be generated when you create the room.",
+    roomDetails: "Room details",
     participants: "Participants",
-    sessionTitleLabel: "Session title",
-    sessionDescriptionLabel: "Session description",
-    plaintiffTitleLabel: "Plaintiff title",
-    plaintiffDescriptionLabel: "Plaintiff description",
-    defendantTitleLabel: "Defendant title",
-    defendantDescriptionLabel: "Defendant description",
+    roomTitleLabel: "Room title",
+    roomDescriptionLabel: "Room description",
+    side1TitleLabel: "Title / Name",
+    side1DescriptionLabel: "Description",
+    side2TitleLabel: "Title / Name",
+    side2DescriptionLabel: "Description",
     titleLabel: "Title",
     descriptionLabel: "Description",
-    noSessions: "No sessions yet. Create your first session to generate plaintiff and defendant credentials.",
-    noSearchResults: "No sessions match your search.",
+    noRooms: "No rooms yet. Create your first room to generate Sides credentials.",
+    noSearchResults: "No rooms match your search.",
     tableCreatedAt: "Created",
+    tableSides: "Sides",
     tableStatus: "Status",
     active: "ACTIVE",
     save: "Save",
     saveParticipant: "Save participant",
-    loginLabel: "Login (UUID)",
+    saveChanges: "Save Changes",
+    loginLabel: "Login",
     passwordLabel: "Password",
     copyCredentials: "Copy Credentials",
     magicLink: "Magic Link",
@@ -133,7 +139,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     systemHealthDesc: "All mediation nodes operational.",
     aiInsight: "AI INSIGHT PANEL",
     aiInsightDesc:
-      "Optimal resolution window detected for active sessions. Recommend facilitating the next session promptly.",
+      "Optimal resolution window detected for active negotiation rooms. Recommend facilitating the next room promptly.",
     mediatorsTitle: "Registry",
     mediatorsSubtitle: "Manage credentials and access for accredited legal mediators.",
     createMediator: "Create Mediator",
@@ -144,11 +150,13 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorDetails: "Mediator details",
     deleteMediator: "Delete mediator",
     deleteMediatorConfirm: "Delete this mediator? This cannot be undone.",
-    selectSession: "Select session",
+    selectRoom: "Select room",
     mediatorTitlePlaceholder: "Mediator title/name",
     mediatorDescPlaceholder: "Mediator description",
     noMediators: "No mediators yet. Create your first mediator to generate credentials.",
-    saveMediator: "Save mediator",
+    saveMediator: "Save Changes",
+    tableActions: "Actions",
+    openCard: "Open card",
     settingsTitle: "Settings",
     settingsSubtitle: "Configure platform preferences and administrative controls.",
     tabCredentials: "Credentials",
@@ -172,49 +180,51 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     integrations: "Integrations",
     settingsPlaceholder: (name) => `Placeholder for ${name.toLowerCase()} settings.`,
     roles: {
-      plaintiff: "Plaintiff",
-      defendant: "Defendant",
+      side1: "Side 1",
+      side2: "Side 2",
       mediator: "Mediator",
       admin: "Admin",
     },
   },
   uk: {
     adminConsole: "Адмін-панель",
-    navSessions: "Сесії",
+    navRooms: "Кімнати",
     navMediators: "Медіатори",
     navSettings: "Налаштування",
     logout: "Вийти",
     portalTitle: "Портал медіації",
     searchPlaceholder: "Пошук...",
-    sessionsTitle: "Активні сесії",
-    sessionsSubtitle:
+    roomsTitle: "Кімнати перемовин",
+    roomsSubtitle:
       "Керуйте безпечними середовищами медіації. Переглядайте облікові дані та надсилайте посилання учасникам.",
-    newSession: "Нова сесія",
-    createSession: "Створити сесію",
+    newRoom: "Нова кімната",
+    createRoom: "Створити кімнату",
     cancel: "Скасувати",
     close: "Закрити",
-    deleteSession: "Видалити сесію",
-    deleteSessionConfirm: "Видалити цю сесію та всіх учасників? Цю дію не можна скасувати.",
-    returnToSessions: "Повернутися до сесій",
-    createSessionSubtitle: "Налаштуйте сесію та обидві сторони. Облікові дані буде згенеровано після створення.",
-    sessionDetails: "Деталі сесії",
+    deleteRoom: "Видалити кімнату",
+    deleteRoomConfirm: "Видалити цю кімнату та всіх учасників? Цю дію не можна скасувати.",
+    returnToRooms: "Повернутися до кімнат",
+    createRoomSubtitle: "Налаштуйте кімнату та обидві сторони. Облікові дані буде згенеровано після створення.",
+    roomDetails: "Деталі кімнати",
     participants: "Учасники",
-    sessionTitleLabel: "Назва сесії",
-    sessionDescriptionLabel: "Опис сесії",
-    plaintiffTitleLabel: "Назва позивача",
-    plaintiffDescriptionLabel: "Опис позивача",
-    defendantTitleLabel: "Назва відповідача",
-    defendantDescriptionLabel: "Опис відповідача",
+    roomTitleLabel: "Назва кімнати",
+    roomDescriptionLabel: "Опис кімнати",
+    side1TitleLabel: "Назва / Ім'я",
+    side1DescriptionLabel: "Опис",
+    side2TitleLabel: "Назва / Ім'я",
+    side2DescriptionLabel: "Опис",
     titleLabel: "Назва",
     descriptionLabel: "Опис",
-    noSessions: "Сесій ще немає. Створіть першу сесію для генерації облікових даних сторін.",
-    noSearchResults: "Немає сесій за вашим запитом.",
+    noRooms: "Кімнат ще немає. Створіть першу кімнату для генерації облікових даних сторін.",
+    noSearchResults: "Немає кімнат за вашим запитом.",
     tableCreatedAt: "Створено",
+    tableSides: "Сторони",
     tableStatus: "Статус",
     active: "АКТИВНА",
     save: "Зберегти",
     saveParticipant: "Зберегти учасника",
-    loginLabel: "Логін (UUID)",
+    saveChanges: "Зберегти зміни",
+    loginLabel: "Логін",
     passwordLabel: "Пароль",
     copyCredentials: "Копіювати дані",
     magicLink: "Magic Link",
@@ -225,7 +235,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     systemHealthDesc: "Усі вузли медіації працюють.",
     aiInsight: "AI АНАЛІТИКА",
     aiInsightDesc:
-      "Виявлено оптимальне вікно для врегулювання активних сесій. Рекомендуємо провести наступну сесію найближчим часом.",
+      "Виявлено оптимальне вікно для врегулювання в активних кімнатах перемовин. Рекомендуємо провести наступну кімнату найближчим часом.",
     mediatorsTitle: "Реєстр",
     mediatorsSubtitle: "Керуйте обліковими даними та доступом акредитованих медіаторів.",
     createMediator: "Створити медіатора",
@@ -236,11 +246,13 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorDetails: "Деталі медіатора",
     deleteMediator: "Видалити медіатора",
     deleteMediatorConfirm: "Видалити цього медіатора? Цю дію не можна скасувати.",
-    selectSession: "Оберіть сесію",
+    selectRoom: "Оберіть кімнату",
     mediatorTitlePlaceholder: "Назва/ім'я медіатора",
     mediatorDescPlaceholder: "Опис медіатора",
     noMediators: "Медіаторів ще немає. Створіть першого медіатора для генерації облікових даних.",
-    saveMediator: "Зберегти медіатора",
+    saveMediator: "Зберегти зміни",
+    tableActions: "Дії",
+    openCard: "Відкрити",
     settingsTitle: "Налаштування",
     settingsSubtitle: "Налаштування платформи та адміністративні параметри.",
     tabCredentials: "Облікові дані",
@@ -264,8 +276,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     integrations: "Інтеграції",
     settingsPlaceholder: (name) => `Заглушка для налаштувань: ${name.toLowerCase()}.`,
     roles: {
-      plaintiff: "Позивач",
-      defendant: "Відповідач",
+      side1: "Сторона 1",
+      side2: "Сторона 2",
       mediator: "Медіатор",
       admin: "Адмін",
     },

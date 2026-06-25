@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
+import { formatCredentials } from "@/lib/credentials";
 
 type MediatorRow = {
   id: string;
@@ -14,7 +16,7 @@ type MediatorRow = {
   description: string;
 };
 
-type SortKey = "title" | "description" | "login";
+type SortKey = "title" | "description";
 type SortDir = "asc" | "desc";
 
 function SortIcon({ active, direction }: { active: boolean; direction: SortDir }) {
@@ -69,10 +71,19 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
     setSortDir("asc");
   };
 
+  const onCopyCredentials = async (mediator: MediatorRow) => {
+    const text = formatCredentials({
+      role: mediator.role,
+      login: mediator.login,
+      password: mediator.password,
+    });
+    await navigator.clipboard.writeText(text);
+    toast.success(admin.copyCredentials);
+  };
+
   const columns: { key: SortKey; label: string }[] = [
     { key: "title", label: admin.titleLabel },
     { key: "description", label: admin.descriptionLabel },
-    { key: "login", label: admin.loginLabel },
   ];
 
   return (
@@ -89,7 +100,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
             person_add
           </span>
-          {admin.createMediator}
+          {admin.addMediator}
         </Link>
       </div>
 
@@ -111,7 +122,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
           </div>
 
           <div className="custom-scrollbar overflow-x-auto rounded-xl border border-outline-variant/10 bg-surface-container-low/30">
-            <table className="w-full min-w-[720px] border-collapse text-left">
+            <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-outline-variant/10 bg-surface-container-highest/40">
                   {columns.map((column) => (
@@ -126,23 +137,23 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                       </button>
                     </th>
                   ))}
-                  <th className="px-4 py-3 font-display text-label-md text-on-surface-variant">{admin.tableStatus}</th>
-                  <th className="px-4 py-3" />
+                  <th className="w-0 whitespace-nowrap px-4 py-3">
+                    <span className="sr-only">{admin.tableActions}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedRows.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-on-surface-variant" colSpan={columns.length + 2}>
+                    <td className="px-4 py-8 text-center text-on-surface-variant" colSpan={columns.length + 1}>
                       {admin.noSearchResults}
                     </td>
                   </tr>
                 ) : (
                   sortedRows.map((mediator) => (
                     <tr
-                      className="cursor-pointer border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
+                      className="border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
                       key={mediator.id}
-                      onClick={() => router.push(`/admin/mediators/${mediator.id}`)}
                     >
                       <td className="px-4 py-3 font-display text-body-md font-semibold text-on-surface">
                         {mediator.title}
@@ -150,17 +161,27 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                       <td className="max-w-xs truncate px-4 py-3 text-body-sm text-on-surface-variant">
                         {mediator.description}
                       </td>
-                      <td className="max-w-[200px] truncate px-4 py-3 font-mono text-body-sm text-on-surface">
-                        {mediator.login}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="status-chip-active inline-flex items-center gap-1 rounded px-2 py-0.5 font-display text-label-md">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" />
-                          {admin.active}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                      <td className="w-0 whitespace-nowrap px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                            onClick={() => router.push(`/admin/mediators/${mediator.id}`)}
+                            title={admin.openCard}
+                            type="button"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">open_in_new</span>
+                            <span className="sr-only">{admin.openCard}</span>
+                          </button>
+                          <button
+                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                            onClick={() => onCopyCredentials(mediator)}
+                            title={admin.copyCredentials}
+                            type="button"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">key</span>
+                            <span className="sr-only">{admin.copyCredentials}</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { deleteMediator, updateMediatorMeta } from "@/app/admin/mediators/actions";
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
 import { useLocale } from "@/components/locale-provider";
@@ -14,7 +14,7 @@ export type MediatorRow = {
   role: string;
   title: string;
   description: string;
-  sessionId: string | null;
+  roomId: string | null;
 };
 
 const inputClass =
@@ -24,8 +24,17 @@ export function MediatorDetailContent({ mediator }: { mediator: MediatorRow }) {
   const { admin } = useLocale();
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [title, setTitle] = useState(mediator.title);
+  const [description, setDescription] = useState(mediator.description);
   const [pending, startTransition] = useTransition();
   const [deletePending, startDeleteTransition] = useTransition();
+
+  useEffect(() => {
+    setTitle(mediator.title);
+    setDescription(mediator.description);
+  }, [mediator]);
+
+  const isDirty = title !== mediator.title || description !== mediator.description;
 
   const onSave = (formData: FormData) => {
     startTransition(async () => {
@@ -50,34 +59,35 @@ export function MediatorDetailContent({ mediator }: { mediator: MediatorRow }) {
         {admin.returnToMediators}
       </Link>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h3 className="font-display text-headline-lg text-on-surface">{mediator.title}</h3>
-        <span className="status-chip-active flex items-center gap-1 rounded px-3 py-1 font-display text-label-md">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" />
-          {admin.active}
-        </span>
-      </div>
+      <h3 className="font-display text-headline-lg text-on-surface">{mediator.title}</h3>
 
       <form action={onSave} className="glass-panel space-y-4 rounded-xl p-6">
         <input name="mediatorId" type="hidden" value={mediator.id} />
         <h4 className="font-display text-headline-md text-on-surface">{admin.mediatorDetails}</h4>
         <div>
-          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.titleLabel}</label>
-          <input className={inputClass} defaultValue={mediator.title} name="title" required />
+          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.mediatorTitleLabel}</label>
+          <input
+            className={inputClass}
+            name="title"
+            onChange={(event) => setTitle(event.target.value)}
+            required
+            value={title}
+          />
         </div>
         <div>
           <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.descriptionLabel}</label>
           <textarea
             className={inputClass}
-            defaultValue={mediator.description}
             name="description"
+            onChange={(event) => setDescription(event.target.value)}
             required
             rows={3}
+            value={description}
           />
         </div>
         <button
-          className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:opacity-60"
-          disabled={pending}
+          className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={pending || !isDirty}
           type="submit"
         >
           {pending ? "..." : admin.saveMediator}

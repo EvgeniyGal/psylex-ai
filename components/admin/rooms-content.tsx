@@ -3,31 +3,35 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
+import { formatCredentials } from "@/lib/credentials";
 
 type UserRow = {
   id: string;
   login: string;
   password: string;
-  role: "admin" | "mediator" | "plaintiff" | "defendant";
+  role: "admin" | "mediator" | "side1" | "side2";
   title: string;
   description: string;
-  sessionId: string | null;
+  roomId: string | null;
 };
 
-type SessionRow = {
+type RoomRow = {
   id: string;
   title: string;
   description: string;
   createdAt: Date;
 };
 
-type SortKey = "title" | "description" | "plaintiff" | "defendant" | "createdAt";
+type SortKey = "title" | "description" | "sides";
 type SortDir = "asc" | "desc";
 
-type SessionTableRow = SessionRow & {
-  plaintiffTitle: string;
-  defendantTitle: string;
+type RoomTableRow = RoomRow & {
+  side1: UserRow | null;
+  side2: UserRow | null;
+  side1Title: string;
+  side2Title: string;
 };
 
 function SortIcon({ active, direction }: { active: boolean; direction: SortDir }) {
@@ -43,48 +47,99 @@ function SortIcon({ active, direction }: { active: boolean; direction: SortDir }
   );
 }
 
-export function SessionsContent({
-  sessionRows,
-  participantsBySession,
+function SideRow({
+  participant,
+  title,
+  onCopy,
+  copyLabel,
 }: {
-  sessionRows: SessionRow[];
-  participantsBySession: { sessionId: string; users: UserRow[] }[];
+  participant: UserRow | null;
+  title: string;
+  onCopy: (participant: UserRow) => void;
+  copyLabel: string;
+}) {
+  if (!title) {
+    return <div className="text-body-sm text-on-surface-variant">—</div>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-body-sm text-on-surface">{title}</span>
+      {participant ? (
+        <button
+          className="flex shrink-0 items-center justify-center rounded-lg border border-outline-variant/30 p-1.5 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+          onClick={() => onCopy(participant)}
+          title={copyLabel}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[18px]">key</span>
+          <span className="sr-only">{copyLabel}</span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function SidesCell({
+  side1,
+  side2,
+  side1Title,
+  side2Title,
+  onCopy,
+  copyLabel,
+}: {
+  side1: UserRow | null;
+  side2: UserRow | null;
+  side1Title: string;
+  side2Title: string;
+  onCopy: (participant: UserRow) => void;
+  copyLabel: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side1} title={side1Title} />
+      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side2} title={side2Title} />
+    </div>
+  );
+}
+
+export function RoomsContent({
+  roomRows,
+  participantsByRoom,
+}: {
+  roomRows: RoomRow[];
+  participantsByRoom: { roomId: string; users: UserRow[] }[];
 }) {
   const { admin } = useLocale();
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("title");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  const tableRows = useMemo<SessionTableRow[]>(() => {
-    return sessionRows.map((session) => {
+  const tableRows = useMemo<RoomTableRow[]>(() => {
+    return roomRows.map((room) => {
       const participants =
-        participantsBySession.find((item) => item.sessionId === session.id)?.users ?? [];
-      const plaintiff = participants.find((p) => p.role === "plaintiff");
-      const defendant = participants.find((p) => p.role === "defendant");
+        participantsByRoom.find((item) => item.roomId === room.id)?.users ?? [];
+      const side1 = participants.find((p) => p.role === "side1") ?? null;
+      const side2 = participants.find((p) => p.role === "side2") ?? null;
 
       return {
-        ...session,
-        createdAt: new Date(session.createdAt),
-        plaintiffTitle: plaintiff?.title ?? "",
-        defendantTitle: defendant?.title ?? "",
+        ...room,
+        createdAt: new Date(room.createdAt),
+        side1,
+        side2,
+        side1Title: side1?.title ?? "",
+        side2Title: side2?.title ?? "",
       };
     });
-  }, [sessionRows, participantsBySession]);
+  }, [roomRows, participantsByRoom]);
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return tableRows;
 
     return tableRows.filter((row) => {
-      const haystack = [
-        row.title,
-        row.description,
-        row.plaintiffTitle,
-        row.defendantTitle,
-      ]
-        .join(" ")
-        .toLowerCase();
+      const haystack = [row.title, row.description, row.side1Title, row.side2Title].join(" ").toLowerCase();
       return haystack.includes(query);
     });
   }, [tableRows, search]);
@@ -94,13 +149,8 @@ export function SessionsContent({
     const multiplier = sortDir === "asc" ? 1 : -1;
 
     rows.sort((a, b) => {
-      if (sortKey === "createdAt") {
-        return (a.createdAt.getTime() - b.createdAt.getTime()) * multiplier;
-      }
-
-      const value = (row: SessionTableRow) => {
-        if (sortKey === "plaintiff") return row.plaintiffTitle;
-        if (sortKey === "defendant") return row.defendantTitle;
+      const value = (row: RoomTableRow) => {
+        if (sortKey === "sides") return `${row.side1Title} ${row.side2Title}`;
         return row[sortKey];
       };
 
@@ -119,32 +169,40 @@ export function SessionsContent({
     setSortDir("asc");
   };
 
+  const onCopyCredentials = async (participant: UserRow) => {
+    const text = formatCredentials({
+      role: participant.role,
+      login: participant.login,
+      password: participant.password,
+    });
+    await navigator.clipboard.writeText(text);
+    toast.success(admin.copyCredentials);
+  };
+
   const columns: { key: SortKey; label: string }[] = [
-    { key: "title", label: admin.sessionTitleLabel },
-    { key: "description", label: admin.sessionDescriptionLabel },
-    { key: "plaintiff", label: admin.roles.plaintiff },
-    { key: "defendant", label: admin.roles.defendant },
-    { key: "createdAt", label: admin.tableCreatedAt },
+    { key: "title", label: admin.roomTitleLabel },
+    { key: "description", label: admin.roomDescriptionLabel },
+    { key: "sides", label: admin.tableSides },
   ];
 
   return (
     <section className="space-y-stack-lg">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.sessionsTitle}</h3>
-          <p className="max-w-xl text-on-surface-variant">{admin.sessionsSubtitle}</p>
+          <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.roomsTitle}</h3>
+          <p className="max-w-xl text-on-surface-variant">{admin.roomsSubtitle}</p>
         </div>
         <Link
           className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
-          href="/admin/sessions/new"
+          href="/admin/rooms/new"
         >
           <span className="material-symbols-outlined">add</span>
-          {admin.newSession}
+          {admin.newRoom}
         </Link>
       </div>
 
-      {sessionRows.length === 0 ? (
-        <div className="glass-panel rounded-xl p-8 text-center text-on-surface-variant">{admin.noSessions}</div>
+      {roomRows.length === 0 ? (
+        <div className="glass-panel rounded-xl p-8 text-center text-on-surface-variant">{admin.noRooms}</div>
       ) : (
         <div className="space-y-4">
           <div className="relative max-w-md">
@@ -161,7 +219,7 @@ export function SessionsContent({
           </div>
 
           <div className="custom-scrollbar overflow-x-auto rounded-xl border border-outline-variant/10 bg-surface-container-low/30">
-            <table className="w-full min-w-[900px] border-collapse text-left">
+            <table className="w-full min-w-[720px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-outline-variant/10 bg-surface-container-highest/40">
                   {columns.map((column) => (
@@ -176,43 +234,50 @@ export function SessionsContent({
                       </button>
                     </th>
                   ))}
-                  <th className="px-4 py-3 font-display text-label-md text-on-surface-variant">{admin.tableStatus}</th>
-                  <th className="px-4 py-3" />
+                  <th className="w-0 whitespace-nowrap px-4 py-3">
+                    <span className="sr-only">{admin.tableActions}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedRows.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-on-surface-variant" colSpan={columns.length + 2}>
+                    <td className="px-4 py-8 text-center text-on-surface-variant" colSpan={columns.length + 1}>
                       {admin.noSearchResults}
                     </td>
                   </tr>
                 ) : (
-                  sortedRows.map((session) => (
+                  sortedRows.map((room) => (
                     <tr
-                      className="cursor-pointer border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
-                      key={session.id}
-                      onClick={() => router.push(`/admin/sessions/${session.id}`)}
+                      className="border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
+                      key={room.id}
                     >
                       <td className="px-4 py-3 font-display text-body-md font-semibold text-on-surface">
-                        {session.title}
+                        {room.title}
                       </td>
                       <td className="max-w-xs truncate px-4 py-3 text-body-sm text-on-surface-variant">
-                        {session.description}
-                      </td>
-                      <td className="px-4 py-3 text-body-sm text-on-surface">{session.plaintiffTitle || "—"}</td>
-                      <td className="px-4 py-3 text-body-sm text-on-surface">{session.defendantTitle || "—"}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-body-sm text-on-surface-variant">
-                        {new Date(session.createdAt).toLocaleString()}
+                        {room.description}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="status-chip-active inline-flex items-center gap-1 rounded px-2 py-0.5 font-display text-label-md">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" />
-                          {admin.active}
-                        </span>
+                        <SidesCell
+                          copyLabel={admin.copyCredentials}
+                          onCopy={onCopyCredentials}
+                          side1={room.side1}
+                          side1Title={room.side1Title}
+                          side2={room.side2}
+                          side2Title={room.side2Title}
+                        />
                       </td>
-                      <td className="px-4 py-3 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                      <td className="w-0 whitespace-nowrap px-4 py-3">
+                        <button
+                          className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                          onClick={() => router.push(`/admin/rooms/${room.id}`)}
+                          title={admin.openCard}
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">open_in_new</span>
+                          <span className="sr-only">{admin.openCard}</span>
+                        </button>
                       </td>
                     </tr>
                   ))

@@ -40,7 +40,7 @@ export function LoginForm() {
     const result = await signIn("credentials", {
       ...values,
       redirect: false,
-      callbackUrl: "/admin/sessions",
+      callbackUrl: "/admin/rooms",
     });
 
     if (result?.ok) {

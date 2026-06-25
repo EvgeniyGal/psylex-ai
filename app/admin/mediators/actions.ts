@@ -25,12 +25,12 @@ export async function createMediator(formData: FormData) {
       role: "mediator",
       title,
       description,
-      sessionId: null,
+      roomId: null,
     })
     .returning();
 
   revalidatePath("/admin/mediators");
-  revalidatePath("/admin/sessions");
+  revalidatePath("/admin/rooms");
   redirect(`/admin/mediators/${mediator.id}`);
 }
 
@@ -46,7 +46,7 @@ export async function updateMediatorMeta(formData: FormData) {
 
   revalidatePath("/admin/mediators");
   revalidatePath(`/admin/mediators/${id}`);
-  revalidatePath("/admin/sessions");
+  revalidatePath("/admin/rooms");
 }
 
 export async function deleteMediator(formData: FormData) {
@@ -55,6 +55,6 @@ export async function deleteMediator(formData: FormData) {
   await db.delete(users).where(and(eq(users.id, mediatorId), eq(users.role, "mediator")));
 
   revalidatePath("/admin/mediators");
-  revalidatePath("/admin/sessions");
+  revalidatePath("/admin/rooms");
   redirect("/admin/mediators");
 }

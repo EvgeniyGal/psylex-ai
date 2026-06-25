@@ -52,7 +52,8 @@ export function TestingDashboard({
   const router = useRouter();
   const { locale, portal: t } = useLocale();
   const roleCopy = getRoleCopy(role, locale);
-  const [isPending, startTransition] = useTransition();
+  const [isUpdatePending, startUpdateTransition] = useTransition();
+  const [isNextStepPending, startNextStepTransition] = useTransition();
 
   const openTest = (url: string) => {
     if (!url) return;
@@ -60,14 +61,14 @@ export function TestingDashboard({
   };
 
   const handleUpdateStatus = () => {
-    startTransition(async () => {
+    startUpdateTransition(async () => {
       await updateTestStatus();
       router.refresh();
     });
   };
 
   const handleNextStep = () => {
-    startTransition(async () => {
+    startNextStepTransition(async () => {
       await completeOnboarding();
     });
   };
@@ -75,11 +76,9 @@ export function TestingDashboard({
   useEffect(() => {
     if (canProceed) return;
 
-    const intervalId = window.setInterval(() => {
-      startTransition(async () => {
-        await updateTestStatus();
-        router.refresh();
-      });
+    const intervalId = window.setInterval(async () => {
+      await updateTestStatus();
+      router.refresh();
     }, STATUS_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
@@ -230,40 +229,40 @@ export function TestingDashboard({
             {showUpdateTestButton ? (
               <button
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-highest px-6 py-3 font-sans text-body-md text-on-surface transition-colors hover:border-tertiary hover:text-tertiary disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
-                disabled={isPending}
+                disabled={isUpdatePending}
                 onClick={handleUpdateStatus}
                 type="button"
               >
-                {isPending ? (
+                {isUpdatePending ? (
                   <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
                 ) : (
                   <span className="material-symbols-outlined text-base">sync</span>
                 )}
-                {isPending ? t.proceedLoading : t.updateTestStatus}
+                {isUpdatePending ? t.proceedLoading : t.updateTestStatus}
               </button>
             ) : null}
             {showUpdateBotButton ? (
               <button
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-highest px-6 py-3 font-sans text-body-md text-on-surface transition-colors hover:border-tertiary hover:text-tertiary disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
-                disabled={isPending}
+                disabled={isUpdatePending}
                 onClick={handleUpdateStatus}
                 type="button"
               >
-                {isPending ? (
+                {isUpdatePending ? (
                   <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
                 ) : (
                   <span className="material-symbols-outlined text-base">smart_toy</span>
                 )}
-                {isPending ? t.proceedLoading : t.updateBotStatus}
+                {isUpdatePending ? t.proceedLoading : t.updateBotStatus}
               </button>
             ) : null}
             <button
               className="btn-primary mt-4 flex w-full items-center justify-center gap-2 px-8 py-4 font-sans text-body-lg font-bold disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
-              disabled={!canProceed || isPending}
+              disabled={!canProceed || isNextStepPending}
               onClick={handleNextStep}
               type="button"
             >
-              {isPending ? (
+              {isNextStepPending ? (
                 <>
                   <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
                   {t.proceedLoading}

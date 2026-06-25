@@ -2,26 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
-  deleteSession,
+  deleteRoom,
   updateParticipantMeta,
-  updateSessionMeta,
-} from "@/app/admin/sessions/actions";
+  updateRoomMeta,
+} from "@/app/admin/rooms/actions";
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
 import { useLocale } from "@/components/locale-provider";
+import { formatDateTime } from "@/lib/format-datetime";
 
-export type SessionUserRow = {
+export type RoomUserRow = {
   id: string;
   login: string;
   password: string;
-  role: "admin" | "mediator" | "plaintiff" | "defendant";
+  role: "admin" | "mediator" | "side1" | "side2";
   title: string;
   description: string;
-  sessionId: string | null;
+  roomId: string | null;
 };
 
-export type SessionDetailRow = {
+export type RoomDetailRow = {
   id: string;
   title: string;
   description: string;
@@ -32,15 +33,24 @@ const inputClass =
   "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
 
 function roleIcon(role: string) {
-  if (role === "plaintiff") return "person";
-  if (role === "defendant") return "balance";
+  if (role === "side1") return "person";
+  if (role === "side2") return "balance";
   return "group";
 }
 
-function ParticipantSection({ participant }: { participant: SessionUserRow }) {
+function ParticipantSection({ participant }: { participant: RoomUserRow }) {
   const { admin } = useLocale();
   const router = useRouter();
+  const [title, setTitle] = useState(participant.title);
+  const [description, setDescription] = useState(participant.description);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setTitle(participant.title);
+    setDescription(participant.description);
+  }, [participant]);
+
+  const isDirty = title !== participant.title || description !== participant.description;
 
   const onSave = (formData: FormData) => {
     startTransition(async () => {
@@ -54,16 +64,16 @@ function ParticipantSection({ participant }: { participant: SessionUserRow }) {
       <div className="mb-4 flex items-center gap-3">
         <div
           className={
-            participant.role === "plaintiff"
+            participant.role === "side1"
               ? "flex h-10 w-10 items-center justify-center rounded bg-primary-container"
-              : participant.role === "defendant"
+              : participant.role === "side2"
                 ? "flex h-10 w-10 items-center justify-center rounded bg-on-tertiary-container/20"
                 : "flex h-10 w-10 items-center justify-center rounded bg-tertiary/20"
           }
         >
           <span
             className={
-              participant.role === "plaintiff"
+              participant.role === "side1"
                 ? "material-symbols-outlined text-primary"
                 : "material-symbols-outlined text-tertiary"
             }
@@ -81,24 +91,31 @@ function ParticipantSection({ participant }: { participant: SessionUserRow }) {
         <input name="userId" type="hidden" value={participant.id} />
         <div>
           <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.titleLabel}</label>
-          <input className={inputClass} defaultValue={participant.title} name="title" required />
+          <input
+            className={inputClass}
+            name="title"
+            onChange={(event) => setTitle(event.target.value)}
+            required
+            value={title}
+          />
         </div>
         <div>
           <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.descriptionLabel}</label>
           <textarea
             className={inputClass}
-            defaultValue={participant.description}
             name="description"
+            onChange={(event) => setDescription(event.target.value)}
             required
             rows={2}
+            value={description}
           />
         </div>
         <button
-          className="rounded border border-tertiary px-4 py-1.5 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:opacity-60"
-          disabled={pending}
+          className="rounded border border-tertiary px-4 py-1.5 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={pending || !isDirty}
           type="submit"
         >
-          {pending ? "..." : admin.saveParticipant}
+          {pending ? "..." : admin.saveChanges}
         </button>
       </form>
 
@@ -116,34 +133,43 @@ function ParticipantSection({ participant }: { participant: SessionUserRow }) {
   );
 }
 
-export function SessionDetailContent({
-  session,
+export function RoomDetailContent({
+  room,
   participants,
 }: {
-  session: SessionDetailRow;
-  participants: SessionUserRow[];
+  room: RoomDetailRow;
+  participants: RoomUserRow[];
 }) {
-  const { admin } = useLocale();
+  const { admin, locale } = useLocale();
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [sessionPending, startSessionTransition] = useTransition();
+  const [title, setTitle] = useState(room.title);
+  const [description, setDescription] = useState(room.description);
+  const [roomPending, startRoomTransition] = useTransition();
   const [deletePending, startDeleteTransition] = useTransition();
 
-  const plaintiff = participants.find((p) => p.role === "plaintiff");
-  const defendant = participants.find((p) => p.role === "defendant");
-  const mediator = participants.find((p) => p.role === "mediator");
-  const orderedParticipants = [plaintiff, defendant, mediator].filter(Boolean) as SessionUserRow[];
+  useEffect(() => {
+    setTitle(room.title);
+    setDescription(room.description);
+  }, [room]);
 
-  const onSaveSession = (formData: FormData) => {
-    startSessionTransition(async () => {
-      await updateSessionMeta(formData);
+  const isRoomDirty = title !== room.title || description !== room.description;
+
+  const side1 = participants.find((p) => p.role === "side1");
+  const side2 = participants.find((p) => p.role === "side2");
+  const mediator = participants.find((p) => p.role === "mediator");
+  const orderedParticipants = [side1, side2, mediator].filter(Boolean) as RoomUserRow[];
+
+  const onSaveRoom = (formData: FormData) => {
+    startRoomTransition(async () => {
+      await updateRoomMeta(formData);
       router.refresh();
     });
   };
 
   const onDelete = (formData: FormData) => {
     startDeleteTransition(async () => {
-      await deleteSession(formData);
+      await deleteRoom(formData);
     });
   };
 
@@ -151,16 +177,16 @@ export function SessionDetailContent({
     <section className="space-y-stack-lg">
       <Link
         className="inline-flex items-center gap-2 text-body-sm font-semibold text-tertiary transition-colors hover:text-on-surface"
-        href="/admin/sessions"
+        href="/admin/rooms"
       >
         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-        {admin.returnToSessions}
+        {admin.returnToRooms}
       </Link>
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-3 flex flex-wrap items-center gap-3">
-            <h3 className="font-display text-headline-lg text-on-surface">{session.title}</h3>
+            <h3 className="font-display text-headline-lg text-on-surface">{room.title}</h3>
             <span className="status-chip-active flex items-center gap-1 rounded px-3 py-1 font-display text-label-md">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" />
               {admin.active}
@@ -168,37 +194,44 @@ export function SessionDetailContent({
           </div>
           <p className="flex items-center gap-1 text-body-sm text-on-surface-variant">
             <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-            {new Date(session.createdAt).toLocaleString()}
+            {formatDateTime(room.createdAt, locale)}
           </p>
         </div>
       </div>
 
       <form
-        action={onSaveSession}
+        action={onSaveRoom}
         className="glass-panel space-y-4 rounded-xl p-6"
       >
-        <input name="sessionId" type="hidden" value={session.id} />
-        <h4 className="font-display text-headline-md text-on-surface">{admin.sessionDetails}</h4>
+        <input name="roomId" type="hidden" value={room.id} />
+        <h4 className="font-display text-headline-md text-on-surface">{admin.roomDetails}</h4>
         <div>
-          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.sessionTitleLabel}</label>
-          <input className={inputClass} defaultValue={session.title} name="title" required />
+          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomTitleLabel}</label>
+          <input
+            className={inputClass}
+            name="title"
+            onChange={(event) => setTitle(event.target.value)}
+            required
+            value={title}
+          />
         </div>
         <div>
-          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.sessionDescriptionLabel}</label>
+          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomDescriptionLabel}</label>
           <textarea
             className={inputClass}
-            defaultValue={session.description}
             name="description"
+            onChange={(event) => setDescription(event.target.value)}
             required
             rows={3}
+            value={description}
           />
         </div>
         <button
-          className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:opacity-60"
-          disabled={sessionPending}
+          className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={roomPending || !isRoomDirty}
           type="submit"
         >
-          {sessionPending ? "..." : admin.save}
+          {roomPending ? "..." : admin.saveChanges}
         </button>
       </form>
 
@@ -219,11 +252,11 @@ export function SessionDetailContent({
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">delete</span>
-            {admin.deleteSession}
+            {admin.deleteRoom}
           </button>
         ) : (
           <div className="space-y-3">
-            <p className="text-body-sm text-on-surface">{admin.deleteSessionConfirm}</p>
+            <p className="text-body-sm text-on-surface">{admin.deleteRoomConfirm}</p>
             <div className="flex gap-3">
               <button
                 className="rounded-lg border border-outline-variant/30 px-4 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-high"
@@ -234,13 +267,13 @@ export function SessionDetailContent({
                 {admin.cancel}
               </button>
               <form action={onDelete}>
-                <input name="sessionId" type="hidden" value={session.id} />
+                <input name="roomId" type="hidden" value={room.id} />
                 <button
                   className="rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
                   disabled={deletePending}
                   type="submit"
                 >
-                  {deletePending ? "..." : admin.deleteSession}
+                  {deletePending ? "..." : admin.deleteRoom}
                 </button>
               </form>
             </div>

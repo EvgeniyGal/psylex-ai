@@ -26,7 +26,7 @@ export async function requireParticipantSession() {
   }
 
   if (role === "admin") {
-    redirect("/admin/sessions");
+    redirect("/admin/rooms");
   }
 
   if (!isParticipantRole(role)) {

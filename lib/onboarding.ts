@@ -78,7 +78,7 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
 }
 
 export async function getPostLoginRedirect(userId: string, role: string) {
-  if (role === "admin") return "/admin/sessions";
+  if (role === "admin") return "/admin/rooms";
   if (!isParticipantRole(role)) return "/login";
   const status = await getUserOnboardingStatus(userId);
   return status.nextPath;
