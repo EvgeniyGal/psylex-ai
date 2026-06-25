@@ -29,7 +29,7 @@ export function MediatorCreateContent() {
       </Link>
 
       <div>
-        <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.createMediator}</h3>
+        <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.addMediator}</h3>
         <p className="max-w-xl text-on-surface-variant">{admin.createMediatorSubtitle}</p>
       </div>
 
@@ -37,7 +37,7 @@ export function MediatorCreateContent() {
         <fieldset className="glass-panel space-y-4 rounded-xl p-6">
           <legend className="mb-1 font-display text-headline-md text-on-surface">{admin.mediatorDetails}</legend>
           <div>
-            <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.titleLabel}</label>
+            <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.mediatorTitleLabel}</label>
             <input
               className={inputClass}
               name="title"
@@ -70,7 +70,7 @@ export function MediatorCreateContent() {
             type="submit"
           >
             <span className="material-symbols-outlined text-[18px]">person_add</span>
-            {pending ? "..." : admin.createMediator}
+            {pending ? "..." : admin.addMediator}
           </button>
         </div>
       </form>

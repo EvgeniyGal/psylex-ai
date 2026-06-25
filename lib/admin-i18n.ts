@@ -49,6 +49,8 @@ export type AdminCopy = {
   mediatorsTitle: string;
   mediatorsSubtitle: string;
   createMediator: string;
+  addMediator: string;
+  mediatorTitleLabel: string;
   returnToMediators: string;
   createMediatorSubtitle: string;
   mediatorDetails: string;
@@ -135,13 +137,15 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorsTitle: "Registry",
     mediatorsSubtitle: "Manage credentials and access for accredited legal mediators.",
     createMediator: "Create Mediator",
+    addMediator: "Add Mediator",
+    mediatorTitleLabel: "Title / Name",
     returnToMediators: "Return to mediators",
-    createMediatorSubtitle: "Add a mediator with title and description. Login and password will be generated automatically.",
+    createMediatorSubtitle: "Add a mediator with title/name and description. Login and password will be generated automatically.",
     mediatorDetails: "Mediator details",
     deleteMediator: "Delete mediator",
     deleteMediatorConfirm: "Delete this mediator? This cannot be undone.",
     selectSession: "Select session",
-    mediatorTitlePlaceholder: "Mediator title",
+    mediatorTitlePlaceholder: "Mediator title/name",
     mediatorDescPlaceholder: "Mediator description",
     noMediators: "No mediators yet. Create your first mediator to generate credentials.",
     saveMediator: "Save mediator",
@@ -225,13 +229,15 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorsTitle: "Реєстр",
     mediatorsSubtitle: "Керуйте обліковими даними та доступом акредитованих медіаторів.",
     createMediator: "Створити медіатора",
+    addMediator: "Додати медіатора",
+    mediatorTitleLabel: "Назва / Ім'я",
     returnToMediators: "Повернутися до медіаторів",
-    createMediatorSubtitle: "Додайте медіатора з назвою та описом. Логін і пароль буде згенеровано автоматично.",
+    createMediatorSubtitle: "Додайте медіатора з назвою/ім'ям та описом. Логін і пароль буде згенеровано автоматично.",
     mediatorDetails: "Деталі медіатора",
     deleteMediator: "Видалити медіатора",
     deleteMediatorConfirm: "Видалити цього медіатора? Цю дію не можна скасувати.",
     selectSession: "Оберіть сесію",
-    mediatorTitlePlaceholder: "Назва медіатора",
+    mediatorTitlePlaceholder: "Назва/ім'я медіатора",
     mediatorDescPlaceholder: "Опис медіатора",
     noMediators: "Медіаторів ще немає. Створіть першого медіатора для генерації облікових даних.",
     saveMediator: "Зберегти медіатора",
