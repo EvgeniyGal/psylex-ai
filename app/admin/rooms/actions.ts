@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { rooms, users } from "@/drizzle/schema";
+import { rooms, roomPipelineStates, users } from "@/drizzle/schema";
 import { generateLogin, generatePassword } from "@/lib/generate-credentials";
 
 function required(value: FormDataEntryValue | null, field: string) {
@@ -25,6 +25,8 @@ export async function createRoom(formData: FormData) {
     .insert(rooms)
     .values({ title, description })
     .returning();
+
+  await db.insert(roomPipelineStates).values({ roomId: room.id });
 
   await db.insert(users).values([
     {

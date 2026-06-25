@@ -5,8 +5,10 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { platformSettings } from "@/drizzle/schema";
+import { platformSettings, agentPrompts } from "@/drizzle/schema";
 import { getPlatformSettings } from "@/lib/platform-settings";
+import type { AgentKey } from "@/drizzle/schema";
+import { runAgentCompletion } from "@/lib/pipeline/openai-client";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -61,4 +63,38 @@ export async function saveTestLinks(formData: FormData) {
     .where(eq(platformSettings.id, "default"));
 
   revalidatePath("/admin/settings");
+}
+
+function requiredString(value: FormDataEntryValue | null, field: string) {
+  const text = String(value ?? "").trim();
+  if (!text) throw new Error(`${field} is required`);
+  return text;
+}
+
+export async function saveAgentPrompt(formData: FormData) {
+  await requireAdmin();
+  const agentKey = String(formData.get("agentKey")) as AgentKey;
+  const systemPrompt = requiredString(formData.get("systemPrompt"), "systemPrompt");
+
+  await db
+    .insert(agentPrompts)
+    .values({ agentKey, systemPrompt, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: agentPrompts.agentKey,
+      set: { systemPrompt, updatedAt: new Date() },
+    });
+
+  revalidatePath("/admin/settings");
+}
+
+export async function testAgentPrompt(formData: FormData) {
+  await requireAdmin();
+  const systemPrompt = requiredString(formData.get("systemPrompt"), "systemPrompt");
+  const sampleInput = String(formData.get("sampleInput") ?? "").trim() || "{}";
+
+  return runAgentCompletion({
+    systemPrompt,
+    userMessage: sampleInput,
+    jsonMode: true,
+  });
 }

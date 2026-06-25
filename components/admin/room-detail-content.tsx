@@ -38,7 +38,13 @@ function roleIcon(role: string) {
   return "group";
 }
 
-function ParticipantSection({ participant }: { participant: RoomUserRow }) {
+function ParticipantSection({
+  participant,
+  readOnly,
+}: {
+  participant: RoomUserRow;
+  readOnly: boolean;
+}) {
   const { admin } = useLocale();
   const router = useRouter();
   const [title, setTitle] = useState(participant.title);
@@ -91,44 +97,58 @@ function ParticipantSection({ participant }: { participant: RoomUserRow }) {
         <input name="userId" type="hidden" value={participant.id} />
         <div>
           <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.titleLabel}</label>
-          <input
-            className={inputClass}
-            name="title"
-            onChange={(event) => setTitle(event.target.value)}
-            required
-            value={title}
-          />
+          {readOnly ? (
+            <p className="text-body-md text-on-surface">{participant.title}</p>
+          ) : (
+            <input
+              className={inputClass}
+              name="title"
+              onChange={(event) => setTitle(event.target.value)}
+              required
+              value={title}
+            />
+          )}
         </div>
         <div>
           <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.descriptionLabel}</label>
-          <textarea
-            className={inputClass}
-            name="description"
-            onChange={(event) => setDescription(event.target.value)}
-            required
-            rows={2}
-            value={description}
-          />
+          {readOnly ? (
+            <p className="text-body-sm text-on-surface-variant">{participant.description}</p>
+          ) : (
+            <textarea
+              className={inputClass}
+              name="description"
+              onChange={(event) => setDescription(event.target.value)}
+              required
+              rows={2}
+              value={description}
+            />
+          )}
         </div>
-        <button
-          className="rounded border border-tertiary px-4 py-1.5 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={pending || !isDirty}
-          type="submit"
-        >
-          {pending ? "..." : admin.saveChanges}
-        </button>
+        {!readOnly ? (
+          <button
+            className="rounded border border-tertiary px-4 py-1.5 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={pending || !isDirty}
+            type="submit"
+          >
+            {pending ? "..." : admin.saveChanges}
+          </button>
+        ) : null}
       </form>
 
-      <div className="space-y-4">
-        <CredentialField label={admin.loginLabel} value={participant.login} />
-        <CredentialField label={admin.passwordLabel} value={participant.password} />
-      </div>
-      <CredentialActions
-        login={participant.login}
-        password={participant.password}
-        role={participant.role}
-        userId={participant.id}
-      />
+      {!readOnly ? (
+        <>
+          <div className="space-y-4">
+            <CredentialField label={admin.loginLabel} value={participant.login} />
+            <CredentialField label={admin.passwordLabel} value={participant.password} />
+          </div>
+          <CredentialActions
+            login={participant.login}
+            password={participant.password}
+            role={participant.role}
+            userId={participant.id}
+          />
+        </>
+      ) : null}
     </section>
   );
 }
@@ -136,9 +156,15 @@ function ParticipantSection({ participant }: { participant: RoomUserRow }) {
 export function RoomDetailContent({
   room,
   participants,
+  pipelineStatus,
+  basePath = "/admin/rooms",
+  readOnly = false,
 }: {
   room: RoomDetailRow;
   participants: RoomUserRow[];
+  pipelineStatus: string;
+  basePath?: string;
+  readOnly?: boolean;
 }) {
   const { admin, locale } = useLocale();
   const router = useRouter();
@@ -177,7 +203,7 @@ export function RoomDetailContent({
     <section className="space-y-stack-lg">
       <Link
         className="inline-flex items-center gap-2 text-body-sm font-semibold text-tertiary transition-colors hover:text-on-surface"
-        href="/admin/rooms"
+        href={basePath}
       >
         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         {admin.returnToRooms}
@@ -189,8 +215,16 @@ export function RoomDetailContent({
             <h3 className="font-display text-headline-lg text-on-surface">{room.title}</h3>
             <span className="status-chip-active flex items-center gap-1 rounded px-3 py-1 font-display text-label-md">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" />
-              {admin.active}
+              {admin.pipelineStatus}: {pipelineStatus}
             </span>
+            {!readOnly ? (
+              <Link
+                className="rounded-lg border border-outline-variant/30 px-3 py-1 text-label-md text-on-surface hover:border-tertiary"
+                href={`${basePath}/${room.id}/pipeline-log`}
+              >
+                {admin.pipelineLog}
+              </Link>
+            ) : null}
           </div>
           <p className="flex items-center gap-1 text-body-sm text-on-surface-variant">
             <span className="material-symbols-outlined text-[16px]">calendar_today</span>
@@ -199,87 +233,103 @@ export function RoomDetailContent({
         </div>
       </div>
 
-      <form
-        action={onSaveRoom}
-        className="glass-panel space-y-4 rounded-xl p-6"
-      >
-        <input name="roomId" type="hidden" value={room.id} />
-        <h4 className="font-display text-headline-md text-on-surface">{admin.roomDetails}</h4>
-        <div>
-          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomTitleLabel}</label>
-          <input
-            className={inputClass}
-            name="title"
-            onChange={(event) => setTitle(event.target.value)}
-            required
-            value={title}
-          />
+      {readOnly ? (
+        <div className="glass-panel space-y-4 rounded-xl p-6">
+          <h4 className="font-display text-headline-md text-on-surface">{admin.roomDetails}</h4>
+          <div>
+            <p className="mb-1 text-body-sm text-on-surface-variant">{admin.roomTitleLabel}</p>
+            <p className="text-body-md text-on-surface">{room.title}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-body-sm text-on-surface-variant">{admin.roomDescriptionLabel}</p>
+            <p className="text-body-sm text-on-surface-variant">{room.description}</p>
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomDescriptionLabel}</label>
-          <textarea
-            className={inputClass}
-            name="description"
-            onChange={(event) => setDescription(event.target.value)}
-            required
-            rows={3}
-            value={description}
-          />
-        </div>
-        <button
-          className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={roomPending || !isRoomDirty}
-          type="submit"
+      ) : (
+        <form
+          action={onSaveRoom}
+          className="glass-panel space-y-4 rounded-xl p-6"
         >
-          {roomPending ? "..." : admin.saveChanges}
-        </button>
-      </form>
+          <input name="roomId" type="hidden" value={room.id} />
+          <h4 className="font-display text-headline-md text-on-surface">{admin.roomDetails}</h4>
+          <div>
+            <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomTitleLabel}</label>
+            <input
+              className={inputClass}
+              name="title"
+              onChange={(event) => setTitle(event.target.value)}
+              required
+              value={title}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomDescriptionLabel}</label>
+            <textarea
+              className={inputClass}
+              name="description"
+              onChange={(event) => setDescription(event.target.value)}
+              required
+              rows={3}
+              value={description}
+            />
+          </div>
+          <button
+            className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={roomPending || !isRoomDirty}
+            type="submit"
+          >
+            {roomPending ? "..." : admin.saveChanges}
+          </button>
+        </form>
+      )}
 
       <div>
         <h4 className="mb-4 font-display text-headline-md text-on-surface">{admin.participants}</h4>
         <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-2">
           {orderedParticipants.map((participant) => (
-            <ParticipantSection key={participant.id} participant={participant} />
+            <ParticipantSection key={participant.id} participant={participant} readOnly={readOnly} />
           ))}
         </div>
       </div>
 
-      <div className="glass-panel rounded-xl border border-error/20 p-6">
-        {!confirmDelete ? (
-          <button
-            className="flex items-center gap-2 text-body-sm font-semibold text-error transition-opacity hover:opacity-80"
-            onClick={() => setConfirmDelete(true)}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
-            {admin.deleteRoom}
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-body-sm text-on-surface">{admin.deleteRoomConfirm}</p>
-            <div className="flex gap-3">
-              <button
-                className="rounded-lg border border-outline-variant/30 px-4 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-high"
-                disabled={deletePending}
-                onClick={() => setConfirmDelete(false)}
-                type="button"
-              >
-                {admin.cancel}
-              </button>
-              <form action={onDelete}>
-                <input name="roomId" type="hidden" value={room.id} />
+      {!readOnly ? (
+        <div className="glass-panel rounded-xl border border-error/20 p-6">
+          {!confirmDelete ? (
+            <button
+              className="flex items-center gap-2 text-body-sm font-semibold text-error transition-opacity hover:opacity-80"
+              onClick={() => setConfirmDelete(true)}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">delete</span>
+              {admin.deleteRoom}
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-body-sm text-on-surface">{admin.deleteRoomConfirm}</p>
+              <div className="flex gap-3">
                 <button
-                  className="rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
+                  className="rounded-lg border border-outline-variant/30 px-4 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-high"
                   disabled={deletePending}
-                  type="submit"
+                  onClick={() => setConfirmDelete(false)}
+                  type="button"
                 >
-                  {deletePending ? "..." : admin.deleteRoom}
+                  {admin.cancel}
                 </button>
-              </form>
+                <form action={onDelete}>
+                  <input name="roomId" type="hidden" value={room.id} />
+                  <button
+                    className="rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
+                    disabled={deletePending}
+                    type="submit"
+                  >
+                    {deletePending ? "..." : admin.deleteRoom}
+                  </button>
+                </form>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

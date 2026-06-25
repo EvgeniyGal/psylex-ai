@@ -2,6 +2,7 @@ import type { Locale } from "@/lib/i18n";
 
 export type AdminCopy = {
   adminConsole: string;
+  mediatorConsole: string;
   navRooms: string;
   navMediators: string;
   navSettings: string;
@@ -79,6 +80,26 @@ export type AdminCopy = {
   testCharacterTraits: string;
   testPersonalityConflicts: string;
   settingsSaved: string;
+  tabPrompts: string;
+  promptsSubtitle: string;
+  agentLegalDomain: string;
+  agentPrecedents: string;
+  agentCompatibility: string;
+  agentSynthesis: string;
+  testPrompt: string;
+  testPromptInput: string;
+  testPromptRun: string;
+  testPromptOutput: string;
+  pipelineLog: string;
+  pipelineStatus: string;
+  backToRoom: string;
+  tableTime: string;
+  tableEvent: string;
+  tableAgent: string;
+  noPipelineEvents: string;
+  tableEmpty: string;
+  pipelineStatusValues: Record<string, string>;
+  pipelineEventLabels: Record<string, string>;
   comingSoon: string;
   comingSoonDesc: string;
   general: string;
@@ -92,6 +113,7 @@ export type AdminCopy = {
 export const adminCopy: Record<Locale, AdminCopy> = {
   en: {
     adminConsole: "Admin Console",
+    mediatorConsole: "Mediator Console",
     navRooms: "Rooms",
     navMediators: "Mediators",
     navSettings: "Settings",
@@ -171,6 +193,39 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testCharacterTraits: "Character traits",
     testPersonalityConflicts: "Personality conflicts",
     settingsSaved: "Settings saved",
+    tabPrompts: "Prompts",
+    promptsSubtitle: "Edit system prompts for each AI agent in the dispute pipeline.",
+    agentLegalDomain: "Agent 1 — Legal domain",
+    agentPrecedents: "Agent 2 — Precedents",
+    agentCompatibility: "Agent 3 — Compatibility",
+    agentSynthesis: "Agent 4 — Synthesis",
+    testPrompt: "Test prompt",
+    testPromptInput: "Sample input (JSON or text)",
+    testPromptRun: "Run test",
+    testPromptOutput: "Test output",
+    pipelineLog: "Pipeline log",
+    pipelineStatus: "Pipeline status",
+    backToRoom: "Back to room",
+    tableTime: "Time",
+    tableEvent: "Event",
+    tableAgent: "Agent",
+    noPipelineEvents: "No pipeline events yet.",
+    tableEmpty: "—",
+    pipelineStatusValues: {
+      awaiting_situations: "Awaiting situations",
+      pipeline_running: "Pipeline running",
+      awaiting_clarification: "Awaiting clarification",
+      options_published: "Options published",
+      post_resolution: "Post-resolution",
+    },
+    pipelineEventLabels: {
+      agent_started: "Agent started",
+      agent_completed: "Agent completed",
+      agent_paused: "Agent paused",
+      options_published: "Options published",
+      regenerate_started: "Regeneration started",
+      options_regenerated: "Options regenerated",
+    },
     comingSoon: "COMING SOON",
     comingSoonDesc:
       "Application settings are not yet available in this MVP. Future releases will include notification preferences, branding options, and integration controls.",
@@ -188,6 +243,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
   },
   uk: {
     adminConsole: "Адмін-панель",
+    mediatorConsole: "Панель медіатора",
     navRooms: "Кімнати",
     navMediators: "Медіатори",
     navSettings: "Налаштування",
@@ -267,6 +323,39 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testCharacterTraits: "Риси характеру",
     testPersonalityConflicts: "Конфлікти особистості",
     settingsSaved: "Налаштування збережено",
+    tabPrompts: "Промпти",
+    promptsSubtitle: "Редагуйте системні промпти для кожного AI-агента в пайплайні спору.",
+    agentLegalDomain: "Агент 1 — Правова сфера",
+    agentPrecedents: "Агент 2 — Прецеденти",
+    agentCompatibility: "Агент 3 — Сумісність",
+    agentSynthesis: "Агент 4 — Синтез",
+    testPrompt: "Тест промпту",
+    testPromptInput: "Зразок вводу (JSON або текст)",
+    testPromptRun: "Запустити тест",
+    testPromptOutput: "Результат тесту",
+    pipelineLog: "Журнал пайплайну",
+    pipelineStatus: "Статус пайплайну",
+    backToRoom: "Назад до кімнати",
+    tableTime: "Час",
+    tableEvent: "Подія",
+    tableAgent: "Агент",
+    noPipelineEvents: "Подій пайплайну ще немає.",
+    tableEmpty: "—",
+    pipelineStatusValues: {
+      awaiting_situations: "Очікування описів ситуації",
+      pipeline_running: "Пайплайн виконується",
+      awaiting_clarification: "Очікування уточнень",
+      options_published: "Варіанти опубліковано",
+      post_resolution: "Після публікації варіантів",
+    },
+    pipelineEventLabels: {
+      agent_started: "Агент запущено",
+      agent_completed: "Агент завершено",
+      agent_paused: "Агент призупинено",
+      options_published: "Варіанти опубліковано",
+      regenerate_started: "Регенерацію розпочато",
+      options_regenerated: "Варіанти оновлено",
+    },
     comingSoon: "НЕЗАБАРОМ",
     comingSoonDesc:
       "Налаштування застосунку ще недоступні в цьому MVP. У майбутніх релізах з’являться сповіщення, брендинг та інтеграції.",

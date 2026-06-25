@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
-import { getUserOnboardingStatus } from "@/lib/onboarding";
+import { getParticipantHomePath, getUserOnboardingStatus } from "@/lib/onboarding";
 import { isParticipantRole } from "@/lib/participant-roles";
 import { syncUserTestStatus } from "@/lib/test-status-sync";
 
@@ -82,7 +82,7 @@ export async function updateTestStatus() {
 }
 
 export async function completeOnboarding() {
-  const { user } = await requireParticipantUser();
+  const { user, role } = await requireParticipantUser();
   const status = await getUserOnboardingStatus(user.id);
 
   if (!status.canProceed) {
@@ -95,5 +95,5 @@ export async function completeOnboarding() {
     .where(eq(users.id, user.id));
 
   revalidatePath("/onboarding/tests");
-  redirect("/dashboard");
+  redirect(getParticipantHomePath(role));
 }

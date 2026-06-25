@@ -4,8 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
-import { getUserOnboardingStatus } from "@/lib/onboarding";
-import { isParticipantRole } from "@/lib/participant-roles";
+import { getParticipantHomePath, getUserOnboardingStatus } from "@/lib/onboarding";
+import { isParticipantRole, type ParticipantRole } from "@/lib/participant-roles";
 
 export async function requireParticipantSession() {
   const session = await getServerSession(authOptions);
@@ -37,11 +37,12 @@ export async function requireParticipantSession() {
 }
 
 export async function guardOnboardingStep(step: "welcome" | "consent" | "tests") {
-  const { userId } = await requireParticipantSession();
+  const { userId, role } = await requireParticipantSession();
   const status = await getUserOnboardingStatus(userId);
+  const homePath = getParticipantHomePath(role as ParticipantRole);
 
   if (status.nextStep === "complete") {
-    redirect("/dashboard");
+    redirect(homePath);
   }
 
   if (step === "welcome" && (status.welcomeSeenAt || status.disclaimerAcceptedAt)) {
@@ -54,7 +55,7 @@ export async function guardOnboardingStep(step: "welcome" | "consent" | "tests")
 
   if (step === "tests") {
     if (!status.disclaimerAcceptedAt) redirect("/onboarding/consent");
-    if (status.onboardingCompletedAt) redirect("/dashboard");
+    if (status.onboardingCompletedAt) redirect(homePath);
   }
 
   return { status };

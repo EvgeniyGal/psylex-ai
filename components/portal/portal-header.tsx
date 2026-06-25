@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import { LocaleSwitcher } from "@/components/locale-switcher";
+import { PortalLocaleSwitcher } from "@/components/portal/portal-locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteHeader } from "@/components/site-header";
 
@@ -12,7 +12,7 @@ export function PortalHeader() {
     <SiteHeader
       trailing={
         <>
-          <LocaleSwitcher />
+          <PortalLocaleSwitcher />
           <button
             className="flex items-center gap-1.5 text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80"
             onClick={() => signOut({ callbackUrl: "/" })}

@@ -43,6 +43,13 @@
       "when": 1781880000000,
       "tag": "0005_rename_sessions_to_rooms",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781960000000,
+      "tag": "0006_dispute_pipeline",
+      "breakpoints": true
     }
   ]
 }

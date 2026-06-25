@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userTestCompletions, users } from "@/drizzle/schema";
-import { isParticipantRole } from "@/lib/participant-roles";
+import { isParticipantRole, type ParticipantRole } from "@/lib/participant-roles";
 import { isTestUnlocked, TEST_KEYS, type TestKey } from "@/lib/test-keys";
 
 export type OnboardingStep = "welcome" | "consent" | "tests" | "complete";
@@ -49,7 +49,7 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
   const canProceed = testsComplete && personalBotReady;
 
   let nextStep: OnboardingStep = "complete";
-  let nextPath = "/dashboard";
+  let nextPath = getParticipantHomePath(user.role as ParticipantRole);
 
   if (!user.disclaimerAcceptedAt) {
     if (!user.welcomeSeenAt) {
@@ -77,6 +77,11 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
   };
 }
 
+export function getParticipantHomePath(role: ParticipantRole) {
+  if (role === "mediator") return "/mediator/rooms";
+  return "/dashboard";
+}
+
 export async function getPostLoginRedirect(userId: string, role: string) {
   if (role === "admin") return "/admin/rooms";
   if (!isParticipantRole(role)) return "/login";
@@ -93,7 +98,7 @@ export function getOnboardingPathForStep(step: OnboardingStep) {
     case "tests":
       return "/onboarding/tests";
     case "complete":
-      return "/dashboard";
+      return "/dashboard"; // callers should use getParticipantHomePath(role) when role is known
   }
 }
 

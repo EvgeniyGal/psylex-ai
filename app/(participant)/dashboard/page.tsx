@@ -4,7 +4,12 @@ import { requireParticipantSession } from "@/lib/portal-auth";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const { userId } = await requireParticipantSession();
+  const { userId, role } = await requireParticipantSession();
+
+  if (role === "mediator") {
+    redirect("/mediator/rooms");
+  }
+
   const status = await getUserOnboardingStatus(userId);
 
   if (!status.onboardingCompletedAt) {

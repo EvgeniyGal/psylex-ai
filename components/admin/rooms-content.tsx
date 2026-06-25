@@ -52,11 +52,13 @@ function SideRow({
   title,
   onCopy,
   copyLabel,
+  showCredentialCopy,
 }: {
   participant: UserRow | null;
   title: string;
   onCopy: (participant: UserRow) => void;
   copyLabel: string;
+  showCredentialCopy: boolean;
 }) {
   if (!title) {
     return <div className="text-body-sm text-on-surface-variant">—</div>;
@@ -65,7 +67,7 @@ function SideRow({
   return (
     <div className="flex items-center gap-2">
       <span className="text-body-sm text-on-surface">{title}</span>
-      {participant ? (
+      {participant && showCredentialCopy ? (
         <button
           className="flex shrink-0 items-center justify-center rounded-lg border border-outline-variant/30 p-1.5 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
           onClick={() => onCopy(participant)}
@@ -87,6 +89,7 @@ function SidesCell({
   side2Title,
   onCopy,
   copyLabel,
+  showCredentialCopy,
 }: {
   side1: UserRow | null;
   side2: UserRow | null;
@@ -94,11 +97,12 @@ function SidesCell({
   side2Title: string;
   onCopy: (participant: UserRow) => void;
   copyLabel: string;
+  showCredentialCopy: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side1} title={side1Title} />
-      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side2} title={side2Title} />
+      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side1} showCredentialCopy={showCredentialCopy} title={side1Title} />
+      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side2} showCredentialCopy={showCredentialCopy} title={side2Title} />
     </div>
   );
 }
@@ -106,9 +110,17 @@ function SidesCell({
 export function RoomsContent({
   roomRows,
   participantsByRoom,
+  basePath = "/admin/rooms",
+  showCreateButton = true,
+  showInsights = true,
+  showCredentialCopy = true,
 }: {
   roomRows: RoomRow[];
   participantsByRoom: { roomId: string; users: UserRow[] }[];
+  basePath?: string;
+  showCreateButton?: boolean;
+  showInsights?: boolean;
+  showCredentialCopy?: boolean;
 }) {
   const { admin } = useLocale();
   const router = useRouter();
@@ -192,13 +204,15 @@ export function RoomsContent({
           <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.roomsTitle}</h3>
           <p className="max-w-xl text-on-surface-variant">{admin.roomsSubtitle}</p>
         </div>
-        <Link
-          className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
-          href="/admin/rooms/new"
-        >
-          <span className="material-symbols-outlined">add</span>
-          {admin.newRoom}
-        </Link>
+        {showCreateButton ? (
+          <Link
+            className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
+            href={`${basePath}/new`}
+          >
+            <span className="material-symbols-outlined">add</span>
+            {admin.newRoom}
+          </Link>
+        ) : null}
       </div>
 
       {roomRows.length === 0 ? (
@@ -262,6 +276,7 @@ export function RoomsContent({
                         <SidesCell
                           copyLabel={admin.copyCredentials}
                           onCopy={onCopyCredentials}
+                          showCredentialCopy={showCredentialCopy}
                           side1={room.side1}
                           side1Title={room.side1Title}
                           side2={room.side2}
@@ -271,7 +286,7 @@ export function RoomsContent({
                       <td className="w-0 whitespace-nowrap px-4 py-3">
                         <button
                           className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
-                          onClick={() => router.push(`/admin/rooms/${room.id}`)}
+                          onClick={() => router.push(`${basePath}/${room.id}`)}
                           title={admin.openCard}
                           type="button"
                         >
@@ -288,27 +303,29 @@ export function RoomsContent({
         </div>
       )}
 
-      <div className="mt-stack-lg grid grid-cols-1 gap-6 border-t border-outline-variant/10 pt-8 md:grid-cols-3">
-        <div className="glass-panel relative overflow-hidden rounded-xl p-6">
-          <div className="absolute left-0 top-0 h-full w-1 bg-tertiary" />
-          <h5 className="mb-4 font-display text-label-md tracking-wider text-tertiary">{admin.systemHealth}</h5>
-          <div className="flex items-end gap-2">
-            <span className="text-4xl font-bold">100%</span>
-            <span className="mb-1 flex items-center text-sm text-emerald-500">
-              <span className="material-symbols-outlined text-sm">trending_up</span> {admin.stable}
-            </span>
+      {showInsights ? (
+        <div className="mt-stack-lg grid grid-cols-1 gap-6 border-t border-outline-variant/10 pt-8 md:grid-cols-3">
+          <div className="glass-panel relative overflow-hidden rounded-xl p-6">
+            <div className="absolute left-0 top-0 h-full w-1 bg-tertiary" />
+            <h5 className="mb-4 font-display text-label-md tracking-wider text-tertiary">{admin.systemHealth}</h5>
+            <div className="flex items-end gap-2">
+              <span className="text-4xl font-bold">100%</span>
+              <span className="mb-1 flex items-center text-sm text-emerald-500">
+                <span className="material-symbols-outlined text-sm">trending_up</span> {admin.stable}
+              </span>
+            </div>
+            <p className="mt-2 text-body-sm text-on-surface-variant">{admin.systemHealthDesc}</p>
           </div>
-          <p className="mt-2 text-body-sm text-on-surface-variant">{admin.systemHealthDesc}</p>
-        </div>
-        <div className="glass-panel relative overflow-hidden rounded-xl p-6 md:col-span-2">
-          <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
-          <h5 className="mb-4 font-display text-label-md tracking-wider text-primary">{admin.aiInsight}</h5>
-          <div className="flex items-center gap-4">
-            <span className="material-symbols-outlined text-4xl text-primary/50">psychology</span>
-            <p className="text-body-md font-light italic leading-relaxed text-on-surface/80">{admin.aiInsightDesc}</p>
+          <div className="glass-panel relative overflow-hidden rounded-xl p-6 md:col-span-2">
+            <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
+            <h5 className="mb-4 font-display text-label-md tracking-wider text-primary">{admin.aiInsight}</h5>
+            <div className="flex items-center gap-4">
+              <span className="material-symbols-outlined text-4xl text-primary/50">psychology</span>
+              <p className="text-body-md font-light italic leading-relaxed text-on-surface/80">{admin.aiInsightDesc}</p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }

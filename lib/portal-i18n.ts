@@ -43,8 +43,27 @@ type PortalCopy = {
   mediator: RoleCopy;
   dashboardTitle: string;
   dashboardBody: string;
+  dashboardEnterRoom: string;
   backToStart: string;
   logout: string;
+  roomTitle: string;
+  roomTabShared: string;
+  roomTabPrivate: string;
+  roomSituationTitle: string;
+  roomWhatHappened: string;
+  roomWhyDispute: string;
+  roomSupportingInfo: string;
+  roomSubmitSituation: string;
+  roomWaitingOthers: string;
+  roomPipelineRunning: string;
+  roomAwaitingClarification: string;
+  roomYourSituation: string;
+  roomSharedPlaceholder: string;
+  roomPrivatePlaceholder: string;
+  roomSend: string;
+  roomRejectOptions: string;
+  roomOptionsTitle: string;
+  roomAgentLabel: string;
 };
 
 export const portalCopy: Record<Locale, PortalCopy> = {
@@ -132,9 +151,28 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       testsSubtitle: "Complete the required modules below to build your mediator profile and unlock session tools.",
     },
     dashboardTitle: "You're all set",
-    dashboardBody: "Your onboarding is complete. Your mediation workspace will be available here soon.",
+    dashboardBody: "Your onboarding is complete. Enter your mediation room to describe your situation and work toward resolution.",
+    dashboardEnterRoom: "Enter mediation room",
     backToStart: "Back to start",
     logout: "Logout",
+    roomTitle: "Mediation room",
+    roomTabShared: "Shared room",
+    roomTabPrivate: "Private thread",
+    roomSituationTitle: "Describe your situation",
+    roomWhatHappened: "What happened",
+    roomWhyDispute: "Why you are raising this dispute",
+    roomSupportingInfo: "Supporting information",
+    roomSubmitSituation: "Submit description",
+    roomWaitingOthers: "Waiting for the other side(s) to submit their description.",
+    roomPipelineRunning: "AI analysis in progress…",
+    roomAwaitingClarification: "Please check your private thread for clarifying questions.",
+    roomYourSituation: "Your situation",
+    roomSharedPlaceholder: "Write a message to the shared room…",
+    roomPrivatePlaceholder: "Reply to the agent…",
+    roomSend: "Send",
+    roomRejectOptions: "Reject options and request alternatives",
+    roomOptionsTitle: "Resolution options",
+    roomAgentLabel: "AI mediator",
   },
   uk: {
     brand: "PsyLex",
@@ -220,9 +258,28 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       testsSubtitle: "Пройдіть обов'язкові модулі нижче, щоб сформувати профіль медіатора та розблокувати інструменти сесій.",
     },
     dashboardTitle: "Усе готово",
-    dashboardBody: "Онбординг завершено. Робочий простір медіації незабаром буде доступний тут.",
+    dashboardBody: "Онбординг завершено. Увійдіть до кімнати медіації, щоб описати ситуацію та працювати над рішенням.",
+    dashboardEnterRoom: "Увійти до кімнати медіації",
     backToStart: "На головну",
     logout: "Вийти",
+    roomTitle: "Кімната медіації",
+    roomTabShared: "Спільна кімната",
+    roomTabPrivate: "Приватний потік",
+    roomSituationTitle: "Опишіть ситуацію",
+    roomWhatHappened: "Що сталося",
+    roomWhyDispute: "Чому ви ініціюєте цей спір",
+    roomSupportingInfo: "Додаткова інформація",
+    roomSubmitSituation: "Надіслати опис",
+    roomWaitingOthers: "Очікуємо, поки інша сторона (сторони) надішле свій опис.",
+    roomPipelineRunning: "Триває AI-аналіз…",
+    roomAwaitingClarification: "Перевірте приватний потік — там можуть бути уточнювальні запитання.",
+    roomYourSituation: "Ваша ситуація",
+    roomSharedPlaceholder: "Напишіть повідомлення в спільну кімнату…",
+    roomPrivatePlaceholder: "Відповідь агенту…",
+    roomSend: "Надіслати",
+    roomRejectOptions: "Відхилити варіанти та запросити нові",
+    roomOptionsTitle: "Варіанти рішення",
+    roomAgentLabel: "AI-медіатор",
   },
 };
 

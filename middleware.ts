@@ -16,6 +16,17 @@ export default withAuth(
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
+    if (path.startsWith("/mediator")) {
+      if (token?.role !== "mediator") {
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+      return NextResponse.next();
+    }
+
+    if (path.startsWith("/dashboard") && token?.role === "mediator") {
+      return NextResponse.redirect(new URL("/mediator/rooms", req.url));
+    }
+
     if (
       (path.startsWith("/onboarding") || path.startsWith("/dashboard")) &&
       token?.role === "admin"
@@ -34,6 +45,10 @@ export default withAuth(
           return token?.role === "admin";
         }
 
+        if (path.startsWith("/mediator")) {
+          return token?.role === "mediator";
+        }
+
         if (path.startsWith("/onboarding") || path.startsWith("/dashboard")) {
           return (
             !!token?.role &&
@@ -48,5 +63,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/onboarding/:path*", "/dashboard/:path*"],
+  matcher: ["/admin/:path*", "/mediator/:path*", "/onboarding/:path*", "/dashboard/:path*"],
 };

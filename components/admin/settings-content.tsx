@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveApiCredentials, saveTestLinks } from "@/app/admin/settings/actions";
+import { PromptsPanel } from "@/components/admin/prompts-panel";
 import { useLocale } from "@/components/locale-provider";
 
 export type PlatformSettingsRow = {
@@ -19,10 +20,20 @@ export type PlatformSettingsRow = {
 const inputClass =
   "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
 
-const tabs = ["credentials", "tests"] as const;
+const tabs = ["credentials", "tests", "prompts"] as const;
 type SettingsTab = (typeof tabs)[number];
 
-export function SettingsContent({ settings }: { settings: PlatformSettingsRow }) {
+type SettingsContentProps = {
+  settings: PlatformSettingsRow;
+  agentPrompts: {
+    legal_domain: string;
+    precedents: string;
+    compatibility: string;
+    synthesis: string;
+  };
+};
+
+export function SettingsContent({ settings, agentPrompts }: SettingsContentProps) {
   const { admin } = useLocale();
   const [activeTab, setActiveTab] = useState<SettingsTab>("credentials");
   const [credentialsPending, startCredentialsTransition] = useTransition();
@@ -53,6 +64,12 @@ export function SettingsContent({ settings }: { settings: PlatformSettingsRow })
     },
   ] as const;
 
+  const tabLabel = (tab: SettingsTab) => {
+    if (tab === "credentials") return admin.tabCredentials;
+    if (tab === "tests") return admin.tabTests;
+    return admin.tabPrompts;
+  };
+
   return (
     <section className="space-y-stack-lg">
       <div>
@@ -73,7 +90,7 @@ export function SettingsContent({ settings }: { settings: PlatformSettingsRow })
               onClick={() => setActiveTab(tab)}
               type="button"
             >
-              {tab === "credentials" ? admin.tabCredentials : admin.tabTests}
+              {tabLabel(tab)}
             </button>
           ))}
         </div>
@@ -111,7 +128,7 @@ export function SettingsContent({ settings }: { settings: PlatformSettingsRow })
               {credentialsPending ? "..." : admin.save}
             </button>
           </form>
-        ) : (
+        ) : activeTab === "tests" ? (
           <form action={onSaveTests} className="space-y-6">
             <p className="text-body-sm text-on-surface-variant">{admin.testsSubtitle}</p>
             <div className="grid gap-5">
@@ -137,6 +154,8 @@ export function SettingsContent({ settings }: { settings: PlatformSettingsRow })
               {testsPending ? "..." : admin.save}
             </button>
           </form>
+        ) : (
+          <PromptsPanel prompts={agentPrompts} />
         )}
       </div>
     </section>
