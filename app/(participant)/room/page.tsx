@@ -4,6 +4,10 @@ import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { requireParticipantSession } from "@/lib/portal-auth";
 import { ensurePipelineState } from "@/lib/room/helpers";
 import { getRoomPageData } from "@/lib/room/queries";
+import {
+  maybeResumeStuckPipeline,
+  reconcilePipelineStatus,
+} from "@/lib/pipeline/orchestrator";
 
 export default async function RoomPage() {
   const { userId, role } = await requireParticipantSession();
@@ -24,6 +28,13 @@ export default async function RoomPage() {
   }
 
   await ensurePipelineState(data.room.id);
+  await reconcilePipelineStatus(data.room.id);
+  void maybeResumeStuckPipeline(data.room.id).catch(console.error);
 
-  return <RoomExperience data={data} />;
+  const refreshedData = await getRoomPageData(userId);
+  if (!refreshedData) {
+    redirect("/dashboard");
+  }
+
+  return <RoomExperience data={refreshedData} />;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { sendPrivateReply, sendSharedMessage } from "@/app/(participant)/room/actions";
 import { useLocale } from "@/components/locale-provider";
@@ -108,7 +109,9 @@ export function SharedRoomPanel({
           ) : null}
 
           {pipelineStatus === "awaiting_clarification" ? (
-            <p className="text-body-md text-tertiary">{t.roomAwaitingClarification}</p>
+            <div className="rounded-xl border border-tertiary/30 bg-tertiary/5 p-4 text-left">
+              <p className="text-body-md text-tertiary">{t.roomAwaitingClarification}</p>
+            </div>
           ) : null}
 
           {activeOptionsMessage ? (
@@ -162,11 +165,13 @@ export function SharedRoomPanel({
 
 export function PrivateThreadPanel({ messages }: { messages: RoomMessageView[] }) {
   const { portal: t } = useLocale();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   const onSend = (formData: FormData) => {
     startTransition(async () => {
       await sendPrivateReply(formData);
+      router.refresh();
     });
   };
 

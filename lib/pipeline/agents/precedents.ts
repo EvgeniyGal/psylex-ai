@@ -1,13 +1,15 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { agentPrompts } from "@/drizzle/schema";
-import { parseJsonResponse, runAgentCompletion } from "@/lib/pipeline/openai-client";
+import { runAgentJsonCompletion } from "@/lib/pipeline/parse-agent-output";
 import { enrichPrecedentsPrompt, searchPrecedents } from "@/lib/pipeline/precedent-search";
 import {
   precedentsOutputSchema,
   type PipelineContext,
   type PrecedentsOutput,
 } from "@/lib/pipeline/types";
+
+const PRECEDENTS_OUTPUT_GUIDE = `Return a JSON object with key "precedents" (array of { title, summary, relevance }).`;
 
 async function getAgentPrompt() {
   const [row] = await db
@@ -32,7 +34,8 @@ export async function runPrecedentsAgent(ctx: PipelineContext): Promise<Preceden
   );
 
   const systemPrompt = await getAgentPrompt();
-  const raw = await runAgentCompletion({
+  return runAgentJsonCompletion({
+    schema: precedentsOutputSchema,
     systemPrompt,
     userMessage: JSON.stringify(
       {
@@ -43,7 +46,6 @@ export async function runPrecedentsAgent(ctx: PipelineContext): Promise<Preceden
       null,
       2,
     ),
-    jsonMode: true,
+    outputGuide: PRECEDENTS_OUTPUT_GUIDE,
   });
-  return precedentsOutputSchema.parse(parseJsonResponse(raw));
 }

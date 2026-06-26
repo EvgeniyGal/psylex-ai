@@ -3,7 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { agentPrompts } from "@/drizzle/schema";
 import type { Locale } from "@/lib/i18n";
-import { parseJsonResponse, runAgentCompletion } from "@/lib/pipeline/openai-client";
+import { parseJsonResponse, runAgentCompletion, unwrapAgentJsonPayload } from "@/lib/pipeline/openai-client";
+import { runAgentJsonCompletion } from "@/lib/pipeline/parse-agent-output";
 import {
   localizedContentSchema,
   synthesisClarificationOutputSchema,
@@ -47,7 +48,8 @@ export async function runSynthesisClarification(
   const profile = ctx.profiles.find((p) => p.userId === userId);
   const situation = ctx.situations.find((s) => s.userId === userId);
 
-  const raw = await runAgentCompletion({
+  return runAgentJsonCompletion({
+    schema: synthesisClarificationOutputSchema,
     systemPrompt,
     userMessage: JSON.stringify(
       {
@@ -64,10 +66,8 @@ export async function runSynthesisClarification(
       2,
     ),
     targetLocale: locale,
-    jsonMode: true,
+    outputGuide: `Return JSON with keys: needsClarification (boolean), question (string | null), sideComplete (boolean).`,
   });
-
-  return synthesisClarificationOutputSchema.parse(parseJsonResponse(raw));
 }
 
 async function generateOptionsRaw(
@@ -105,7 +105,9 @@ export async function runSynthesisOptions(
   const raw = await generateOptionsRaw(ctx, { mode: "generate_options" }, locales);
 
   if (needBoth) {
-    const bilingual = bilingualOptionsSchema.safeParse(parseJsonResponse(raw));
+    const bilingual = bilingualOptionsSchema.safeParse(
+      unwrapAgentJsonPayload(parseJsonResponse(raw)),
+    );
     if (bilingual.success) {
       const enText = formatOptionsText(bilingual.data.optionsEn.options);
       const ukText = formatOptionsText(bilingual.data.optionsUk.options);
@@ -117,7 +119,9 @@ export async function runSynthesisOptions(
     }
   }
 
-  const single = synthesisOptionsOutputSchema.parse(parseJsonResponse(raw));
+  const single = synthesisOptionsOutputSchema.parse(
+    unwrapAgentJsonPayload(parseJsonResponse(raw)),
+  );
   const text = formatOptionsText(single.options);
   return { options: single.options, localized: null, content: text };
 }
@@ -138,7 +142,9 @@ export async function runSynthesisRegenerate(
   );
 
   if (needBoth) {
-    const bilingual = bilingualOptionsSchema.safeParse(parseJsonResponse(raw));
+    const bilingual = bilingualOptionsSchema.safeParse(
+      unwrapAgentJsonPayload(parseJsonResponse(raw)),
+    );
     if (bilingual.success) {
       const enText = formatOptionsText(bilingual.data.optionsEn.options);
       const ukText = formatOptionsText(bilingual.data.optionsUk.options);
@@ -150,7 +156,9 @@ export async function runSynthesisRegenerate(
     }
   }
 
-  const single = synthesisOptionsOutputSchema.parse(parseJsonResponse(raw));
+  const single = synthesisOptionsOutputSchema.parse(
+    unwrapAgentJsonPayload(parseJsonResponse(raw)),
+  );
   const text = formatOptionsText(single.options);
   return { options: single.options, content: text, localized: null as LocalizedContent | null };
 }

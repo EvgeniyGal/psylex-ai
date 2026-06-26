@@ -57,7 +57,9 @@ export async function submitSituation(formData: FormData) {
       .set({ status: "pipeline_running", updatedAt: new Date() })
       .where(eq(roomPipelineStates.roomId, roomId));
 
-    void runPipelineOrchestrator(roomId).catch(console.error);
+    void runPipelineOrchestrator(roomId)
+      .catch(console.error)
+      .finally(() => revalidatePath("/room"));
   }
 
   revalidatePath("/room");
@@ -76,7 +78,12 @@ export async function sendPrivateReply(formData: FormData) {
     content,
   });
 
-  void resumePipelineAfterPrivateReply(roomId, user.id).catch(console.error);
+  try {
+    await resumePipelineAfterPrivateReply(roomId, user.id);
+  } catch (error) {
+    console.error("[pipeline] resume after private reply failed", roomId, error);
+  }
+
   revalidatePath("/room");
 }
 

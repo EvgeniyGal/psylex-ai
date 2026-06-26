@@ -14,20 +14,38 @@ type RoomExperienceProps = {
 
 type Tab = "shared" | "private";
 
+const LIVE_UPDATE_INTERVAL_MS = 2000;
+
 export function RoomExperience({ data }: RoomExperienceProps) {
   const { portal: t } = useLocale();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("shared");
 
-  const poll =
+  const needsLiveUpdates =
     data.pipeline.status === "pipeline_running" ||
-    data.pipeline.status === "awaiting_clarification";
+    data.pipeline.status === "awaiting_clarification" ||
+    (data.allSidesSubmitted &&
+      !data.activeOptionsMessage &&
+      data.pipeline.status !== "options_published" &&
+      data.pipeline.status !== "post_resolution");
+
+  const hasUnreadPrivateAgentMessage =
+    data.pipeline.status === "awaiting_clarification" &&
+    data.privateMessages.at(-1)?.senderType === "agent";
 
   useEffect(() => {
-    if (!poll) return;
-    const id = setInterval(() => router.refresh(), 5000);
+    if (hasUnreadPrivateAgentMessage) {
+      setTab("private");
+    }
+  }, [hasUnreadPrivateAgentMessage]);
+
+  useEffect(() => {
+    if (!needsLiveUpdates) return;
+
+    router.refresh();
+    const id = setInterval(() => router.refresh(), LIVE_UPDATE_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [poll, router]);
+  }, [needsLiveUpdates, router]);
 
   const showSituationForm = !data.hasSubmitted;
 
@@ -64,7 +82,12 @@ export function RoomExperience({ data }: RoomExperienceProps) {
                 onClick={() => setTab("private")}
                 type="button"
               >
-                {t.roomTabPrivate}
+                <span className="inline-flex items-center gap-2">
+                  {t.roomTabPrivate}
+                  {hasUnreadPrivateAgentMessage && tab !== "private" ? (
+                    <span className="h-2 w-2 rounded-full bg-tertiary" />
+                  ) : null}
+                </span>
               </button>
             </div>
 

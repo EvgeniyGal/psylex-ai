@@ -1,12 +1,17 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { agentPrompts } from "@/drizzle/schema";
-import { parseJsonResponse, runAgentCompletion } from "@/lib/pipeline/openai-client";
+import { runAgentJsonCompletion } from "@/lib/pipeline/parse-agent-output";
 import {
   compatibilityOutputSchema,
   type CompatibilityOutput,
   type PipelineContext,
 } from "@/lib/pipeline/types";
+
+const COMPATIBILITY_OUTPUT_GUIDE = `Return a JSON object with keys:
+- frictionPoints (string[])
+- commonGround (string[])
+- summary (string)`;
 
 async function getAgentPrompt() {
   const [row] = await db
@@ -20,7 +25,8 @@ async function getAgentPrompt() {
 
 export async function runCompatibilityAgent(ctx: PipelineContext): Promise<CompatibilityOutput> {
   const systemPrompt = await getAgentPrompt();
-  const raw = await runAgentCompletion({
+  return runAgentJsonCompletion({
+    schema: compatibilityOutputSchema,
     systemPrompt,
     userMessage: JSON.stringify(
       {
@@ -30,7 +36,6 @@ export async function runCompatibilityAgent(ctx: PipelineContext): Promise<Compa
       null,
       2,
     ),
-    jsonMode: true,
+    outputGuide: COMPATIBILITY_OUTPUT_GUIDE,
   });
-  return compatibilityOutputSchema.parse(parseJsonResponse(raw));
 }

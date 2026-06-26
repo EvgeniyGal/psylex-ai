@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { submitSituation } from "@/app/(participant)/room/actions";
 import { useLocale } from "@/components/locale-provider";
@@ -9,11 +10,13 @@ const inputClass =
 
 export function SituationForm() {
   const { portal: t } = useLocale();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   const onSubmit = (formData: FormData) => {
     startTransition(async () => {
       await submitSituation(formData);
+      router.refresh();
     });
   };
 

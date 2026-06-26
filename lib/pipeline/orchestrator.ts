@@ -22,6 +22,7 @@ import {
   insertAgentSharedMessage,
   parseClarificationStatus,
   parsePendingInput,
+  revalidateRoomPage,
 } from "@/lib/room/helpers";
 
 async function loadPipelineContext(roomId: string): Promise<PipelineContext> {
@@ -71,24 +72,179 @@ async function loadPipelineContext(roomId: string): Promise<PipelineContext> {
 }
 
 async function getJurisdictionAnswers(roomId: string, userIds: string[]) {
+  const rows = await db
+    .select()
+    .from(roomMessages)
+    .where(eq(roomMessages.roomId, roomId));
+
   const answers: Record<string, string> = {};
+
   for (const userId of userIds) {
-    const rows = await db
-      .select()
-      .from(roomMessages)
-      .where(eq(roomMessages.roomId, roomId));
-    const privateReplies = rows
-      .filter(
-        (m) =>
-          m.channel === "private" &&
-          m.participantUserId === userId &&
-          m.senderType === "participant",
-      )
+    const thread = rows
+      .filter((m) => m.channel === "private" && m.participantUserId === userId)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-    const last = privateReplies.at(-1);
-    if (last) answers[userId] = last.content;
+
+    let lastJurisdictionQuestionIdx = -1;
+    for (let i = thread.length - 1; i >= 0; i--) {
+      const message = thread[i];
+      if (message.senderType === "agent" && message.senderAgent === "legal_domain") {
+        lastJurisdictionQuestionIdx = i;
+        break;
+      }
+    }
+
+    const repliesAfterQuestion = thread
+      .slice(lastJurisdictionQuestionIdx + 1)
+      .filter((m) => m.senderType === "participant");
+    const lastReply = repliesAfterQuestion.at(-1);
+    if (lastReply) answers[userId] = lastReply.content;
   }
+
   return answers;
+}
+
+function applyParticipantJurisdictionAnswers(
+  result: Awaited<ReturnType<typeof runLegalDomainAgent>>,
+  jurisdictionAnswers: Record<string, string>,
+) {
+  const combined = Object.values(jurisdictionAnswers)
+    .map((answer) => answer.trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+  if (!combined) return result;
+
+  return {
+    ...result,
+    jurisdiction: result.jurisdiction?.trim() || combined.slice(0, 2000),
+    needsJurisdictionClarification: false,
+    jurisdictionQuestion: null,
+  };
+}
+
+type PrivateThreadContext = {
+  agentKey: string;
+  question: string;
+  answer: string;
+};
+
+async function getPrivateAgentThreadContext(
+  roomId: string,
+  userId: string,
+): Promise<PrivateThreadContext | null> {
+  const rows = await db
+    .select()
+    .from(roomMessages)
+    .where(eq(roomMessages.roomId, roomId));
+
+  const thread = rows
+    .filter((m) => m.channel === "private" && m.participantUserId === userId)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  const lastAgent = [...thread].reverse().find((m) => m.senderType === "agent");
+  const lastParticipant = [...thread].reverse().find((m) => m.senderType === "participant");
+
+  if (!lastAgent?.senderAgent || !lastParticipant) return null;
+  if (lastParticipant.createdAt <= lastAgent.createdAt) return null;
+
+  return {
+    agentKey: lastAgent.senderAgent,
+    question: lastAgent.content,
+    answer: lastParticipant.content,
+  };
+}
+
+async function resumeJurisdictionPipeline(roomId: string) {
+  const sides = await getRoomSides(roomId);
+  const answers = await getJurisdictionAnswers(
+    roomId,
+    sides.map((side) => side.id),
+  );
+  if (!Object.values(answers).some((answer) => answer.trim())) return;
+
+  await db
+    .update(roomPipelineStates)
+    .set({
+      pendingInput: null,
+      currentAgent: null,
+      status: "pipeline_running",
+      updatedAt: new Date(),
+    })
+    .where(eq(roomPipelineStates.roomId, roomId));
+
+  await runPipelineOrchestrator(roomId);
+}
+
+async function resumeSynthesisClarification(roomId: string, userId: string) {
+  const [state] = await db
+    .select()
+    .from(roomPipelineStates)
+    .where(eq(roomPipelineStates.roomId, roomId))
+    .limit(1);
+
+  if (!state) return;
+
+  const ctx = await loadPipelineContext(roomId);
+  const clarification = parseClarificationStatus(state.clarificationStatus);
+  const priorReplies = await getClarificationReplies(roomId, userId);
+  const result = await runSynthesisClarification(ctx, userId, priorReplies);
+
+  if (result.sideComplete || !result.needsClarification) {
+    clarification[userId] = { complete: true, round: (clarification[userId]?.round ?? 0) + 1 };
+  } else if (result.question) {
+    const [side] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const locale = (side?.preferredLocale as Locale) ?? "en";
+    await insertAgentPrivateMessage(roomId, userId, "synthesis", result.question);
+    clarification[userId] = { complete: false, round: (clarification[userId]?.round ?? 0) + 1 };
+
+    await db
+      .update(roomPipelineStates)
+      .set({
+        clarificationStatus: clarification,
+        pendingInput: { type: "clarification", userId, waitingUserIds: [userId] },
+        currentAgent: "synthesis",
+        status: "awaiting_clarification",
+        updatedAt: new Date(),
+      })
+      .where(eq(roomPipelineStates.roomId, roomId));
+    return;
+  }
+
+  await db
+    .update(roomPipelineStates)
+    .set({
+      clarificationStatus: clarification,
+      pendingInput: null,
+      currentAgent: null,
+      status: "awaiting_clarification",
+      updatedAt: new Date(),
+    })
+    .where(eq(roomPipelineStates.roomId, roomId));
+
+  const sides = await getRoomSides(roomId);
+  const allComplete = sides.every((side) => clarification[side.id]?.complete);
+  if (allComplete) {
+    await publishResolutionOptions(roomId, await loadPipelineContext(roomId));
+    return;
+  }
+
+  const waitingUserIds = sides
+    .filter((side) => !clarification[side.id]?.complete)
+    .map((side) => side.id);
+
+  if (waitingUserIds.length > 0) {
+    await db
+      .update(roomPipelineStates)
+      .set({
+        pendingInput: { type: "clarification", userId: waitingUserIds[0], waitingUserIds },
+        currentAgent: "synthesis",
+        status: "awaiting_clarification",
+        updatedAt: new Date(),
+      })
+      .where(eq(roomPipelineStates.roomId, roomId));
+  }
+
+  await runAgentFourClarifications(roomId, await loadPipelineContext(roomId));
 }
 
 async function getClarificationReplies(roomId: string, userId: string) {
@@ -124,24 +280,55 @@ async function runAgentOne(roomId: string, ctx: PipelineContext) {
     .where(eq(roomPipelineStates.roomId, roomId))
     .limit(1);
 
-  const pending = parsePendingInput(state?.pendingInput);
   const sides = await getRoomSides(roomId);
+  const jurisdictionAnswers = await getJurisdictionAnswers(
+    roomId,
+    sides.map((side) => side.id),
+  );
+  const hasJurisdictionAnswers = Object.values(jurisdictionAnswers).some((answer) => answer.trim());
+  const pending = parsePendingInput(state?.pendingInput);
 
-  if (state?.jurisdiction && state.legalDomain) {
+  if (
+    pending?.type === "jurisdiction" &&
+    !hasJurisdictionAnswers &&
+    state?.status === "awaiting_clarification"
+  ) {
     return;
   }
 
-  const jurisdictionAnswers =
-    pending?.type === "jurisdiction"
-      ? await getJurisdictionAnswers(roomId, pending.waitingUserIds)
-      : {};
+  if (state?.jurisdiction && state.legalDomain?.trim() && !hasJurisdictionAnswers) {
+    return;
+  }
 
   await logPipelineEvent(roomId, "agent_started", "legal_domain");
-  const result = await runLegalDomainAgent(ctx, jurisdictionAnswers);
+  let result = await runLegalDomainAgent(ctx, jurisdictionAnswers);
+  result = applyParticipantJurisdictionAnswers(result, jurisdictionAnswers);
 
   if (result.needsJurisdictionClarification && !result.jurisdiction) {
-    const waitingUserIds = sides.map((s) => s.id);
+    const waitingUserIds = sides
+      .filter((side) => !jurisdictionAnswers[side.id]?.trim())
+      .map((side) => side.id);
+
+    if (waitingUserIds.length === 0) {
+      const forced = applyParticipantJurisdictionAnswers(result, jurisdictionAnswers);
+      await db
+        .update(roomPipelineStates)
+        .set({
+          legalDomain: forced.legalDomain,
+          jurisdiction: forced.jurisdiction ?? "unspecified",
+          applicableNorms: forced.applicableNorms,
+          currentAgent: null,
+          pendingInput: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(roomPipelineStates.roomId, roomId));
+      await logPipelineEvent(roomId, "agent_completed", "legal_domain");
+      ctx.legalDomain = forced;
+      return;
+    }
+
     for (const side of sides) {
+      if (jurisdictionAnswers[side.id]?.trim()) continue;
       const locale = (side.preferredLocale as Locale) ?? "en";
       const question = await formatJurisdictionQuestion(
         result.jurisdictionQuestion ?? "",
@@ -153,6 +340,7 @@ async function runAgentOne(roomId: string, ctx: PipelineContext) {
     await db
       .update(roomPipelineStates)
       .set({
+        status: "awaiting_clarification",
         currentAgent: "legal_domain",
         pendingInput: { type: "jurisdiction", waitingUserIds },
         updatedAt: new Date(),
@@ -162,6 +350,7 @@ async function runAgentOne(roomId: string, ctx: PipelineContext) {
     await logPipelineEvent(roomId, "agent_paused", "legal_domain", {
       reason: "jurisdiction",
     });
+    revalidateRoomPage();
     return;
   }
 
@@ -228,6 +417,7 @@ async function runAgentFourClarifications(roomId: string, ctx: PipelineContext) 
   const clarification = parseClarificationStatus(state?.clarificationStatus);
   const sides = await getRoomSides(roomId);
   let anyPending = false;
+  const waitingClarificationUserIds: string[] = [];
 
   await db
     .update(roomPipelineStates)
@@ -251,23 +441,30 @@ async function runAgentFourClarifications(roomId: string, ctx: PipelineContext) 
       await insertAgentPrivateMessage(roomId, side.id, "synthesis", result.question);
       clarification[side.id] = { complete: false, round: status.round + 1 };
       anyPending = true;
-
-      await db
-        .update(roomPipelineStates)
-        .set({
-          currentAgent: "synthesis",
-          pendingInput: { type: "clarification", userId: side.id },
-          clarificationStatus: clarification,
-          updatedAt: new Date(),
-        })
-        .where(eq(roomPipelineStates.roomId, roomId));
+      waitingClarificationUserIds.push(side.id);
     }
   }
 
-  await db
-    .update(roomPipelineStates)
-    .set({ clarificationStatus: clarification, updatedAt: new Date() })
-    .where(eq(roomPipelineStates.roomId, roomId));
+  if (waitingClarificationUserIds.length > 0) {
+    await db
+      .update(roomPipelineStates)
+      .set({
+        currentAgent: "synthesis",
+        pendingInput: {
+          type: "clarification",
+          userId: waitingClarificationUserIds[0],
+          waitingUserIds: waitingClarificationUserIds,
+        },
+        clarificationStatus: clarification,
+        updatedAt: new Date(),
+      })
+      .where(eq(roomPipelineStates.roomId, roomId));
+  } else {
+    await db
+      .update(roomPipelineStates)
+      .set({ clarificationStatus: clarification, updatedAt: new Date() })
+      .where(eq(roomPipelineStates.roomId, roomId));
+  }
 
   const allComplete = sides.every((s) => clarification[s.id]?.complete);
   if (allComplete) {
@@ -277,6 +474,7 @@ async function runAgentFourClarifications(roomId: string, ctx: PipelineContext) 
 
   if (anyPending) {
     await logPipelineEvent(roomId, "agent_paused", "synthesis", { reason: "clarification" });
+    revalidateRoomPage();
   }
 }
 
@@ -312,10 +510,126 @@ async function publishResolutionOptions(roomId: string, ctx: PipelineContext) {
     .where(eq(roomPipelineStates.roomId, roomId));
 
   await logPipelineEvent(roomId, "options_published", "synthesis", { version });
+  revalidateRoomPage();
 }
 
 export async function runPipelineOrchestrator(roomId: string) {
   await ensurePipelineState(roomId);
+
+  const [existing] = await db
+    .select()
+    .from(roomPipelineStates)
+    .where(eq(roomPipelineStates.roomId, roomId))
+    .limit(1);
+
+  if (existing?.currentAgent === "orchestrator") {
+    const lockAge = Date.now() - new Date(existing.updatedAt).getTime();
+    if (lockAge < 10 * 60_000) return;
+  }
+
+  await db
+    .update(roomPipelineStates)
+    .set({ currentAgent: "orchestrator", updatedAt: new Date() })
+    .where(eq(roomPipelineStates.roomId, roomId));
+
+  try {
+    await runPipelineOrchestratorInner(roomId);
+  } catch (error) {
+    console.error("[pipeline] failed for room", roomId, error);
+    await logPipelineEvent(roomId, "pipeline_failed", null, {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  } finally {
+    const [state] = await db
+      .select()
+      .from(roomPipelineStates)
+      .where(eq(roomPipelineStates.roomId, roomId))
+      .limit(1);
+
+    if (state?.currentAgent === "orchestrator") {
+      await db
+        .update(roomPipelineStates)
+        .set({ currentAgent: null, updatedAt: new Date() })
+        .where(eq(roomPipelineStates.roomId, roomId));
+    }
+  }
+}
+
+const STUCK_PIPELINE_MS = 45_000;
+const ORCHESTRATOR_LOCK_MS = 10 * 60_000;
+
+export async function reconcilePipelineStatus(roomId: string) {
+  const [state] = await db
+    .select()
+    .from(roomPipelineStates)
+    .where(eq(roomPipelineStates.roomId, roomId))
+    .limit(1);
+
+  if (!state) return;
+
+  const pending = parsePendingInput(state.pendingInput);
+  if (state.status === "pipeline_running" && pending?.type === "jurisdiction") {
+    await db
+      .update(roomPipelineStates)
+      .set({ status: "awaiting_clarification", updatedAt: new Date() })
+      .where(eq(roomPipelineStates.roomId, roomId));
+  }
+}
+
+export async function maybeResumeStuckPipeline(roomId: string) {
+  const [state] = await db
+    .select()
+    .from(roomPipelineStates)
+    .where(eq(roomPipelineStates.roomId, roomId))
+    .limit(1);
+
+  if (!state) return;
+
+  const pending = parsePendingInput(state.pendingInput);
+
+  if (state.status === "awaiting_clarification" && pending?.type === "jurisdiction") {
+    const answers = await getJurisdictionAnswers(roomId, pending.waitingUserIds);
+    if (!pending.waitingUserIds.some((id) => answers[id]?.trim())) return;
+
+    await resumeJurisdictionPipeline(roomId);
+    return;
+  }
+
+  if (state.status === "awaiting_clarification" && pending?.type === "clarification") {
+    const waitingUserIds =
+      pending.waitingUserIds ?? (pending.userId ? [pending.userId] : []);
+    for (const userId of waitingUserIds) {
+      const threadCtx = await getPrivateAgentThreadContext(roomId, userId);
+      if (threadCtx?.agentKey === "synthesis") {
+        await resumeSynthesisClarification(roomId, userId);
+        return;
+      }
+    }
+    return;
+  }
+
+  if (state.status !== "pipeline_running") return;
+
+  const age = Date.now() - new Date(state.updatedAt).getTime();
+
+  if (state.currentAgent === "orchestrator") {
+    if (age < ORCHESTRATOR_LOCK_MS) return;
+    await db
+      .update(roomPipelineStates)
+      .set({ currentAgent: null, updatedAt: new Date() })
+      .where(eq(roomPipelineStates.roomId, roomId));
+  } else if (state.pendingInput || state.currentAgent) {
+    return;
+  } else if (age < STUCK_PIPELINE_MS) {
+    return;
+  }
+
+  console.info("[pipeline] resuming stuck pipeline for room", roomId);
+  await runPipelineOrchestrator(roomId);
+}
+
+async function runPipelineOrchestratorInner(roomId: string) {
   const [state] = await db
     .select()
     .from(roomPipelineStates)
@@ -354,62 +668,17 @@ export async function runPipelineOrchestrator(roomId: string) {
 }
 
 export async function resumePipelineAfterPrivateReply(roomId: string, userId: string) {
-  const [state] = await db
-    .select()
-    .from(roomPipelineStates)
-    .where(eq(roomPipelineStates.roomId, roomId))
-    .limit(1);
+  const threadCtx = await getPrivateAgentThreadContext(roomId, userId);
+  if (!threadCtx) return;
 
-  if (!state) return;
-
-  const pending = parsePendingInput(state.pendingInput);
-  const ctx = await loadPipelineContext(roomId);
-
-  if (pending?.type === "jurisdiction" && state.currentAgent === "legal_domain") {
-    const answers = await getJurisdictionAnswers(roomId, pending.waitingUserIds);
-    const allAnswered = pending.waitingUserIds.every((id) => answers[id]?.trim());
-    if (!allAnswered) return;
-
-    await db
-      .update(roomPipelineStates)
-      .set({ pendingInput: null, currentAgent: null, updatedAt: new Date() })
-      .where(eq(roomPipelineStates.roomId, roomId));
-
-    await runPipelineOrchestrator(roomId);
+  if (threadCtx.agentKey === "synthesis") {
+    console.info("[pipeline] resuming synthesis clarification for user", userId, "room", roomId);
+    await resumeSynthesisClarification(roomId, userId);
     return;
   }
 
-  if (pending?.type === "clarification" && pending.userId === userId) {
-    const clarification = parseClarificationStatus(state.clarificationStatus);
-    const priorReplies = await getClarificationReplies(roomId, userId);
-    const result = await runSynthesisClarification(ctx, userId, priorReplies);
-
-    if (result.sideComplete || !result.needsClarification) {
-      clarification[userId] = { complete: true, round: (clarification[userId]?.round ?? 0) + 1 };
-    } else if (result.question) {
-      const [side] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      const locale = (side?.preferredLocale as Locale) ?? "en";
-      await insertAgentPrivateMessage(roomId, userId, "synthesis", result.question);
-      clarification[userId] = { complete: false, round: (clarification[userId]?.round ?? 0) + 1 };
-    }
-
-    await db
-      .update(roomPipelineStates)
-      .set({
-        clarificationStatus: clarification,
-        pendingInput: null,
-        currentAgent: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(roomPipelineStates.roomId, roomId));
-
-    const sides = await getRoomSides(roomId);
-    const allComplete = sides.every((s) => clarification[s.id]?.complete);
-    if (allComplete) {
-      await publishResolutionOptions(roomId, await loadPipelineContext(roomId));
-      return;
-    }
-
-    await runAgentFourClarifications(roomId, await loadPipelineContext(roomId));
+  if (threadCtx.agentKey === "legal_domain") {
+    console.info("[pipeline] resuming jurisdiction for user", userId, "room", roomId);
+    await resumeJurisdictionPipeline(roomId);
   }
 }

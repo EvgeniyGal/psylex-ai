@@ -64,3 +64,38 @@ export function parseJsonResponse<T>(raw: string): T {
   const jsonText = fenceMatch ? fenceMatch[1].trim() : trimmed;
   return JSON.parse(jsonText) as T;
 }
+
+const AGENT_JSON_WRAPPER_KEYS = ["result", "response", "output", "data", "analysis"] as const;
+
+/** Unwrap common LLM nesting and map snake_case keys to camelCase. */
+export function unwrapAgentJsonPayload(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+
+  const obj = { ...(raw as Record<string, unknown>) };
+
+  const aliasMap: Record<string, string> = {
+    legal_domain: "legalDomain",
+    applicable_norms: "applicableNorms",
+    needs_jurisdiction_clarification: "needsJurisdictionClarification",
+    jurisdiction_question: "jurisdictionQuestion",
+    friction_points: "frictionPoints",
+    common_ground: "commonGround",
+    needs_clarification: "needsClarification",
+    side_complete: "sideComplete",
+  };
+
+  for (const [from, to] of Object.entries(aliasMap)) {
+    if (from in obj && obj[to] === undefined) {
+      obj[to] = obj[from];
+    }
+  }
+
+  for (const key of AGENT_JSON_WRAPPER_KEYS) {
+    const nested = obj[key];
+    if (nested && typeof nested === "object" && !Array.isArray(nested)) {
+      return unwrapAgentJsonPayload(nested);
+    }
+  }
+
+  return obj;
+}

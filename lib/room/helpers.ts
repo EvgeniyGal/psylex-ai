@@ -1,4 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import {
   roomMessages,
@@ -60,12 +61,38 @@ export async function allSidesSubmitted(roomId: string) {
   return sides.length > 0 && sides.every((s) => submitted.has(s.id));
 }
 
+export async function hasPendingAgentQuestion(
+  roomId: string,
+  participantUserId: string,
+  agentKey: string,
+) {
+  const rows = await db
+    .select()
+    .from(roomMessages)
+    .where(eq(roomMessages.roomId, roomId));
+
+  const thread = rows
+    .filter((m) => m.channel === "private" && m.participantUserId === participantUserId)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+  const last = thread.at(-1);
+  return last?.senderType === "agent" && last.senderAgent === agentKey;
+}
+
+export function revalidateRoomPage() {
+  revalidatePath("/room");
+}
+
 export async function insertAgentPrivateMessage(
   roomId: string,
   participantUserId: string,
   agentKey: string,
   content: string,
 ) {
+  if (await hasPendingAgentQuestion(roomId, participantUserId, agentKey)) {
+    return false;
+  }
+
   await db.insert(roomMessages).values({
     roomId,
     channel: "private",
@@ -74,6 +101,8 @@ export async function insertAgentPrivateMessage(
     senderAgent: agentKey,
     content,
   });
+  revalidateRoomPage();
+  return true;
 }
 
 export async function insertAgentSharedMessage(
@@ -92,6 +121,7 @@ export async function insertAgentSharedMessage(
     contentByLocale: contentByLocale ?? null,
     messageMetadata: metadata ?? null,
   });
+  revalidateRoomPage();
 }
 
 export function parseClarificationStatus(raw: unknown): ClarificationStatus {

@@ -60,7 +60,7 @@ export type ClarificationStatus = Record<
 
 export type PendingInput =
   | { type: "jurisdiction"; waitingUserIds: string[] }
-  | { type: "clarification"; userId: string };
+  | { type: "clarification"; userId: string; waitingUserIds?: string[] };
 
 export type SituationInput = {
   userId: string;
