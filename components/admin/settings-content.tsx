@@ -10,6 +10,7 @@ export type PlatformSettingsRow = {
   id: string;
   openaiApiKey: string;
   airtableApiKey: string;
+  legalDataHunterApiKey: string;
   testPersonalityTypeUrl: string;
   testFaceFearUrl: string;
   testCharacterTraitsUrl: string;
@@ -118,6 +119,19 @@ export function SettingsContent({ settings, agentPrompts }: SettingsContentProps
                   placeholder="pat..."
                   type="password"
                 />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-body-sm text-on-surface-variant">
+                  {admin.legalDataHunterApiKeyLabel}
+                </label>
+                <input
+                  className={inputClass}
+                  defaultValue={settings.legalDataHunterApiKey}
+                  name="legalDataHunterApiKey"
+                  placeholder="sk-..."
+                  type="password"
+                />
+                <p className="mt-1 text-body-sm text-on-surface-variant">{admin.legalDataHunterApiKeyHelp}</p>
               </div>
             </div>
             <button

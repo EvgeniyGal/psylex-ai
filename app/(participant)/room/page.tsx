@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { RoomExperience } from "@/components/portal/room/room-experience";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { requireParticipantSession } from "@/lib/portal-auth";
@@ -29,12 +30,11 @@ export default async function RoomPage() {
 
   await ensurePipelineState(data.room.id);
   await reconcilePipelineStatus(data.room.id);
-  void maybeResumeStuckPipeline(data.room.id).catch(console.error);
 
-  const refreshedData = await getRoomPageData(userId);
-  if (!refreshedData) {
-    redirect("/dashboard");
-  }
+  const roomId = data.room.id;
+  after(() => {
+    void maybeResumeStuckPipeline(roomId).catch(console.error);
+  });
 
-  return <RoomExperience data={refreshedData} />;
+  return <RoomExperience data={data} />;
 }

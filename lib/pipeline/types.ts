@@ -2,12 +2,19 @@ import { z } from "zod";
 import type { AgentKey } from "@/drizzle/schema";
 import type { Locale } from "@/lib/i18n";
 
+export const legalDomainClarificationRequestSchema = z.object({
+  userId: z.string(),
+  needed: z.boolean(),
+  question: z.string().nullable(),
+});
+
 export const legalDomainOutputSchema = z.object({
   legalDomain: z.string(),
   jurisdiction: z.string().nullable(),
   applicableNorms: z.string(),
   needsJurisdictionClarification: z.boolean(),
   jurisdictionQuestion: z.string().nullable(),
+  sideClarifications: z.array(legalDomainClarificationRequestSchema).optional(),
 });
 
 export const precedentsOutputSchema = z.object({
@@ -48,6 +55,20 @@ export const localizedContentSchema = z.object({
 });
 
 export type LegalDomainOutput = z.infer<typeof legalDomainOutputSchema>;
+export type LegalDomainClarificationRequest = z.infer<
+  typeof legalDomainClarificationRequestSchema
+>;
+
+export type LegalDomainSideInput = {
+  userId: string;
+  role: string;
+  situation: {
+    whatHappened: string;
+    whyDispute: string;
+    supportingInfo: string;
+  } | null;
+  priorClarifications: Array<{ question: string; answer: string }>;
+};
 export type PrecedentsOutput = z.infer<typeof precedentsOutputSchema>;
 export type CompatibilityOutput = z.infer<typeof compatibilityOutputSchema>;
 export type ResolutionOption = z.infer<typeof resolutionOptionSchema>;

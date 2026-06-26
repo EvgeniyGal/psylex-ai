@@ -226,6 +226,7 @@ export const platformSettings = pgTable("platform_settings", {
   id: text("id").primaryKey().default("default"),
   openaiApiKey: text("openai_api_key").notNull().default(""),
   airtableApiKey: text("airtable_api_key").notNull().default(""),
+  legalDataHunterApiKey: text("legal_data_hunter_api_key").notNull().default(""),
   testPersonalityTypeUrl: text("test_personality_type_url").notNull().default(""),
   testFaceFearUrl: text("test_face_fear_url").notNull().default(""),
   testCharacterTraitsUrl: text("test_character_traits_url").notNull().default(""),

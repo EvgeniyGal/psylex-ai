@@ -78,6 +78,7 @@ export function unwrapAgentJsonPayload(raw: unknown): unknown {
     applicable_norms: "applicableNorms",
     needs_jurisdiction_clarification: "needsJurisdictionClarification",
     jurisdiction_question: "jurisdictionQuestion",
+    side_clarifications: "sideClarifications",
     friction_points: "frictionPoints",
     common_ground: "commonGround",
     needs_clarification: "needsClarification",

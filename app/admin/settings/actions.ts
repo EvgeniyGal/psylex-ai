@@ -26,6 +26,7 @@ export async function saveApiCredentials(formData: FormData) {
 
   const openaiApiKey = optionalString(formData.get("openaiApiKey"));
   const airtableApiKey = optionalString(formData.get("airtableApiKey"));
+  const legalDataHunterApiKey = optionalString(formData.get("legalDataHunterApiKey"));
 
   await getPlatformSettings();
 
@@ -34,6 +35,7 @@ export async function saveApiCredentials(formData: FormData) {
     .set({
       openaiApiKey,
       airtableApiKey,
+      legalDataHunterApiKey,
       updatedAt: new Date(),
     })
     .where(eq(platformSettings.id, "default"));

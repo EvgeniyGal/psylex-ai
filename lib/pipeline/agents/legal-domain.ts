@@ -7,9 +7,12 @@ import {
   runAgentCompletion,
   unwrapAgentJsonPayload,
 } from "@/lib/pipeline/openai-client";
+import { getLatestClarificationAnswer } from "@/lib/pipeline/legal-domain-history";
 import {
   legalDomainOutputSchema,
+  type LegalDomainClarificationRequest,
   type LegalDomainOutput,
+  type LegalDomainSideInput,
   type PipelineContext,
 } from "@/lib/pipeline/types";
 import type { Locale } from "@/lib/i18n";
@@ -24,12 +27,24 @@ async function getAgentPrompt(agentKey: AgentKey) {
   return row.systemPrompt;
 }
 
-const LEGAL_DOMAIN_OUTPUT_GUIDE = `Respond with a single JSON object containing exactly these keys:
+const LEGAL_DOMAIN_OUTPUT_GUIDE = `Analyze ALL participant data below before responding. Each participant entry includes their situation description and full prior clarification history (question/answer pairs).
+
+Respond with a single JSON object containing exactly these keys:
 - legalDomain (string): area of law
-- jurisdiction (string | null): identified jurisdiction, or null if unknown
+- jurisdiction (string | null): identified jurisdiction, or null if still unknown
 - applicableNorms (string): summary of applicable legal norms
-- needsJurisdictionClarification (boolean): true when participants must clarify jurisdiction
-- jurisdictionQuestion (string | null): clarification question for participants, or null`;
+- needsJurisdictionClarification (boolean): true when at least one participant must still clarify
+- jurisdictionQuestion (string | null): legacy single question; prefer sideClarifications instead
+- sideClarifications (array): one entry per participant in the input, each with:
+  - userId (string): must match a participant userId from the input
+  - needed (boolean): true only if THIS participant must answer a new targeted question
+  - question (string | null): specific question for that participant in English, or null when needed is false
+
+Rules:
+- Cross-check both participants' situations and all prior clarifications before asking anything.
+- Do not set needed:true for a participant if the information is already stated by either side.
+- Ask only the participant(s) who can supply missing facts; tailor each question to what that side has not yet provided.
+- If jurisdiction and legal domain can be determined from available data, set jurisdiction and mark every side needed:false.`;
 
 function pickString(obj: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -58,6 +73,26 @@ function pickBoolean(obj: Record<string, unknown>, keys: string[]) {
   return undefined;
 }
 
+function normalizeSideClarifications(raw: unknown): LegalDomainClarificationRequest[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+
+  const parsed: LegalDomainClarificationRequest[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const userId = pickString(row, ["userId", "user_id", "participantUserId", "participant_user_id"]);
+    if (!userId) continue;
+
+    const needed = pickBoolean(row, ["needed", "needsClarification", "needs_clarification"]) ?? false;
+    const question =
+      pickNullableString(row, ["question", "jurisdictionQuestion", "jurisdiction_question"]) ?? null;
+
+    parsed.push({ userId, needed, question });
+  }
+
+  return parsed.length > 0 ? parsed : undefined;
+}
+
 function normalizeLegalDomainPayload(raw: unknown): unknown {
   const unwrapped = unwrapAgentJsonPayload(raw);
   if (!unwrapped || typeof unwrapped !== "object" || Array.isArray(unwrapped)) {
@@ -66,8 +101,12 @@ function normalizeLegalDomainPayload(raw: unknown): unknown {
 
   const obj = unwrapped as Record<string, unknown>;
   const jurisdiction = pickNullableString(obj, ["jurisdiction"]);
+  const sideClarifications = normalizeSideClarifications(
+    obj.sideClarifications ?? obj.side_clarifications ?? obj.clarificationRequests,
+  );
+  const needsFromSides = sideClarifications?.some((side) => side.needed) ?? false;
   const needsJurisdictionClarification =
-    pickBoolean(obj, ["needsJurisdictionClarification"]) ?? !jurisdiction;
+    pickBoolean(obj, ["needsJurisdictionClarification"]) ?? needsFromSides ?? !jurisdiction;
 
   return {
     legalDomain: pickString(obj, ["legalDomain", "domain", "areaOfLaw", "area_of_law"]) ?? "",
@@ -76,6 +115,7 @@ function normalizeLegalDomainPayload(raw: unknown): unknown {
       pickString(obj, ["applicableNorms", "norms", "legalNorms", "legal_norms"]) ?? "",
     needsJurisdictionClarification,
     jurisdictionQuestion: pickNullableString(obj, ["jurisdictionQuestion"]) ?? null,
+    sideClarifications,
   };
 }
 
@@ -84,14 +124,52 @@ function parseLegalDomainOutput(raw: string) {
   return legalDomainOutputSchema.safeParse(parsed);
 }
 
+export function resolveSideClarificationRequests(
+  result: LegalDomainOutput,
+  sides: Array<{ id: string }>,
+  participants: LegalDomainSideInput[],
+): LegalDomainClarificationRequest[] {
+  if (result.sideClarifications?.length) {
+    const byUserId = new Map(result.sideClarifications.map((entry) => [entry.userId, entry]));
+    return sides.map(
+      (side) =>
+        byUserId.get(side.id) ?? {
+          userId: side.id,
+          needed: false,
+          question: null,
+        },
+    );
+  }
+
+  if (!result.needsJurisdictionClarification) {
+    return sides.map((side) => ({ userId: side.id, needed: false, question: null }));
+  }
+
+  const fallbackQuestion = result.jurisdictionQuestion;
+  return sides.map((side) => {
+    const participant = participants.find((entry) => entry.userId === side.id);
+    const hasAnswered = participant ? Boolean(getLatestClarificationAnswer(participant)) : false;
+    return {
+      userId: side.id,
+      needed: !hasAnswered && Boolean(fallbackQuestion?.trim()),
+      question: fallbackQuestion,
+    };
+  });
+}
+
 export async function runLegalDomainAgent(
   ctx: PipelineContext,
-  jurisdictionAnswers?: Record<string, string>,
+  participants: LegalDomainSideInput[],
 ): Promise<LegalDomainOutput> {
   const systemPrompt = await getAgentPrompt("legal_domain");
   const payload = {
+    participants: participants.map((side) => ({
+      userId: side.userId,
+      role: side.role,
+      situation: side.situation,
+      priorClarifications: side.priorClarifications,
+    })),
     situations: ctx.situations,
-    jurisdictionAnswers: jurisdictionAnswers ?? {},
   };
   const userMessage = `${JSON.stringify(payload, null, 2)}\n\n${LEGAL_DOMAIN_OUTPUT_GUIDE}`;
 
