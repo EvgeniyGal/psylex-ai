@@ -22,7 +22,7 @@ The admin dashboard SHALL be accessible only to users with the `admin` role.
 
 ### Requirement: Tab navigation
 
-The admin dashboard SHALL provide sidebar navigation with Rooms, Mediators, and Settings. The Settings page SHALL provide horizontal tab navigation with three tabs: Credentials, Tests, and Prompts.
+The admin dashboard SHALL provide sidebar navigation with Rooms, Mediators, and Settings. The Settings page SHALL provide horizontal tab navigation with four tabs: Credentials, Tests, Prompts, and RAG.
 
 #### Scenario: Sidebar tab switching
 
@@ -40,11 +40,18 @@ The admin dashboard SHALL provide sidebar navigation with Rooms, Mediators, and 
 - **WHEN** an admin opens Settings and clicks the Prompts tab
 - **THEN** the Prompts content is displayed
 - **AND** the Prompts tab is visually active
-- **AND** Credentials and Tests tabs remain accessible
+- **AND** Credentials, Tests, and RAG tabs remain accessible
+
+#### Scenario: RAG settings tab navigation
+
+- **WHEN** an admin opens Settings and clicks the RAG tab
+- **THEN** the RAG management interface is displayed within the Settings page at `/admin/settings`
+- **AND** the RAG tab is visually active
+- **AND** Credentials, Tests, and Prompts tabs remain accessible
 
 ### Requirement: Settings placeholder
 
-The Settings page SHALL retain existing configuration tabs and add a **Prompts** tab for agent prompt management. The Settings placeholder is fully replaced by functional settings tabs.
+The Settings page SHALL retain existing configuration tabs and add functional **Prompts** and **RAG** tabs. The Settings placeholder is fully replaced by functional settings tabs.
 
 #### Scenario: Settings shows Credentials and Tests tabs
 
@@ -56,6 +63,12 @@ The Settings page SHALL retain existing configuration tabs and add a **Prompts**
 - **WHEN** an admin selects the Prompts tab within Settings
 - **THEN** editors for all four agent system prompts are displayed
 - **AND** prompt testing actions are available on that tab
+
+#### Scenario: Settings shows RAG tab
+
+- **WHEN** an admin selects the RAG tab within Settings
+- **THEN** the legal document management and test inquiry interface is displayed
+- **AND** Credentials, Tests, and Prompts tabs remain accessible
 
 ### Requirement: Room pipeline log access
 

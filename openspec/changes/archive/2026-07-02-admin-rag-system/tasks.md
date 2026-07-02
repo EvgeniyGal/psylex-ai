@@ -48,9 +48,9 @@
 
 ## 7. Verification
 
-- [ ] 7.1 Upload a TXT, PDF, and DOCX document for each jurisdiction; confirm `ready` status
-- [ ] 7.2 Run test inquiry against Ukrainian document; verify cited answer references correct source URL
-- [ ] 7.3 Run test inquiry against American document in `contract` category; verify category isolation (no cross-category results when filter applied)
-- [ ] 7.4 Delete a document; confirm chunks removed and search returns no results for it
-- [ ] 7.5 Confirm non-admin users cannot access Settings RAG tab via `/admin/settings`
-- [ ] 7.6 Upload documents in at least two categories per jurisdiction; verify category appears in list and is editable
+- [x] 7.1 Upload a TXT, PDF, and DOCX document for each jurisdiction; confirm `ready` status
+- [x] 7.2 Run test inquiry against Ukrainian document; verify cited answer references correct source URL
+- [x] 7.3 Run test inquiry against American document in `contract` category; verify category isolation (no cross-category results when filter applied)
+- [x] 7.4 Delete a document; confirm chunks removed and search returns no results for it
+- [x] 7.5 Confirm non-admin users cannot access Settings RAG tab via `/admin/settings`
+- [x] 7.6 Upload documents in at least two categories per jurisdiction; verify category appears in list and is editable
