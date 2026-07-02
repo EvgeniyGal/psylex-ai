@@ -44,9 +44,11 @@ function roleIcon(role: string) {
 function ParticipantSection({
   participant,
   readOnly,
+  showCredentials,
 }: {
   participant: RoomUserRow;
   readOnly: boolean;
+  showCredentials: boolean;
 }) {
   const { admin } = useLocale();
   const router = useRouter();
@@ -138,7 +140,7 @@ function ParticipantSection({
         ) : null}
       </form>
 
-      {!readOnly ? (
+      {showCredentials ? (
         <>
           <div className="space-y-4">
             <CredentialField label={admin.loginLabel} value={participant.login} />
@@ -162,13 +164,16 @@ export function RoomDetailContent({
   pipelineStatus,
   basePath = "/admin/rooms",
   readOnly = false,
+  showCredentials,
 }: {
   room: RoomDetailRow;
   participants: RoomUserRow[];
   pipelineStatus: string;
   basePath?: string;
   readOnly?: boolean;
+  showCredentials?: boolean;
 }) {
+  const credentialsVisible = showCredentials ?? !readOnly;
   const { admin, locale } = useLocale();
   const router = useRouter();
   const jurisdictionDisplay = jurisdictionLabels(locale)[room.jurisdiction];
@@ -305,7 +310,12 @@ export function RoomDetailContent({
         <h4 className="mb-4 font-display text-headline-md text-on-surface">{admin.participants}</h4>
         <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-2">
           {orderedParticipants.map((participant) => (
-            <ParticipantSection key={participant.id} participant={participant} readOnly={readOnly} />
+            <ParticipantSection
+              key={participant.id}
+              participant={participant}
+              readOnly={readOnly}
+              showCredentials={credentialsVisible}
+            />
           ))}
         </div>
       </div>

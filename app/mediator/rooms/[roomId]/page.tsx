@@ -36,6 +36,7 @@ export default async function MediatorRoomDetailPage({
       participants={participants}
       pipelineStatus={pipeline?.status ?? "awaiting_situations"}
       readOnly
+      showCredentials
       room={room}
     />
   );
