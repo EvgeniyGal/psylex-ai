@@ -26,7 +26,6 @@ export default async function TestsPage() {
     key: test.key,
     url: resolveTestUrl(String(settings[TEST_URL_MAP[test.key]] ?? "")),
     completed: test.completed,
-    unlocked: test.unlocked,
   }));
 
   return (

@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userTestCompletions, users } from "@/drizzle/schema";
 import { isParticipantRole, type ParticipantRole } from "@/lib/participant-roles";
-import { isTestUnlocked, TEST_KEYS, type TestKey } from "@/lib/test-keys";
+import { TEST_KEYS, type TestKey } from "@/lib/test-keys";
 
 export type OnboardingStep = "welcome" | "consent" | "tests" | "complete";
 
@@ -119,6 +119,5 @@ export function getTestStatuses(completedTests: TestKey[]) {
   return TEST_KEYS.map((key) => ({
     key,
     completed: completedSet.has(key),
-    unlocked: isTestUnlocked(key, completedSet),
   }));
 }

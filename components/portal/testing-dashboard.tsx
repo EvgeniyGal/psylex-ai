@@ -29,7 +29,6 @@ type TestDefinition = {
   key: TestKey;
   url: string;
   completed: boolean;
-  unlocked: boolean;
 };
 
 type TestingDashboardProps = {
@@ -100,7 +99,6 @@ export function TestingDashboard({
             {tests.map((test) => {
               const meta = t.testMeta[test.key];
               const testUrl = buildTestUrl(test.url, login);
-              const isLocked = !test.unlocked;
               const showOpenTest = !test.completed && !!testUrl;
 
               return (
@@ -152,9 +150,7 @@ export function TestingDashboard({
                       </div>
                     ) : (
                       <div className={failedBadgeClass}>
-                        <span className="material-symbols-outlined text-sm">
-                          {isLocked ? "lock" : "pending"}
-                        </span>
+                        <span className="material-symbols-outlined text-sm">pending</span>
                         <span className="font-display text-label-md uppercase">{t.notPassed}</span>
                       </div>
                     )}
