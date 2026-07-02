@@ -59,6 +59,7 @@ type PortalCopy = {
   mediationOppositeNotReady: string;
   mediationStart: string;
   mediationYourStatus: string;
+  mediationAgentsWorking: string;
   backToStart: string;
   logout: string;
   roomTitle: string;
@@ -170,6 +171,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       "The opposite side is not ready for mediation yet. They may still be completing tests or answering the dispute questions.",
     mediationStart: "Start Mediation",
     mediationYourStatus: "Your status",
+    mediationAgentsWorking:
+      "Our analysis agents are preparing your mediation session. This may take several minutes. Please wait — the Start Mediation button will become available when analysis is complete.",
     backToStart: "Back to start",
     logout: "Logout",
     roomTitle: "Mediation room",
@@ -280,6 +283,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       "Інша сторона ще не готова до медіації. Вона може ще проходити тести або відповідати на запитання про спір.",
     mediationStart: "Почати медіацію",
     mediationYourStatus: "Ваш статус",
+    mediationAgentsWorking:
+      "Агенти аналізу готують вашу сесію медіації. Це може зайняти кілька хвилин. Зачекайте — кнопка «Почати медіацію» стане доступною після завершення аналізу.",
     backToStart: "На головну",
     logout: "Вийти",
     roomTitle: "Кімната медіації",

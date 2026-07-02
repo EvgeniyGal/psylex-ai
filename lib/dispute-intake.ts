@@ -4,6 +4,10 @@ import { rooms, userTestCompletions, users, type users as usersTable } from "@/d
 import { TEST_KEYS } from "@/lib/test-keys";
 import { getRoomSides } from "@/lib/room/helpers";
 import type { ParticipantRole } from "@/lib/participant-roles";
+import {
+  canTriggerPostIntakePipeline,
+  isPostIntakePipelineComplete,
+} from "@/lib/pipeline/gate";
 
 export type SideReadiness = {
   userId: string;
@@ -77,11 +81,19 @@ export async function getMediationLobbyData(userId: string) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, user.roomId)).limit(1);
   if (!room) return null;
 
+  const bothReady = selfReadiness.mediationReady && !!oppositeReadiness?.mediationReady;
+  const pipelineComplete = await isPostIntakePipelineComplete(room.id);
+  const pipelineRunning = bothReady && !pipelineComplete && (await canTriggerPostIntakePipeline(room.id));
+  const canStartMediation = bothReady && pipelineComplete;
+
   return {
     room,
     self: selfReadiness,
     opposite: oppositeReadiness,
     oppositeRole,
-    bothReady: selfReadiness.mediationReady && !!oppositeReadiness?.mediationReady,
+    bothReady,
+    pipelineComplete,
+    pipelineRunning,
+    canStartMediation,
   };
 }

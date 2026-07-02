@@ -69,6 +69,12 @@ export const rooms = pgTable("rooms", {
   description: text("description").notNull(),
   jurisdiction: roomJurisdiction("jurisdiction").notNull().default("ukraine"),
   createdByUserId: uuid("created_by_user_id"),
+  interestsAnalysis: jsonb("interests_analysis"),
+  interestsAnalysisAt: timestamp("interests_analysis_at", { withTimezone: true }),
+  legalAnalysis: jsonb("legal_analysis"),
+  legalAnalysisAt: timestamp("legal_analysis_at", { withTimezone: true }),
+  postIntakePipelineStartedAt: timestamp("post_intake_pipeline_started_at", { withTimezone: true }),
+  postIntakePipelineCompletedAt: timestamp("post_intake_pipeline_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -89,6 +95,10 @@ export const users = pgTable("users", {
   disputePriority: text("dispute_priority"),
   disputeAcceptableOutcome: text("dispute_acceptable_outcome"),
   disputeIntakeSubmittedAt: timestamp("dispute_intake_submitted_at", { withTimezone: true }),
+  psychodynamicProfile: jsonb("psychodynamic_profile"),
+  psychodynamicProfileAt: timestamp("psychodynamic_profile_at", { withTimezone: true }),
+  emotionalTriggers: jsonb("emotional_triggers"),
+  emotionalTriggersAt: timestamp("emotional_triggers_at", { withTimezone: true }),
   preferredLocale: preferredLocale("preferred_locale").notNull().default("en"),
 });
 
@@ -199,5 +209,35 @@ export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
   document: one(legalDocuments, {
     fields: [documentChunks.documentId],
     references: [legalDocuments.id],
+  }),
+}));
+
+export const agentPrompts = pgTable("agent_prompts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  agentKey: text("agent_key").notNull().unique(),
+  systemPrompt: text("system_prompt").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const pipelineEventLogs = pgTable("pipeline_event_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => rooms.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  agentKey: text("agent_key"),
+  eventType: text("event_type").notNull(),
+  payload: jsonb("payload"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const pipelineEventLogsRelations = relations(pipelineEventLogs, ({ one }) => ({
+  room: one(rooms, {
+    fields: [pipelineEventLogs.roomId],
+    references: [rooms.id],
+  }),
+  user: one(users, {
+    fields: [pipelineEventLogs.userId],
+    references: [users.id],
   }),
 }));

@@ -8,6 +8,11 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
+import {
+  canTriggerPostIntakePipeline,
+  isPostIntakePipelineComplete,
+} from "@/lib/pipeline/gate";
+import { tryRunPostIntakePipeline } from "@/lib/pipeline/trigger";
 import { disputeIntakeSchema } from "@/lib/dispute-intake-schema";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 
@@ -67,6 +72,10 @@ export async function submitDisputeIntake(formData: FormData) {
     })
     .where(eq(users.id, user.id));
 
+  if (user.roomId) {
+    tryRunPostIntakePipeline(user.roomId);
+  }
+
   revalidatePath("/dispute-intake");
   revalidatePath("/mediation");
   redirect("/mediation");
@@ -83,6 +92,10 @@ export async function startMediation() {
   const lobby = await getMediationLobbyData(user.id);
 
   if (!lobby?.bothReady) {
+    redirect("/mediation");
+  }
+
+  if (!lobby.pipelineComplete) {
     redirect("/mediation");
   }
 

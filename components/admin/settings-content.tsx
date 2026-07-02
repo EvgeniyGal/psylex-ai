@@ -3,9 +3,11 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveApiCredentials, saveTestLinks } from "@/app/admin/settings/actions";
+import { AgentPromptsSettingsContent } from "@/components/admin/agent-prompts-settings-content";
 import { RagSettingsContent } from "@/components/admin/rag-settings-content";
 import { useLocale } from "@/components/locale-provider";
 import type { LegalDocumentRow } from "@/lib/rag/types";
+import type { AgentKey } from "@/lib/pipeline/agent-keys";
 
 export type PlatformSettingsRow = {
   id: string;
@@ -27,9 +29,10 @@ type SettingsTab = (typeof tabs)[number];
 type SettingsContentProps = {
   settings: PlatformSettingsRow;
   documents: LegalDocumentRow[];
+  prompts: { agentKey: AgentKey; systemPrompt: string }[];
 };
 
-export function SettingsContent({ settings, documents }: SettingsContentProps) {
+export function SettingsContent({ settings, documents, prompts }: SettingsContentProps) {
   const { admin } = useLocale();
   const [activeTab, setActiveTab] = useState<SettingsTab>("credentials");
   const [credentialsPending, startCredentialsTransition] = useTransition();
@@ -152,10 +155,7 @@ export function SettingsContent({ settings, documents }: SettingsContentProps) {
             </button>
           </form>
         ) : activeTab === "prompts" ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="mb-2 font-display text-headline-md text-on-surface-variant">{admin.comingSoon}</p>
-            <p className="max-w-md text-body-md text-on-surface-variant">{admin.promptsComingSoonDesc}</p>
-          </div>
+          <AgentPromptsSettingsContent prompts={prompts} />
         ) : (
           <RagSettingsContent documents={documents} />
         )}

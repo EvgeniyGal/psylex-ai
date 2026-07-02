@@ -1,6 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { startMediation } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
@@ -13,6 +14,8 @@ type MediationLobbyProps = {
   opposite: SideReadiness | null;
   oppositeRole: "side1" | "side2";
   bothReady: boolean;
+  pipelineRunning: boolean;
+  canStartMediation: boolean;
   viewerRole: ParticipantRole;
 };
 
@@ -37,10 +40,23 @@ export function MediationLobby({
   opposite,
   oppositeRole,
   bothReady,
+  pipelineRunning,
+  canStartMediation,
   viewerRole,
 }: MediationLobbyProps) {
   const { portal: t } = useLocale();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!pipelineRunning) return;
+
+    const intervalId = window.setInterval(() => {
+      router.refresh();
+    }, 20000);
+
+    return () => window.clearInterval(intervalId);
+  }, [pipelineRunning, router]);
 
   const handleStart = () => {
     startTransition(async () => {
@@ -93,9 +109,16 @@ export function MediationLobby({
             </div>
           ) : null}
 
+          {pipelineRunning ? (
+            <div className="flex w-full items-start gap-3 rounded-lg border border-tertiary/30 bg-tertiary/10 p-4">
+              <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
+              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
+            </div>
+          ) : null}
+
           <button
             className="btn-primary flex w-full items-center justify-center gap-2 px-8 py-4 font-display text-label-md disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
-            disabled={!bothReady || isPending}
+            disabled={!canStartMediation || isPending}
             onClick={handleStart}
             type="button"
           >

@@ -123,6 +123,23 @@ export type AdminCopy = {
   ragProcessingIncomplete: string;
   ragFileLabel: string;
   promptsComingSoonDesc: string;
+  agentPromptsSubtitle: string;
+  agentTabPsychodynamic: string;
+  agentTabInterests: string;
+  agentTabEmotionalTriggers: string;
+  agentTabLegalAnalysis: string;
+  agentSystemPrompt: string;
+  agentTestPanel: string;
+  agentTestSelectUser: string;
+  agentTestSelectRoom: string;
+  agentTestRun: string;
+  agentTestInput: string;
+  agentTestResult: string;
+  agentTestPersonalBotPrompt: string;
+  agentTestDisputeAnswers: string;
+  agentTestJurisdiction: string;
+  agentTestResponseLocale: string;
+  agentPromptSaved: string;
   comingSoon: string;
   comingSoonDesc: string;
   general: string;
@@ -261,6 +278,23 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragFileLabel: "File (TXT, PDF, DOCX)",
     promptsComingSoonDesc:
       "AI prompt configuration will be available here in a future release.",
+    agentPromptsSubtitle: "Edit system prompts and test each post-intake analysis agent in isolation.",
+    agentTabPsychodynamic: "Psychodynamic",
+    agentTabInterests: "Interests",
+    agentTabEmotionalTriggers: "Emotional Triggers",
+    agentTabLegalAnalysis: "Legal Analysis",
+    agentSystemPrompt: "System prompt",
+    agentTestPanel: "Test agent",
+    agentTestSelectUser: "Select participant",
+    agentTestSelectRoom: "Select room",
+    agentTestRun: "Run test",
+    agentTestInput: "Input data",
+    agentTestResult: "Result",
+    agentTestPersonalBotPrompt: "Personal bot prompt",
+    agentTestDisputeAnswers: "Dispute answers",
+    agentTestJurisdiction: "Jurisdiction",
+    agentTestResponseLocale: "Response language",
+    agentPromptSaved: "Agent prompt saved",
     comingSoon: "COMING SOON",
     comingSoonDesc:
       "Application settings are not yet available in this MVP. Future releases will include notification preferences, branding options, and integration controls.",
@@ -403,6 +437,23 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragFileLabel: "Файл (TXT, PDF, DOCX)",
     promptsComingSoonDesc:
       "Налаштування AI-промптів буде доступне тут у майбутньому релізі.",
+    agentPromptsSubtitle: "Редагуйте системні промпти та тестуйте кожного агента пост-інтейк аналізу окремо.",
+    agentTabPsychodynamic: "Психодинаміка",
+    agentTabInterests: "Інтереси",
+    agentTabEmotionalTriggers: "Емоційні тригери",
+    agentTabLegalAnalysis: "Правовий аналіз",
+    agentSystemPrompt: "Системний промпт",
+    agentTestPanel: "Тест агента",
+    agentTestSelectUser: "Оберіть учасника",
+    agentTestSelectRoom: "Оберіть кімнату",
+    agentTestRun: "Запустити тест",
+    agentTestInput: "Вхідні дані",
+    agentTestResult: "Результат",
+    agentTestPersonalBotPrompt: "Промпт персонального бота",
+    agentTestDisputeAnswers: "Відповіді про спір",
+    agentTestJurisdiction: "Юрисдикція",
+    agentTestResponseLocale: "Мова відповіді",
+    agentPromptSaved: "Промпт агента збережено",
     comingSoon: "НЕЗАБАРОМ",
     comingSoonDesc:
       "Налаштування застосунку ще недоступні в цьому MVP. У майбутніх релізах з’являться сповіщення, брендинг та інтеграції.",

@@ -29,7 +29,7 @@ export default async function RoomPage() {
   }
 
   const lobby = await getMediationLobbyData(userId);
-  if (!lobby?.bothReady) {
+  if (!lobby?.canStartMediation) {
     redirect("/mediation");
   }
 
