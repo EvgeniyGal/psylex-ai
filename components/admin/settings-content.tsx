@@ -3,14 +3,12 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveApiCredentials, saveTestLinks } from "@/app/admin/settings/actions";
-import { PromptsPanel } from "@/components/admin/prompts-panel";
 import { useLocale } from "@/components/locale-provider";
 
 export type PlatformSettingsRow = {
   id: string;
   openaiApiKey: string;
   airtableApiKey: string;
-  legalDataHunterApiKey: string;
   testPersonalityTypeUrl: string;
   testFaceFearUrl: string;
   testCharacterTraitsUrl: string;
@@ -26,15 +24,9 @@ type SettingsTab = (typeof tabs)[number];
 
 type SettingsContentProps = {
   settings: PlatformSettingsRow;
-  agentPrompts: {
-    legal_domain: string;
-    precedents: string;
-    compatibility: string;
-    synthesis: string;
-  };
 };
 
-export function SettingsContent({ settings, agentPrompts }: SettingsContentProps) {
+export function SettingsContent({ settings }: SettingsContentProps) {
   const { admin } = useLocale();
   const [activeTab, setActiveTab] = useState<SettingsTab>("credentials");
   const [credentialsPending, startCredentialsTransition] = useTransition();
@@ -120,19 +112,6 @@ export function SettingsContent({ settings, agentPrompts }: SettingsContentProps
                   type="password"
                 />
               </div>
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-body-sm text-on-surface-variant">
-                  {admin.legalDataHunterApiKeyLabel}
-                </label>
-                <input
-                  className={inputClass}
-                  defaultValue={settings.legalDataHunterApiKey}
-                  name="legalDataHunterApiKey"
-                  placeholder="sk-..."
-                  type="password"
-                />
-                <p className="mt-1 text-body-sm text-on-surface-variant">{admin.legalDataHunterApiKeyHelp}</p>
-              </div>
             </div>
             <button
               className="rounded-lg bg-tertiary px-6 py-2.5 text-body-sm font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 disabled:opacity-60"
@@ -169,7 +148,10 @@ export function SettingsContent({ settings, agentPrompts }: SettingsContentProps
             </button>
           </form>
         ) : (
-          <PromptsPanel prompts={agentPrompts} />
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="mb-2 font-display text-headline-md text-on-surface-variant">{admin.comingSoon}</p>
+            <p className="max-w-md text-body-md text-on-surface-variant">{admin.promptsComingSoonDesc}</p>
+          </div>
         )}
       </div>
     </section>

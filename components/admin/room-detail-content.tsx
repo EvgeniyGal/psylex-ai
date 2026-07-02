@@ -161,14 +161,12 @@ function ParticipantSection({
 export function RoomDetailContent({
   room,
   participants,
-  pipelineStatus,
   basePath = "/admin/rooms",
   readOnly = false,
   showCredentials,
 }: {
   room: RoomDetailRow;
   participants: RoomUserRow[];
-  pipelineStatus: string;
   basePath?: string;
   readOnly?: boolean;
   showCredentials?: boolean;
@@ -222,18 +220,6 @@ export function RoomDetailContent({
         <div>
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h3 className="font-display text-headline-lg text-on-surface">{room.title}</h3>
-            <span className="status-chip-active flex items-center gap-1 rounded px-3 py-1 font-display text-label-md">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-tertiary" />
-              {admin.pipelineStatus}: {pipelineStatus}
-            </span>
-            {!readOnly ? (
-              <Link
-                className="rounded-lg border border-outline-variant/30 px-3 py-1 text-label-md text-on-surface hover:border-tertiary"
-                href={`${basePath}/${room.id}/pipeline-log`}
-              >
-                {admin.pipelineLog}
-              </Link>
-            ) : null}
           </div>
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-on-surface-variant">
             <span className="flex items-center gap-1">

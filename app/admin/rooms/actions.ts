@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
-import { rooms, roomPipelineStates, users } from "@/drizzle/schema";
+import { rooms, users } from "@/drizzle/schema";
 import { authOptions } from "@/lib/auth";
 import { requireSessionUserId } from "@/lib/auth-session";
 import { generateLogin, generatePassword } from "@/lib/generate-credentials";
-import { isRoomJurisdiction, jurisdictionToPipelineString } from "@/lib/room/jurisdiction";
+import { isRoomJurisdiction } from "@/lib/room/jurisdiction";
 
 function required(value: FormDataEntryValue | null, field: string) {
   const text = String(value ?? "").trim();
@@ -41,8 +41,6 @@ export async function createRoom(formData: FormData) {
     throw new Error("Invalid jurisdiction");
   }
 
-  const pipelineJurisdiction = jurisdictionToPipelineString(jurisdictionRaw);
-
   const [room] = await db
     .insert(rooms)
     .values({
@@ -52,11 +50,6 @@ export async function createRoom(formData: FormData) {
       createdByUserId: role === "mediator" ? userId : null,
     })
     .returning();
-
-  await db.insert(roomPipelineStates).values({
-    roomId: room.id,
-    jurisdiction: pipelineJurisdiction,
-  });
 
   await db.insert(users).values([
     {
