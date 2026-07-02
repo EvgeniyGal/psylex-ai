@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { JurisdictionSelectModal } from "@/components/admin/jurisdiction-select-modal";
 import { useLocale } from "@/components/locale-provider";
 import { formatCredentials } from "@/lib/credentials";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
@@ -130,7 +130,6 @@ export function RoomsContent({
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [jurisdictionModalOpen, setJurisdictionModalOpen] = useState(false);
   const jurisdictionDisplay = jurisdictionLabels(locale);
 
   const tableRows = useMemo<RoomTableRow[]>(() => {
@@ -220,22 +219,15 @@ export function RoomsContent({
           <p className="max-w-xl text-on-surface-variant">{admin.roomsSubtitle}</p>
         </div>
         {showCreateButton ? (
-          <button
+          <Link
             className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
-            onClick={() => setJurisdictionModalOpen(true)}
-            type="button"
+            href={`${basePath}/new`}
           >
             <span className="material-symbols-outlined">add</span>
             {admin.newRoom}
-          </button>
+          </Link>
         ) : null}
       </div>
-
-      <JurisdictionSelectModal
-        basePath={basePath}
-        onClose={() => setJurisdictionModalOpen(false)}
-        open={jurisdictionModalOpen}
-      />
 
       {roomRows.length === 0 ? (
         <div className="glass-panel rounded-xl p-8 text-center text-on-surface-variant">{admin.noRooms}</div>

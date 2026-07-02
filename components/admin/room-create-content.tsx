@@ -1,27 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { createRoom } from "@/app/admin/rooms/actions";
 import { useLocale } from "@/components/locale-provider";
-import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
-import { jurisdictionLabels } from "@/lib/room/jurisdiction";
+import { ROOM_JURISDICTIONS, jurisdictionLabels } from "@/lib/room/jurisdiction";
 
 const inputClass =
   "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
 
-export function RoomCreateContent({
-  jurisdiction,
-  basePath = "/admin/rooms",
-}: {
-  jurisdiction: RoomJurisdiction;
-  basePath?: string;
-}) {
+export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: string }) {
   const { admin, locale } = useLocale();
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const jurisdictionDisplay = jurisdictionLabels(locale)[jurisdiction];
+  const labels = jurisdictionLabels(locale);
 
   const onSubmit = (formData: FormData) => {
     startTransition(async () => {
@@ -44,22 +35,7 @@ export function RoomCreateContent({
         <p className="max-w-xl text-on-surface-variant">{admin.createRoomSubtitle}</p>
       </div>
 
-      <div className="glass-panel inline-flex items-center gap-2 rounded-xl px-4 py-3">
-        <span className="material-symbols-outlined text-tertiary">gavel</span>
-        <span className="text-body-sm text-on-surface-variant">{admin.jurisdictionLabel}:</span>
-        <span className="text-body-sm font-semibold text-on-surface">{jurisdictionDisplay}</span>
-        <button
-          className="ml-2 text-body-sm font-semibold text-tertiary hover:underline"
-          onClick={() => router.push(basePath)}
-          type="button"
-        >
-          {admin.changeJurisdiction}
-        </button>
-      </div>
-
       <form action={onSubmit} className="space-y-stack-md">
-        <input name="jurisdiction" type="hidden" value={jurisdiction} />
-
         <fieldset className="glass-panel space-y-4 rounded-xl p-6">
           <legend className="mb-1 font-display text-headline-md text-on-surface">{admin.roomDetails}</legend>
           <div>
@@ -75,6 +51,33 @@ export function RoomCreateContent({
               required
               rows={3}
             />
+          </div>
+          <div>
+            <label className="mb-2 block text-body-sm text-on-surface-variant">{admin.jurisdictionLabel}</label>
+            <p className="mb-3 text-body-sm text-on-surface-variant">{admin.jurisdictionFieldHelp}</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {ROOM_JURISDICTIONS.map((value) => (
+                <label
+                  className="flex cursor-pointer flex-col items-start gap-1 rounded-xl border border-outline-variant/20 bg-surface-container-low p-4 transition-colors has-[:checked]:border-tertiary has-[:checked]:bg-tertiary/10"
+                  key={value}
+                >
+                  <span className="flex w-full items-center gap-2">
+                    <input
+                      className="h-4 w-4 accent-tertiary"
+                      defaultChecked={value === "ukraine"}
+                      name="jurisdiction"
+                      required
+                      type="radio"
+                      value={value}
+                    />
+                    <span className="font-display text-headline-sm text-on-surface">{labels[value]}</span>
+                  </span>
+                  <span className="pl-6 text-body-sm text-on-surface-variant">
+                    {value === "ukraine" ? admin.jurisdictionUkraineDesc : admin.jurisdictionUsaDesc}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
         </fieldset>
 

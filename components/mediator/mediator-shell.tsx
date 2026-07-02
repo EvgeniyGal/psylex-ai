@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useLocale } from "@/components/locale-provider";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { siteHeaderSurfaceClassName, useHeaderScrolled } from "@/components/site-header";
 import { cn } from "@/lib/utils";
 
 const navItems = [{ href: "/mediator/rooms", key: "navRooms" as const, icon: "gavel" }];
@@ -62,21 +61,5 @@ export function MediatorSidebar() {
         </button>
       </div>
     </aside>
-  );
-}
-
-export function MediatorTopBar() {
-  const { admin } = useLocale();
-  const scrolled = useHeaderScrolled();
-
-  return (
-    <header
-      className={siteHeaderSurfaceClassName(
-        scrolled,
-        "fixed left-64 right-0 top-0 z-40 flex h-20 items-center justify-between px-gutter",
-      )}
-    >
-      <h2 className="font-display text-headline-md text-primary">{admin.portalTitle}</h2>
-    </header>
   );
 }

@@ -15,13 +15,10 @@ export type AdminCopy = {
   createRoom: string;
   cancel: string;
   close: string;
-  continue: string;
-  jurisdictionModalTitle: string;
-  jurisdictionModalSubtitle: string;
+  jurisdictionFieldHelp: string;
   jurisdictionLabel: string;
   jurisdictionUkraineDesc: string;
   jurisdictionUsaDesc: string;
-  changeJurisdiction: string;
   deleteRoom: string;
   deleteRoomConfirm: string;
   returnToRooms: string;
@@ -136,14 +133,11 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     createRoom: "Create Room",
     cancel: "Cancel",
     close: "Close",
-    continue: "Continue",
-    jurisdictionModalTitle: "Select jurisdiction",
-    jurisdictionModalSubtitle:
+    jurisdictionFieldHelp:
       "Choose the legal jurisdiction for this room. This determines which laws and precedents apply throughout the mediation process.",
     jurisdictionLabel: "Jurisdiction",
     jurisdictionUkraineDesc: "Ukrainian law and legal practice",
     jurisdictionUsaDesc: "United States law and legal practice",
-    changeJurisdiction: "Change",
     deleteRoom: "Delete Room",
     deleteRoomConfirm: "Delete this room and all its participants? This cannot be undone.",
     returnToRooms: "Return to rooms",
@@ -277,14 +271,11 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     createRoom: "Створити кімнату",
     cancel: "Скасувати",
     close: "Закрити",
-    continue: "Продовжити",
-    jurisdictionModalTitle: "Оберіть юрисдикцію",
-    jurisdictionModalSubtitle:
+    jurisdictionFieldHelp:
       "Оберіть правову юрисдикцію для цієї кімнати. Вона визначатиме, які закони та прецеденти застосовуватимуться під час медіації.",
     jurisdictionLabel: "Юрисдикція",
     jurisdictionUkraineDesc: "Українське право та судова практика",
     jurisdictionUsaDesc: "Право США та судова практика",
-    changeJurisdiction: "Змінити",
     deleteRoom: "Видалити кімнату",
     deleteRoomConfirm: "Видалити цю кімнату та всіх учасників? Цю дію не можна скасувати.",
     returnToRooms: "Повернутися до кімнат",

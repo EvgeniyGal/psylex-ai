@@ -49,6 +49,7 @@ export const rooms = pgTable("rooms", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   jurisdiction: roomJurisdiction("jurisdiction").notNull().default("ukraine"),
+  createdByUserId: uuid("created_by_user_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

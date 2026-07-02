@@ -1,16 +1,5 @@
-import { redirect } from "next/navigation";
 import { RoomCreateContent } from "@/components/admin/room-create-content";
-import { isRoomJurisdiction } from "@/lib/room/jurisdiction";
 
-export default async function AdminRoomCreatePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ jurisdiction?: string }>;
-}) {
-  const { jurisdiction } = await searchParams;
-  if (!jurisdiction || !isRoomJurisdiction(jurisdiction)) {
-    redirect("/admin/rooms");
-  }
-
-  return <RoomCreateContent jurisdiction={jurisdiction} />;
+export default function AdminRoomCreatePage() {
+  return <RoomCreateContent />;
 }

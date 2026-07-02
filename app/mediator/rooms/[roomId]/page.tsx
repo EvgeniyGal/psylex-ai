@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { roomPipelineStates, rooms, users } from "@/drizzle/schema";
+import { requireSessionUserId } from "@/lib/auth-session";
 import { ensurePipelineState } from "@/lib/room/helpers";
 import { RoomDetailContent } from "@/components/admin/room-detail-content";
 
@@ -11,8 +12,13 @@ export default async function MediatorRoomDetailPage({
   params: Promise<{ roomId: string }>;
 }) {
   const { roomId } = await params;
+  const userId = await requireSessionUserId();
 
-  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  const [room] = await db
+    .select()
+    .from(rooms)
+    .where(and(eq(rooms.id, roomId), eq(rooms.createdByUserId, userId)))
+    .limit(1);
   if (!room) notFound();
 
   await ensurePipelineState(roomId);

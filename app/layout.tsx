@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AppProviders } from "@/components/app-providers";
-import { SiteFooter } from "@/components/site-footer";
+import { ConditionalSiteFooter } from "@/components/conditional-site-footer";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -39,7 +39,7 @@ export default function RootLayout({
         <AppProviders>
           <div className="flex min-h-screen flex-col">
             <div className="flex-grow">{children}</div>
-            <SiteFooter />
+            <ConditionalSiteFooter />
           </div>
         </AppProviders>
         <Toaster richColors />

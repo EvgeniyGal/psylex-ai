@@ -1,10 +1,17 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rooms, users } from "@/drizzle/schema";
+import { requireSessionUserId } from "@/lib/auth-session";
 import { RoomsContent } from "@/components/admin/rooms-content";
 
 export default async function MediatorRoomsPage() {
-  const roomRows = await db.select().from(rooms).orderBy(desc(rooms.createdAt));
+  const userId = await requireSessionUserId();
+
+  const roomRows = await db
+    .select()
+    .from(rooms)
+    .where(eq(rooms.createdByUserId, userId))
+    .orderBy(desc(rooms.createdAt));
 
   const participantsByRoom = await Promise.all(
     roomRows.map(async (room) => ({

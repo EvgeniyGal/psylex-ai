@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
 import { rooms, roomPipelineStates, users } from "@/drizzle/schema";
 import { authOptions } from "@/lib/auth";
+import { requireSessionUserId } from "@/lib/auth-session";
 import { generateLogin, generatePassword } from "@/lib/generate-credentials";
 import { isRoomJurisdiction, jurisdictionToPipelineString } from "@/lib/room/jurisdiction";
 
@@ -22,11 +23,12 @@ async function assertCanManageRooms() {
   if (!session || (role !== "admin" && role !== "mediator")) {
     throw new Error("Unauthorized");
   }
-  return role;
+  const userId = await requireSessionUserId();
+  return { role, userId };
 }
 
 export async function createRoom(formData: FormData) {
-  const role = await assertCanManageRooms();
+  const { role, userId } = await assertCanManageRooms();
 
   const title = required(formData.get("title"), "title");
   const description = required(formData.get("description"), "description");
@@ -43,7 +45,12 @@ export async function createRoom(formData: FormData) {
 
   const [room] = await db
     .insert(rooms)
-    .values({ title, description, jurisdiction: jurisdictionRaw })
+    .values({
+      title,
+      description,
+      jurisdiction: jurisdictionRaw,
+      createdByUserId: role === "mediator" ? userId : null,
+    })
     .returning();
 
   await db.insert(roomPipelineStates).values({
