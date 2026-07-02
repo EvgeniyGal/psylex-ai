@@ -18,7 +18,7 @@ export default async function MediatorRoomsPage() {
       basePath="/mediator/rooms"
       participantsByRoom={participantsByRoom}
       roomRows={roomRows}
-      showCreateButton={false}
+      showCreateButton={true}
       showCredentialCopy={false}
       showInsights={false}
     />

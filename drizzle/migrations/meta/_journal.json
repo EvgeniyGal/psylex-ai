@@ -57,6 +57,13 @@
       "when": 1782040000000,
       "tag": "0007_legal_data_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782120000000,
+      "tag": "0008_room_jurisdiction",
+      "breakpoints": true
     }
   ]
 }

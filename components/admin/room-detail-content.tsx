@@ -11,6 +11,8 @@ import {
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
 import { useLocale } from "@/components/locale-provider";
 import { formatDateTime } from "@/lib/format-datetime";
+import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
+import { jurisdictionLabels } from "@/lib/room/jurisdiction";
 
 export type RoomUserRow = {
   id: string;
@@ -26,6 +28,7 @@ export type RoomDetailRow = {
   id: string;
   title: string;
   description: string;
+  jurisdiction: RoomJurisdiction;
   createdAt: Date;
 };
 
@@ -168,6 +171,7 @@ export function RoomDetailContent({
 }) {
   const { admin, locale } = useLocale();
   const router = useRouter();
+  const jurisdictionDisplay = jurisdictionLabels(locale)[room.jurisdiction];
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(room.title);
   const [description, setDescription] = useState(room.description);
@@ -226,9 +230,15 @@ export function RoomDetailContent({
               </Link>
             ) : null}
           </div>
-          <p className="flex items-center gap-1 text-body-sm text-on-surface-variant">
-            <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-            {formatDateTime(room.createdAt, locale)}
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-on-surface-variant">
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+              {formatDateTime(room.createdAt, locale)}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">gavel</span>
+              {admin.jurisdictionLabel}: {jurisdictionDisplay}
+            </span>
           </p>
         </div>
       </div>
@@ -243,6 +253,10 @@ export function RoomDetailContent({
           <div>
             <p className="mb-1 text-body-sm text-on-surface-variant">{admin.roomDescriptionLabel}</p>
             <p className="text-body-sm text-on-surface-variant">{room.description}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-body-sm text-on-surface-variant">{admin.jurisdictionLabel}</p>
+            <p className="text-body-md text-on-surface">{jurisdictionDisplay}</p>
           </div>
         </div>
       ) : (
@@ -272,6 +286,10 @@ export function RoomDetailContent({
               rows={3}
               value={description}
             />
+          </div>
+          <div>
+            <p className="mb-1 text-body-sm text-on-surface-variant">{admin.jurisdictionLabel}</p>
+            <p className="text-body-md text-on-surface">{jurisdictionDisplay}</p>
           </div>
           <button
             className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"

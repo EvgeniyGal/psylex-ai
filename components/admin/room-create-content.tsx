@@ -1,16 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { createRoom } from "@/app/admin/rooms/actions";
 import { useLocale } from "@/components/locale-provider";
+import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
+import { jurisdictionLabels } from "@/lib/room/jurisdiction";
 
 const inputClass =
   "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
 
-export function RoomCreateContent() {
-  const { admin } = useLocale();
+export function RoomCreateContent({
+  jurisdiction,
+  basePath = "/admin/rooms",
+}: {
+  jurisdiction: RoomJurisdiction;
+  basePath?: string;
+}) {
+  const { admin, locale } = useLocale();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const jurisdictionDisplay = jurisdictionLabels(locale)[jurisdiction];
 
   const onSubmit = (formData: FormData) => {
     startTransition(async () => {
@@ -22,7 +33,7 @@ export function RoomCreateContent() {
     <section className="space-y-stack-lg">
       <Link
         className="inline-flex items-center gap-2 text-body-sm font-semibold text-tertiary transition-colors hover:text-on-surface"
-        href="/admin/rooms"
+        href={basePath}
       >
         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         {admin.returnToRooms}
@@ -33,7 +44,22 @@ export function RoomCreateContent() {
         <p className="max-w-xl text-on-surface-variant">{admin.createRoomSubtitle}</p>
       </div>
 
+      <div className="glass-panel inline-flex items-center gap-2 rounded-xl px-4 py-3">
+        <span className="material-symbols-outlined text-tertiary">gavel</span>
+        <span className="text-body-sm text-on-surface-variant">{admin.jurisdictionLabel}:</span>
+        <span className="text-body-sm font-semibold text-on-surface">{jurisdictionDisplay}</span>
+        <button
+          className="ml-2 text-body-sm font-semibold text-tertiary hover:underline"
+          onClick={() => router.push(basePath)}
+          type="button"
+        >
+          {admin.changeJurisdiction}
+        </button>
+      </div>
+
       <form action={onSubmit} className="space-y-stack-md">
+        <input name="jurisdiction" type="hidden" value={jurisdiction} />
+
         <fieldset className="glass-panel space-y-4 rounded-xl p-6">
           <legend className="mb-1 font-display text-headline-md text-on-surface">{admin.roomDetails}</legend>
           <div>
@@ -93,7 +119,7 @@ export function RoomCreateContent() {
         <div className="flex justify-end gap-3 border-t border-outline-variant/10 pt-6">
           <Link
             className="rounded-lg border border-outline-variant/30 px-5 py-2 text-body-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high"
-            href="/admin/rooms"
+            href={basePath}
           >
             {admin.cancel}
           </Link>

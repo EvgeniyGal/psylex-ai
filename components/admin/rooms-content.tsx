@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { JurisdictionSelectModal } from "@/components/admin/jurisdiction-select-modal";
 import { useLocale } from "@/components/locale-provider";
 import { formatCredentials } from "@/lib/credentials";
+import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
+import { jurisdictionLabels } from "@/lib/room/jurisdiction";
 
 type UserRow = {
   id: string;
@@ -21,10 +23,11 @@ type RoomRow = {
   id: string;
   title: string;
   description: string;
+  jurisdiction: RoomJurisdiction;
   createdAt: Date;
 };
 
-type SortKey = "title" | "description" | "sides";
+type SortKey = "title" | "description" | "jurisdiction" | "sides";
 type SortDir = "asc" | "desc";
 
 type RoomTableRow = RoomRow & {
@@ -122,11 +125,13 @@ export function RoomsContent({
   showInsights?: boolean;
   showCredentialCopy?: boolean;
 }) {
-  const { admin } = useLocale();
+  const { admin, locale } = useLocale();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [jurisdictionModalOpen, setJurisdictionModalOpen] = useState(false);
+  const jurisdictionDisplay = jurisdictionLabels(locale);
 
   const tableRows = useMemo<RoomTableRow[]>(() => {
     return roomRows.map((room) => {
@@ -151,7 +156,15 @@ export function RoomsContent({
     if (!query) return tableRows;
 
     return tableRows.filter((row) => {
-      const haystack = [row.title, row.description, row.side1Title, row.side2Title].join(" ").toLowerCase();
+      const haystack = [
+        row.title,
+        row.description,
+        row.side1Title,
+        row.side2Title,
+        jurisdictionDisplay[row.jurisdiction],
+      ]
+        .join(" ")
+        .toLowerCase();
       return haystack.includes(query);
     });
   }, [tableRows, search]);
@@ -163,6 +176,7 @@ export function RoomsContent({
     rows.sort((a, b) => {
       const value = (row: RoomTableRow) => {
         if (sortKey === "sides") return `${row.side1Title} ${row.side2Title}`;
+        if (sortKey === "jurisdiction") return jurisdictionDisplay[row.jurisdiction];
         return row[sortKey];
       };
 
@@ -170,7 +184,7 @@ export function RoomsContent({
     });
 
     return rows;
-  }, [filteredRows, sortKey, sortDir]);
+  }, [filteredRows, sortKey, sortDir, jurisdictionDisplay]);
 
   const onSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -194,6 +208,7 @@ export function RoomsContent({
   const columns: { key: SortKey; label: string }[] = [
     { key: "title", label: admin.roomTitleLabel },
     { key: "description", label: admin.roomDescriptionLabel },
+    { key: "jurisdiction", label: admin.jurisdictionLabel },
     { key: "sides", label: admin.tableSides },
   ];
 
@@ -205,15 +220,22 @@ export function RoomsContent({
           <p className="max-w-xl text-on-surface-variant">{admin.roomsSubtitle}</p>
         </div>
         {showCreateButton ? (
-          <Link
+          <button
             className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
-            href={`${basePath}/new`}
+            onClick={() => setJurisdictionModalOpen(true)}
+            type="button"
           >
             <span className="material-symbols-outlined">add</span>
             {admin.newRoom}
-          </Link>
+          </button>
         ) : null}
       </div>
+
+      <JurisdictionSelectModal
+        basePath={basePath}
+        onClose={() => setJurisdictionModalOpen(false)}
+        open={jurisdictionModalOpen}
+      />
 
       {roomRows.length === 0 ? (
         <div className="glass-panel rounded-xl p-8 text-center text-on-surface-variant">{admin.noRooms}</div>
@@ -271,6 +293,9 @@ export function RoomsContent({
                       </td>
                       <td className="max-w-xs truncate px-4 py-3 text-body-sm text-on-surface-variant">
                         {room.description}
+                      </td>
+                      <td className="px-4 py-3 text-body-sm text-on-surface">
+                        {jurisdictionDisplay[room.jurisdiction]}
                       </td>
                       <td className="px-4 py-3">
                         <SidesCell

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { roomMessages, roomPipelineStates, situationDescriptions, users } from "@/drizzle/schema";
+import { roomMessages, roomPipelineStates, rooms, situationDescriptions, users } from "@/drizzle/schema";
 import type { Locale } from "@/lib/i18n";
 import { runCompatibilityAgent } from "@/lib/pipeline/agents/compatibility";
 import { formatJurisdictionQuestion, resolveSideClarificationRequests, runLegalDomainAgent } from "@/lib/pipeline/agents/legal-domain";
@@ -28,6 +28,7 @@ import {
   parseClarificationStatus,
   parsePendingInput,
 } from "@/lib/room/helpers";
+import { jurisdictionToPipelineString } from "@/lib/room/jurisdiction";
 
 const STUCK_PIPELINE_MS = 45_000;
 const ORCHESTRATOR_LOCK_MS = 10 * 60_000;
@@ -275,6 +276,16 @@ async function runAgentOne(roomId: string, ctx: PipelineContext) {
     .where(eq(roomPipelineStates.roomId, roomId))
     .limit(1);
 
+  const [room] = await db
+    .select({ jurisdiction: rooms.jurisdiction })
+    .from(rooms)
+    .where(eq(rooms.id, roomId))
+    .limit(1);
+
+  const presetJurisdiction = room?.jurisdiction
+    ? jurisdictionToPipelineString(room.jurisdiction)
+    : null;
+
   const sides = await getRoomSides(roomId);
   const participants = await buildLegalDomainSideInputs(roomId, ctx);
   const clarificationAnswers = getLatestClarificationAnswers(participants);
@@ -290,11 +301,16 @@ async function runAgentOne(roomId: string, ctx: PipelineContext) {
   }
 
   await logPipelineEvent(roomId, "agent_started", "legal_domain");
-  const result = await runLegalDomainAgent(ctx, participants);
+  const result = await runLegalDomainAgent(ctx, participants, presetJurisdiction);
   const sideRequests = resolveSideClarificationRequests(result, sides, participants);
-  const pendingRequests = sideRequests.filter(
+  let pendingRequests = sideRequests.filter(
     (request) => request.needed && request.question?.trim(),
   );
+
+  if (presetJurisdiction) {
+    result.jurisdiction = presetJurisdiction;
+    pendingRequests = [];
+  }
 
   if (result.jurisdiction?.trim() || pendingRequests.length === 0) {
     const jurisdiction =

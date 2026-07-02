@@ -42,10 +42,13 @@ export type AgentKey = (typeof AGENT_KEYS)[number];
 
 export const SIDE_ROLES = ["side1", "side2"] as const;
 
+export const roomJurisdiction = pgEnum("room_jurisdiction", ["ukraine", "usa"]);
+
 export const rooms = pgTable("rooms", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  jurisdiction: roomJurisdiction("jurisdiction").notNull().default("ukraine"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

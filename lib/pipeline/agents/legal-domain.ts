@@ -160,6 +160,7 @@ export function resolveSideClarificationRequests(
 export async function runLegalDomainAgent(
   ctx: PipelineContext,
   participants: LegalDomainSideInput[],
+  presetJurisdiction?: string | null,
 ): Promise<LegalDomainOutput> {
   const systemPrompt = await getAgentPrompt("legal_domain");
   const payload = {
@@ -170,8 +171,12 @@ export async function runLegalDomainAgent(
       priorClarifications: side.priorClarifications,
     })),
     situations: ctx.situations,
+    ...(presetJurisdiction ? { presetJurisdiction } : {}),
   };
-  const userMessage = `${JSON.stringify(payload, null, 2)}\n\n${LEGAL_DOMAIN_OUTPUT_GUIDE}`;
+  const presetGuide = presetJurisdiction
+    ? `\nThe room jurisdiction is already set to "${presetJurisdiction}". Use this jurisdiction, do not ask participants to clarify it, and set needsJurisdictionClarification to false for all sides.`
+    : "";
+  const userMessage = `${JSON.stringify(payload, null, 2)}\n\n${LEGAL_DOMAIN_OUTPUT_GUIDE}${presetGuide}`;
 
   const raw = await runAgentCompletion({
     systemPrompt,

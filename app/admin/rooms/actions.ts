@@ -3,9 +3,12 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
 import { rooms, roomPipelineStates, users } from "@/drizzle/schema";
+import { authOptions } from "@/lib/auth";
 import { generateLogin, generatePassword } from "@/lib/generate-credentials";
+import { isRoomJurisdiction, jurisdictionToPipelineString } from "@/lib/room/jurisdiction";
 
 function required(value: FormDataEntryValue | null, field: string) {
   const text = String(value ?? "").trim();
@@ -13,20 +16,40 @@ function required(value: FormDataEntryValue | null, field: string) {
   return text;
 }
 
+async function assertCanManageRooms() {
+  const session = await getServerSession(authOptions);
+  const role = session?.user?.role;
+  if (!session || (role !== "admin" && role !== "mediator")) {
+    throw new Error("Unauthorized");
+  }
+  return role;
+}
+
 export async function createRoom(formData: FormData) {
+  const role = await assertCanManageRooms();
+
   const title = required(formData.get("title"), "title");
   const description = required(formData.get("description"), "description");
   const side1Title = required(formData.get("side1Title"), "side1Title");
   const side1Description = required(formData.get("side1Description"), "side1Description");
   const side2Title = required(formData.get("side2Title"), "side2Title");
   const side2Description = required(formData.get("side2Description"), "side2Description");
+  const jurisdictionRaw = required(formData.get("jurisdiction"), "jurisdiction");
+  if (!isRoomJurisdiction(jurisdictionRaw)) {
+    throw new Error("Invalid jurisdiction");
+  }
+
+  const pipelineJurisdiction = jurisdictionToPipelineString(jurisdictionRaw);
 
   const [room] = await db
     .insert(rooms)
-    .values({ title, description })
+    .values({ title, description, jurisdiction: jurisdictionRaw })
     .returning();
 
-  await db.insert(roomPipelineStates).values({ roomId: room.id });
+  await db.insert(roomPipelineStates).values({
+    roomId: room.id,
+    jurisdiction: pipelineJurisdiction,
+  });
 
   await db.insert(users).values([
     {
@@ -48,8 +71,9 @@ export async function createRoom(formData: FormData) {
   ]);
 
   revalidatePath("/admin/rooms");
+  revalidatePath("/mediator/rooms");
   revalidatePath("/admin/mediators");
-  redirect(`/admin/rooms/${room.id}`);
+  redirect(role === "mediator" ? `/mediator/rooms/${room.id}` : `/admin/rooms/${room.id}`);
 }
 
 export async function updateRoomMeta(formData: FormData) {
