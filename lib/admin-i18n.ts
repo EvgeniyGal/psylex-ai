@@ -34,7 +34,12 @@ export type AdminCopy = {
   titleLabel: string;
   descriptionLabel: string;
   noRooms: string;
+  noAdminRooms: string;
+  noMediatorRooms: string;
   noSearchResults: string;
+  tabAdminRooms: string;
+  tabMediatorRooms: string;
+  unknownMediator: string;
   tableCreatedAt: string;
   tableSides: string;
   tableStatus: string;
@@ -133,7 +138,12 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     titleLabel: "Title",
     descriptionLabel: "Description",
     noRooms: "No rooms yet. Create your first room to generate Sides credentials.",
+    noAdminRooms: "No admin rooms yet. Create a room to generate participant credentials.",
+    noMediatorRooms: "No mediator rooms yet.",
     noSearchResults: "No rooms match your search.",
+    tabAdminRooms: "Admin rooms",
+    tabMediatorRooms: "Mediator rooms",
+    unknownMediator: "Unknown mediator",
     tableCreatedAt: "Created",
     tableSides: "Sides",
     tableStatus: "Status",
@@ -238,7 +248,12 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     titleLabel: "Назва",
     descriptionLabel: "Опис",
     noRooms: "Кімнат ще немає. Створіть першу кімнату для генерації облікових даних сторін.",
+    noAdminRooms: "Адміністративних кімнат ще немає. Створіть кімнату для генерації облікових даних учасників.",
+    noMediatorRooms: "Кімнат медіаторів ще немає.",
     noSearchResults: "Немає кімнат за вашим запитом.",
+    tabAdminRooms: "Кімнати адміна",
+    tabMediatorRooms: "Кімнати медіаторів",
+    unknownMediator: "Невідомий медіатор",
     tableCreatedAt: "Створено",
     tableSides: "Сторони",
     tableStatus: "Статус",

@@ -25,16 +25,20 @@ type RoomRow = {
   description: string;
   jurisdiction: RoomJurisdiction;
   createdAt: Date;
+  createdByUserId?: string | null;
+  mediatorTitle?: string | null;
 };
 
-type SortKey = "title" | "description" | "jurisdiction" | "sides";
+type SortKey = "title" | "description" | "jurisdiction" | "sides" | "mediator";
 type SortDir = "asc" | "desc";
+type RoomListTab = "admin" | "mediator";
 
 type RoomTableRow = RoomRow & {
   side1: UserRow | null;
   side2: UserRow | null;
   side1Title: string;
   side2Title: string;
+  mediatorTitle: string;
 };
 
 function SortIcon({ active, direction }: { active: boolean; direction: SortDir }) {
@@ -117,6 +121,7 @@ export function RoomsContent({
   showCreateButton = true,
   showInsights = true,
   showCredentialCopy = true,
+  showRoomTabs = false,
 }: {
   roomRows: RoomRow[];
   participantsByRoom: { roomId: string; users: UserRow[] }[];
@@ -124,9 +129,11 @@ export function RoomsContent({
   showCreateButton?: boolean;
   showInsights?: boolean;
   showCredentialCopy?: boolean;
+  showRoomTabs?: boolean;
 }) {
   const { admin, locale } = useLocale();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<RoomListTab>("admin");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -146,27 +153,37 @@ export function RoomsContent({
         side2,
         side1Title: side1?.title ?? "",
         side2Title: side2?.title ?? "",
+        mediatorTitle: room.mediatorTitle ?? admin.unknownMediator,
       };
     });
-  }, [roomRows, participantsByRoom]);
+  }, [roomRows, participantsByRoom, admin.unknownMediator]);
+
+  const tabRows = useMemo(() => {
+    if (!showRoomTabs) return tableRows;
+    if (activeTab === "admin") {
+      return tableRows.filter((row) => !row.createdByUserId);
+    }
+    return tableRows.filter((row) => !!row.createdByUserId);
+  }, [tableRows, showRoomTabs, activeTab]);
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return tableRows;
+    if (!query) return tabRows;
 
-    return tableRows.filter((row) => {
+    return tabRows.filter((row) => {
       const haystack = [
         row.title,
         row.description,
         row.side1Title,
         row.side2Title,
+        row.mediatorTitle,
         jurisdictionDisplay[row.jurisdiction],
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [tableRows, search]);
+  }, [tabRows, search, jurisdictionDisplay]);
 
   const sortedRows = useMemo(() => {
     const rows = [...filteredRows];
@@ -176,6 +193,7 @@ export function RoomsContent({
       const value = (row: RoomTableRow) => {
         if (sortKey === "sides") return `${row.side1Title} ${row.side2Title}`;
         if (sortKey === "jurisdiction") return jurisdictionDisplay[row.jurisdiction];
+        if (sortKey === "mediator") return row.mediatorTitle;
         return row[sortKey];
       };
 
@@ -204,12 +222,26 @@ export function RoomsContent({
     toast.success(admin.copyCredentials);
   };
 
+  const showMediatorColumn = showRoomTabs && activeTab === "mediator";
+
   const columns: { key: SortKey; label: string }[] = [
+    ...(showMediatorColumn
+      ? [{ key: "mediator" as const, label: admin.mediatorTitleLabel }]
+      : []),
     { key: "title", label: admin.roomTitleLabel },
     { key: "description", label: admin.roomDescriptionLabel },
     { key: "jurisdiction", label: admin.jurisdictionLabel },
     { key: "sides", label: admin.tableSides },
   ];
+
+  const emptyMessage = () => {
+    if (showRoomTabs) {
+      return activeTab === "admin" ? admin.noAdminRooms : admin.noMediatorRooms;
+    }
+    return admin.noRooms;
+  };
+
+  const showCreate = showCreateButton && (!showRoomTabs || activeTab === "admin");
 
   return (
     <section className="space-y-stack-lg">
@@ -218,7 +250,7 @@ export function RoomsContent({
           <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.roomsTitle}</h3>
           <p className="max-w-xl text-on-surface-variant">{admin.roomsSubtitle}</p>
         </div>
-        {showCreateButton ? (
+        {showCreate ? (
           <Link
             className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
             href={`${basePath}/new`}
@@ -229,8 +261,32 @@ export function RoomsContent({
         ) : null}
       </div>
 
-      {roomRows.length === 0 ? (
-        <div className="glass-panel rounded-xl p-8 text-center text-on-surface-variant">{admin.noRooms}</div>
+      {showRoomTabs ? (
+        <div className="flex gap-2 border-b border-outline-variant/20">
+          {(["admin", "mediator"] as const).map((tab) => (
+            <button
+              className={
+                activeTab === tab
+                  ? "border-b-2 border-tertiary px-4 py-3 font-display text-body-md font-semibold text-tertiary"
+                  : "px-4 py-3 font-display text-body-md text-on-surface-variant transition-colors hover:text-on-surface"
+              }
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setSearch("");
+                setSortKey("title");
+                setSortDir("asc");
+              }}
+              type="button"
+            >
+              {tab === "admin" ? admin.tabAdminRooms : admin.tabMediatorRooms}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {tabRows.length === 0 ? (
+        <div className="glass-panel rounded-xl p-8 text-center text-on-surface-variant">{emptyMessage()}</div>
       ) : (
         <div className="space-y-4">
           <div className="relative max-w-md">
@@ -280,6 +336,9 @@ export function RoomsContent({
                       className="border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
                       key={room.id}
                     >
+                      {showMediatorColumn ? (
+                        <td className="px-4 py-3 text-body-sm text-on-surface">{room.mediatorTitle}</td>
+                      ) : null}
                       <td className="px-4 py-3 font-display text-body-md font-semibold text-on-surface">
                         {room.title}
                       </td>
