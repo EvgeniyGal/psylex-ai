@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userTestCompletions, users } from "@/drizzle/schema";
+import { hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { isParticipantRole, type ParticipantRole } from "@/lib/participant-roles";
 import { TEST_KEYS, type TestKey } from "@/lib/test-keys";
 
@@ -79,14 +80,29 @@ export async function getUserOnboardingStatus(userId: string): Promise<Onboardin
 
 export function getParticipantHomePath(role: ParticipantRole) {
   if (role === "mediator") return "/mediator/rooms";
-  return "/dashboard";
+  return "/mediation";
+}
+
+export async function getParticipantNextPath(userId: string, role: ParticipantRole) {
+  if (role === "mediator") return "/mediator/rooms";
+
+  const status = await getUserOnboardingStatus(userId);
+  if (status.nextStep !== "complete") {
+    return status.nextPath;
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user || !hasSubmittedDisputeIntake(user)) {
+    return "/dispute-intake";
+  }
+
+  return "/mediation";
 }
 
 export async function getPostLoginRedirect(userId: string, role: string) {
   if (role === "admin") return "/admin/rooms";
   if (!isParticipantRole(role)) return "/login";
-  const status = await getUserOnboardingStatus(userId);
-  return status.nextPath;
+  return getParticipantNextPath(userId, role);
 }
 
 export function getOnboardingPathForStep(step: OnboardingStep) {

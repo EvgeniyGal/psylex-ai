@@ -85,6 +85,10 @@ export const users = pgTable("users", {
   onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
   personalBotPrompt: text("personal_bot_prompt"),
   personalBotReadyAt: timestamp("personal_bot_ready_at", { withTimezone: true }),
+  disputeDescription: text("dispute_description"),
+  disputePriority: text("dispute_priority"),
+  disputeAcceptableOutcome: text("dispute_acceptable_outcome"),
+  disputeIntakeSubmittedAt: timestamp("dispute_intake_submitted_at", { withTimezone: true }),
   preferredLocale: preferredLocale("preferred_locale").notNull().default("en"),
 });
 

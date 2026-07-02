@@ -7,8 +7,8 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
-import { getParticipantHomePath, getUserOnboardingStatus } from "@/lib/onboarding";
-import { isParticipantRole } from "@/lib/participant-roles";
+import { getParticipantNextPath, getUserOnboardingStatus } from "@/lib/onboarding";
+import { isParticipantRole, type ParticipantRole } from "@/lib/participant-roles";
 import { syncUserTestStatus } from "@/lib/test-status-sync";
 
 async function requireParticipantUser() {
@@ -95,5 +95,5 @@ export async function completeOnboarding() {
     .where(eq(users.id, user.id));
 
   revalidatePath("/onboarding/tests");
-  redirect(getParticipantHomePath(role));
+  redirect(await getParticipantNextPath(user.id, role as ParticipantRole));
 }

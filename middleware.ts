@@ -23,15 +23,19 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    if (path.startsWith("/dashboard") && token?.role === "mediator") {
-      return NextResponse.redirect(new URL("/mediator/rooms", req.url));
-    }
-
     if (
-      (path.startsWith("/onboarding") || path.startsWith("/dashboard")) &&
+      (path.startsWith("/onboarding") ||
+        path.startsWith("/dashboard") ||
+        path.startsWith("/dispute-intake") ||
+        path.startsWith("/mediation") ||
+        path.startsWith("/room")) &&
       token?.role === "admin"
     ) {
       return NextResponse.redirect(new URL("/admin/rooms", req.url));
+    }
+
+    if (path.startsWith("/dashboard") && token?.role === "mediator") {
+      return NextResponse.redirect(new URL("/mediator/rooms", req.url));
     }
 
     return NextResponse.next();
@@ -49,7 +53,13 @@ export default withAuth(
           return token?.role === "mediator";
         }
 
-        if (path.startsWith("/onboarding") || path.startsWith("/dashboard")) {
+        if (
+          path.startsWith("/onboarding") ||
+          path.startsWith("/dashboard") ||
+          path.startsWith("/dispute-intake") ||
+          path.startsWith("/mediation") ||
+          path.startsWith("/room")
+        ) {
           return (
             !!token?.role &&
             PARTICIPANT_ROLES.includes(token.role as (typeof PARTICIPANT_ROLES)[number])
@@ -63,5 +73,13 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/mediator/:path*", "/onboarding/:path*", "/dashboard/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/mediator/:path*",
+    "/onboarding/:path*",
+    "/dashboard/:path*",
+    "/dispute-intake/:path*",
+    "/mediation/:path*",
+    "/room/:path*",
+  ],
 };

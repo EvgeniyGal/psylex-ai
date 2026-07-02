@@ -1,24 +1,23 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { RoomExperience } from "@/components/portal/room/room-experience";
+import { MediationLobby } from "@/components/portal/mediation-lobby";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { getMediationLobbyData, hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { requireParticipantSession } from "@/lib/portal-auth";
-import { getRoomPageData } from "@/lib/room/queries";
+import type { ParticipantRole } from "@/lib/participant-roles";
 
-export default async function RoomPage() {
+export default async function MediationPage() {
   const { userId, role } = await requireParticipantSession();
 
-  if (role === "mediator") {
+  if (role !== "side1" && role !== "side2") {
     redirect("/mediator/rooms");
   }
 
   const status = await getUserOnboardingStatus(userId);
-
-  if (!status.onboardingCompletedAt || !status.personalBotReady) {
-    redirect(status.nextPath);
+  if (!status.canProceed || !status.onboardingCompletedAt) {
+    redirect("/onboarding/tests");
   }
 
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -29,14 +28,18 @@ export default async function RoomPage() {
   }
 
   const lobby = await getMediationLobbyData(userId);
-  if (!lobby?.bothReady) {
-    redirect("/mediation");
+  if (!lobby) {
+    redirect("/onboarding/tests");
   }
 
-  const data = await getRoomPageData(userId);
-  if (!data) {
-    redirect("/mediation");
-  }
-
-  return <RoomExperience data={data} />;
+  return (
+    <MediationLobby
+      bothReady={lobby.bothReady}
+      opposite={lobby.opposite}
+      oppositeRole={lobby.oppositeRole}
+      roomTitle={lobby.room.title}
+      self={lobby.self}
+      viewerRole={role as ParticipantRole}
+    />
+  );
 }

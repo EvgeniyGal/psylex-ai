@@ -44,6 +44,21 @@ type PortalCopy = {
   dashboardTitle: string;
   dashboardBody: string;
   dashboardEnterRoom: string;
+  disputeIntakeTitle: string;
+  disputeIntakeSubtitle: string;
+  disputeIntakeQ1: string;
+  disputeIntakeQ2: string;
+  disputeIntakeQ3: string;
+  disputeIntakeSubmit: string;
+  disputeIntakeSubmitting: string;
+  mediationLobbyTitle: string;
+  mediationLobbySubtitle: string;
+  mediationOppositeSide: string;
+  mediationStatusReady: string;
+  mediationStatusNotReady: string;
+  mediationOppositeNotReady: string;
+  mediationStart: string;
+  mediationYourStatus: string;
   backToStart: string;
   logout: string;
   roomTitle: string;
@@ -138,6 +153,23 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     dashboardTitle: "You're all set",
     dashboardBody: "Your onboarding is complete. Enter your mediation room when you are ready.",
     dashboardEnterRoom: "Enter mediation room",
+    disputeIntakeTitle: "Describe your dispute",
+    disputeIntakeSubtitle:
+      "Please answer the following questions so we can prepare your mediation session.",
+    disputeIntakeQ1: "Please describe the dispute in your own words.",
+    disputeIntakeQ2: "What is most important to you in this dispute?",
+    disputeIntakeQ3: "What outcome would you consider acceptable?",
+    disputeIntakeSubmit: "Submit answers",
+    disputeIntakeSubmitting: "Submitting…",
+    mediationLobbyTitle: "Mediation readiness",
+    mediationLobbySubtitle: "Both sides must complete onboarding and answer the dispute questions before mediation can begin.",
+    mediationOppositeSide: "Opposite side",
+    mediationStatusReady: "Ready for mediation",
+    mediationStatusNotReady: "Not ready for mediation",
+    mediationOppositeNotReady:
+      "The opposite side is not ready for mediation yet. They may still be completing tests or answering the dispute questions.",
+    mediationStart: "Start Mediation",
+    mediationYourStatus: "Your status",
     backToStart: "Back to start",
     logout: "Logout",
     roomTitle: "Mediation room",
@@ -230,6 +262,24 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     dashboardTitle: "Усе готово",
     dashboardBody: "Онбординг завершено. Увійдіть до кімнати медіації, коли будете готові.",
     dashboardEnterRoom: "Увійти до кімнати медіації",
+    disputeIntakeTitle: "Опишіть ваш спір",
+    disputeIntakeSubtitle:
+      "Будь ласка, дайте відповіді на наступні запитання, щоб ми могли підготувати сесію медіації.",
+    disputeIntakeQ1: "Опишіть, будь ласка, суть спору у довільній формі.",
+    disputeIntakeQ2: "Що для вас є найважливішим у цьому конфлікті?",
+    disputeIntakeQ3: "Який результат ви вважаєте прийнятним?",
+    disputeIntakeSubmit: "Надіслати відповіді",
+    disputeIntakeSubmitting: "Надсилання…",
+    mediationLobbyTitle: "Готовність до медіації",
+    mediationLobbySubtitle:
+      "Обидві сторони мають завершити онбординг і відповісти на запитання про спір, перш ніж можна почати медіацію.",
+    mediationOppositeSide: "Інша сторона",
+    mediationStatusReady: "Готова до медіації",
+    mediationStatusNotReady: "Не готова до медіації",
+    mediationOppositeNotReady:
+      "Інша сторона ще не готова до медіації. Вона може ще проходити тести або відповідати на запитання про спір.",
+    mediationStart: "Почати медіацію",
+    mediationYourStatus: "Ваш статус",
     backToStart: "На головну",
     logout: "Вийти",
     roomTitle: "Кімната медіації",
