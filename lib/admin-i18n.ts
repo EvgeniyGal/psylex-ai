@@ -78,8 +78,6 @@ export type AdminCopy = {
   testsSubtitle: string;
   openaiApiKeyLabel: string;
   airtableApiKeyLabel: string;
-  legalDataHunterApiKeyLabel: string;
-  legalDataHunterApiKeyHelp: string;
   testUrlLabel: string;
   testPersonalityType: string;
   testFaceFear: string;
@@ -87,25 +85,7 @@ export type AdminCopy = {
   testPersonalityConflicts: string;
   settingsSaved: string;
   tabPrompts: string;
-  promptsSubtitle: string;
-  agentLegalDomain: string;
-  agentPrecedents: string;
-  agentCompatibility: string;
-  agentSynthesis: string;
-  testPrompt: string;
-  testPromptInput: string;
-  testPromptRun: string;
-  testPromptOutput: string;
-  pipelineLog: string;
-  pipelineStatus: string;
-  backToRoom: string;
-  tableTime: string;
-  tableEvent: string;
-  tableAgent: string;
-  noPipelineEvents: string;
-  tableEmpty: string;
-  pipelineStatusValues: Record<string, string>;
-  pipelineEventLabels: Record<string, string>;
+  promptsComingSoonDesc: string;
   comingSoon: string;
   comingSoonDesc: string;
   general: string;
@@ -198,9 +178,6 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testsSubtitle: "Configure links to personality and conflict assessment tests.",
     openaiApiKeyLabel: "OpenAI API key",
     airtableApiKeyLabel: "Airtable API key",
-    legalDataHunterApiKeyLabel: "Legal Data Hunter API key",
-    legalDataHunterApiKeyHelp:
-      "Used by Agent 2 (case law / судова практика) to search 38M+ legal documents via legaldatahunter.com.",
     testUrlLabel: "Test URL",
     testPersonalityType: "What is my personality type",
     testFaceFear: "Face to face with fear",
@@ -208,38 +185,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testPersonalityConflicts: "Personality conflicts",
     settingsSaved: "Settings saved",
     tabPrompts: "Prompts",
-    promptsSubtitle: "Edit system prompts for each AI agent in the dispute pipeline.",
-    agentLegalDomain: "Agent 1 — Legal domain",
-    agentPrecedents: "Agent 2 — Precedents",
-    agentCompatibility: "Agent 3 — Compatibility",
-    agentSynthesis: "Agent 4 — Synthesis",
-    testPrompt: "Test prompt",
-    testPromptInput: "Sample input (JSON or text)",
-    testPromptRun: "Run test",
-    testPromptOutput: "Test output",
-    pipelineLog: "Pipeline log",
-    pipelineStatus: "Pipeline status",
-    backToRoom: "Back to room",
-    tableTime: "Time",
-    tableEvent: "Event",
-    tableAgent: "Agent",
-    noPipelineEvents: "No pipeline events yet.",
-    tableEmpty: "—",
-    pipelineStatusValues: {
-      awaiting_situations: "Awaiting situations",
-      pipeline_running: "Pipeline running",
-      awaiting_clarification: "Awaiting clarification",
-      options_published: "Options published",
-      post_resolution: "Post-resolution",
-    },
-    pipelineEventLabels: {
-      agent_started: "Agent started",
-      agent_completed: "Agent completed",
-      agent_paused: "Agent paused",
-      options_published: "Options published",
-      regenerate_started: "Regeneration started",
-      options_regenerated: "Options regenerated",
-    },
+    promptsComingSoonDesc:
+      "AI prompt configuration will be available here in a future release.",
     comingSoon: "COMING SOON",
     comingSoonDesc:
       "Application settings are not yet available in this MVP. Future releases will include notification preferences, branding options, and integration controls.",
@@ -336,9 +283,6 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testsSubtitle: "Налаштуйте посилання на тести особистості та конфліктів.",
     openaiApiKeyLabel: "OpenAI API ключ",
     airtableApiKeyLabel: "Airtable API ключ",
-    legalDataHunterApiKeyLabel: "Legal Data Hunter API ключ",
-    legalDataHunterApiKeyHelp:
-      "Використовується агентом 2 (судова практика) для пошуку правових документів через legaldatahunter.com.",
     testUrlLabel: "Посилання на тест",
     testPersonalityType: "Який мій тип характеру",
     testFaceFear: "Віч-на-віч зі страхом",
@@ -346,38 +290,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testPersonalityConflicts: "Конфлікти особистості",
     settingsSaved: "Налаштування збережено",
     tabPrompts: "Промпти",
-    promptsSubtitle: "Редагуйте системні промпти для кожного AI-агента в пайплайні спору.",
-    agentLegalDomain: "Агент 1 — Правова сфера",
-    agentPrecedents: "Агент 2 — Прецеденти",
-    agentCompatibility: "Агент 3 — Сумісність",
-    agentSynthesis: "Агент 4 — Синтез",
-    testPrompt: "Тест промпту",
-    testPromptInput: "Зразок вводу (JSON або текст)",
-    testPromptRun: "Запустити тест",
-    testPromptOutput: "Результат тесту",
-    pipelineLog: "Журнал пайплайну",
-    pipelineStatus: "Статус пайплайну",
-    backToRoom: "Назад до кімнати",
-    tableTime: "Час",
-    tableEvent: "Подія",
-    tableAgent: "Агент",
-    noPipelineEvents: "Подій пайплайну ще немає.",
-    tableEmpty: "—",
-    pipelineStatusValues: {
-      awaiting_situations: "Очікування описів ситуації",
-      pipeline_running: "Пайплайн виконується",
-      awaiting_clarification: "Очікування уточнень",
-      options_published: "Варіанти опубліковано",
-      post_resolution: "Після публікації варіантів",
-    },
-    pipelineEventLabels: {
-      agent_started: "Агент запущено",
-      agent_completed: "Агент завершено",
-      agent_paused: "Агент призупинено",
-      options_published: "Варіанти опубліковано",
-      regenerate_started: "Регенерацію розпочато",
-      options_regenerated: "Варіанти оновлено",
-    },
+    promptsComingSoonDesc:
+      "Налаштування AI-промптів буде доступне тут у майбутньому релізі.",
     comingSoon: "НЕЗАБАРОМ",
     comingSoonDesc:
       "Налаштування застосунку ще недоступні в цьому MVP. У майбутніх релізах з’являться сповіщення, брендинг та інтеграції.",
