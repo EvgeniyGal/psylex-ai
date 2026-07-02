@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
 import { formatCredentials } from "@/lib/credentials";
+import { compareStringsStable } from "@/lib/utils";
 
 type MediatorRow = {
   id: string;
@@ -56,7 +57,9 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
     rows.sort((a, b) => {
       const aVal = a[sortKey].toLowerCase();
       const bVal = b[sortKey].toLowerCase();
-      return aVal.localeCompare(bVal, undefined, { sensitivity: "base" }) * multiplier;
+      const compare = compareStringsStable(aVal, bVal);
+      if (compare !== 0) return compare * multiplier;
+      return compareStringsStable(a.id, b.id) * multiplier;
     });
 
     return rows;

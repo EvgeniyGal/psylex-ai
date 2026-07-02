@@ -1,5 +1,8 @@
 import { relations } from "drizzle-orm";
 import {
+  customType,
+  integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -7,6 +10,27 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
+const vector1536 = customType<{ data: number[]; driverData: string }>({
+  dataType() {
+    return "vector(1536)";
+  },
+  toDriver(value: number[]) {
+    return `[${value.join(",")}]`;
+  },
+  fromDriver(value: string) {
+    if (!value) return [];
+    const trimmed = value.replace(/^\[/, "").replace(/\]$/, "");
+    if (!trimmed) return [];
+    return trimmed.split(",").map((part) => Number(part.trim()));
+  },
+});
 
 export const userRole = pgEnum("user_role", [
   "admin",
@@ -20,6 +44,24 @@ export const preferredLocale = pgEnum("preferred_locale", ["en", "uk"]);
 export const SIDE_ROLES = ["side1", "side2"] as const;
 
 export const roomJurisdiction = pgEnum("room_jurisdiction", ["ukraine", "usa"]);
+
+export const legalDocumentStatus = pgEnum("legal_document_status", [
+  "pending",
+  "processing",
+  "ready",
+  "failed",
+]);
+
+export const legalDocumentCategory = pgEnum("legal_document_category", [
+  "labor",
+  "family",
+  "contract",
+  "property",
+  "consumer",
+  "corporate",
+  "insurance",
+  "odr_international",
+]);
 
 export const rooms = pgTable("rooms", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -107,3 +149,51 @@ export const platformSettings = pgTable("platform_settings", {
   testPersonalityConflictsUrl: text("test_personality_conflicts_url").notNull().default(""),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const legalDocuments = pgTable("legal_documents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  jurisdiction: roomJurisdiction("jurisdiction").notNull(),
+  category: legalDocumentCategory("category").notNull(),
+  originalFilename: text("original_filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileData: bytea("file_data").notNull(),
+  status: legalDocumentStatus("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  uploadedByUserId: uuid("uploaded_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const documentChunks = pgTable(
+  "document_chunks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => legalDocuments.id, { onDelete: "cascade" }),
+    chunkIndex: integer("chunk_index").notNull(),
+    content: text("content").notNull(),
+    tokenCount: integer("token_count").notNull(),
+    pageNumber: integer("page_number"),
+    metadata: jsonb("metadata"),
+    embedding: vector1536("embedding"),
+  },
+  (table) => [unique("document_chunks_document_chunk_unique").on(table.documentId, table.chunkIndex)],
+);
+
+export const legalDocumentsRelations = relations(legalDocuments, ({ many, one }) => ({
+  chunks: many(documentChunks),
+  uploadedBy: one(users, {
+    fields: [legalDocuments.uploadedByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
+  document: one(legalDocuments, {
+    fields: [documentChunks.documentId],
+    references: [legalDocuments.id],
+  }),
+}));

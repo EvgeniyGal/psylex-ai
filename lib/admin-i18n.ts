@@ -90,6 +90,38 @@ export type AdminCopy = {
   testPersonalityConflicts: string;
   settingsSaved: string;
   tabPrompts: string;
+  tabRag: string;
+  ragSubtitle: string;
+  ragUploadDocument: string;
+  ragDocumentName: string;
+  ragSourceUrl: string;
+  ragCategory: string;
+  ragCategoryFilter: string;
+  ragAllCategories: string;
+  ragJurisdictionUkraine: string;
+  ragJurisdictionUsa: string;
+  ragUpload: string;
+  ragUploading: string;
+  ragUploadingHint: string;
+  ragEditDocument: string;
+  ragDeleteDocument: string;
+  ragDeleteConfirm: string;
+  ragReprocess: string;
+  ragStatusPending: string;
+  ragStatusProcessing: string;
+  ragStatusReady: string;
+  ragStatusFailed: string;
+  ragNoDocuments: string;
+  ragTestInquiry: string;
+  ragTestQuestion: string;
+  ragTestSubmit: string;
+  ragTestSelectDocument: string;
+  ragTestAllDocuments: string;
+  ragDocumentUploaded: string;
+  ragDocumentUpdated: string;
+  ragDocumentDeleted: string;
+  ragProcessingIncomplete: string;
+  ragFileLabel: string;
   promptsComingSoonDesc: string;
   comingSoon: string;
   comingSoonDesc: string;
@@ -195,6 +227,38 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testPersonalityConflicts: "Personality conflicts",
     settingsSaved: "Settings saved",
     tabPrompts: "Prompts",
+    tabRag: "RAG",
+    ragSubtitle: "Manage legal documents for hybrid retrieval. Upload legislation by jurisdiction and category.",
+    ragUploadDocument: "Upload document",
+    ragDocumentName: "Document name",
+    ragSourceUrl: "Source URL",
+    ragCategory: "Category",
+    ragCategoryFilter: "Filter by category",
+    ragAllCategories: "All categories",
+    ragJurisdictionUkraine: "Ukraine",
+    ragJurisdictionUsa: "United States",
+    ragUpload: "Upload",
+    ragUploading: "Uploading document…",
+    ragUploadingHint: "Extracting text and building the search index. This may take a moment.",
+    ragEditDocument: "Edit document",
+    ragDeleteDocument: "Delete",
+    ragDeleteConfirm: "Delete this document and all indexed chunks?",
+    ragReprocess: "Reprocess",
+    ragStatusPending: "Pending",
+    ragStatusProcessing: "Processing",
+    ragStatusReady: "Ready",
+    ragStatusFailed: "Failed",
+    ragNoDocuments: "No documents yet.",
+    ragTestInquiry: "Test inquiry",
+    ragTestQuestion: "Ask a question about the corpus",
+    ragTestSubmit: "Run inquiry",
+    ragTestSelectDocument: "Document (optional)",
+    ragTestAllDocuments: "Search entire jurisdiction",
+    ragDocumentUploaded: "Document uploaded",
+    ragDocumentUpdated: "Document updated",
+    ragDocumentDeleted: "Document deleted",
+    ragProcessingIncomplete: "Document processing is not complete.",
+    ragFileLabel: "File (TXT, PDF, DOCX)",
     promptsComingSoonDesc:
       "AI prompt configuration will be available here in a future release.",
     comingSoon: "COMING SOON",
@@ -305,6 +369,38 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testPersonalityConflicts: "Конфлікти особистості",
     settingsSaved: "Налаштування збережено",
     tabPrompts: "Промпти",
+    tabRag: "RAG",
+    ragSubtitle: "Керуйте правовими документами для гібридного пошуку. Завантажуйте законодавство за юрисдикцією та категорією.",
+    ragUploadDocument: "Завантажити документ",
+    ragDocumentName: "Назва документа",
+    ragSourceUrl: "Посилання на джерело",
+    ragCategory: "Категорія",
+    ragCategoryFilter: "Фільтр за категорією",
+    ragAllCategories: "Усі категорії",
+    ragJurisdictionUkraine: "Україна",
+    ragJurisdictionUsa: "США",
+    ragUpload: "Завантажити",
+    ragUploading: "Завантаження документа…",
+    ragUploadingHint: "Витягуємо текст і будуємо пошуковий індекс. Це може зайняти деякий час.",
+    ragEditDocument: "Редагувати документ",
+    ragDeleteDocument: "Видалити",
+    ragDeleteConfirm: "Видалити цей документ і всі проіндексовані фрагменти?",
+    ragReprocess: "Переобробити",
+    ragStatusPending: "Очікує",
+    ragStatusProcessing: "Обробка",
+    ragStatusReady: "Готово",
+    ragStatusFailed: "Помилка",
+    ragNoDocuments: "Документів ще немає.",
+    ragTestInquiry: "Тестовий запит",
+    ragTestQuestion: "Поставте питання щодо корпусу",
+    ragTestSubmit: "Запустити запит",
+    ragTestSelectDocument: "Документ (необов'язково)",
+    ragTestAllDocuments: "Шукати в усій юрисдикції",
+    ragDocumentUploaded: "Документ завантажено",
+    ragDocumentUpdated: "Документ оновлено",
+    ragDocumentDeleted: "Документ видалено",
+    ragProcessingIncomplete: "Обробка документа ще не завершена.",
+    ragFileLabel: "Файл (TXT, PDF, DOCX)",
     promptsComingSoonDesc:
       "Налаштування AI-промптів буде доступне тут у майбутньому релізі.",
     comingSoon: "НЕЗАБАРОМ",

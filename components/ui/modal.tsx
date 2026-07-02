@@ -1,22 +1,29 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
-export function Modal({
+function useMounted() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted;
+}
+
+export function ModalOverlay({
   open,
   onClose,
-  title,
   children,
   className,
+  panelClassName,
 }: {
   open: boolean;
   onClose: () => void;
-  title: string;
   children: ReactNode;
   className?: string;
+  panelClassName?: string;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
+  const mounted = useMounted();
 
   useEffect(() => {
     if (!open) return;
@@ -34,13 +41,66 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
+    <div
+      className={cn("fixed inset-0 z-[100] flex items-center justify-center p-4", className)}
+      role="presentation"
+    >
+      <button
+        aria-label="Close"
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        type="button"
+      />
+      <div className={cn("relative z-10 w-full max-w-lg", panelClassName)} onClick={(event) => event.stopPropagation()}>
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  className,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const mounted = useMounted();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [open, onClose]);
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
     <div
       aria-labelledby="modal-title"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
     >
       <button
@@ -70,6 +130,7 @@ export function Modal({
         </div>
         <div className="custom-scrollbar overflow-y-auto px-6 py-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

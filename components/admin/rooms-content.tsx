@@ -8,6 +8,7 @@ import { useLocale } from "@/components/locale-provider";
 import { formatCredentials } from "@/lib/credentials";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
 import { jurisdictionLabels } from "@/lib/room/jurisdiction";
+import { compareStringsStable } from "@/lib/utils";
 
 type UserRow = {
   id: string;
@@ -197,7 +198,9 @@ export function RoomsContent({
         return row[sortKey];
       };
 
-      return value(a).localeCompare(value(b), undefined, { sensitivity: "base" }) * multiplier;
+      const compare = compareStringsStable(value(a), value(b));
+      if (compare !== 0) return compare * multiplier;
+      return compareStringsStable(a.id, b.id) * multiplier;
     });
 
     return rows;

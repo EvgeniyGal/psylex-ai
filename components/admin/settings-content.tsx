@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveApiCredentials, saveTestLinks } from "@/app/admin/settings/actions";
+import { RagSettingsContent } from "@/components/admin/rag-settings-content";
 import { useLocale } from "@/components/locale-provider";
+import type { LegalDocumentRow } from "@/lib/rag/types";
 
 export type PlatformSettingsRow = {
   id: string;
@@ -19,14 +21,15 @@ export type PlatformSettingsRow = {
 const inputClass =
   "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
 
-const tabs = ["credentials", "tests", "prompts"] as const;
+const tabs = ["credentials", "tests", "prompts", "rag"] as const;
 type SettingsTab = (typeof tabs)[number];
 
 type SettingsContentProps = {
   settings: PlatformSettingsRow;
+  documents: LegalDocumentRow[];
 };
 
-export function SettingsContent({ settings }: SettingsContentProps) {
+export function SettingsContent({ settings, documents }: SettingsContentProps) {
   const { admin } = useLocale();
   const [activeTab, setActiveTab] = useState<SettingsTab>("credentials");
   const [credentialsPending, startCredentialsTransition] = useTransition();
@@ -60,7 +63,8 @@ export function SettingsContent({ settings }: SettingsContentProps) {
   const tabLabel = (tab: SettingsTab) => {
     if (tab === "credentials") return admin.tabCredentials;
     if (tab === "tests") return admin.tabTests;
-    return admin.tabPrompts;
+    if (tab === "prompts") return admin.tabPrompts;
+    return admin.tabRag;
   };
 
   return (
@@ -71,7 +75,7 @@ export function SettingsContent({ settings }: SettingsContentProps) {
       </div>
 
       <div className="glass-card rounded-xl p-6 md:p-8">
-        <div className="mb-8 flex gap-2 border-b border-outline-variant/20">
+        <div className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant/20">
           {tabs.map((tab) => (
             <button
               className={
@@ -147,11 +151,13 @@ export function SettingsContent({ settings }: SettingsContentProps) {
               {testsPending ? "..." : admin.save}
             </button>
           </form>
-        ) : (
+        ) : activeTab === "prompts" ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="mb-2 font-display text-headline-md text-on-surface-variant">{admin.comingSoon}</p>
             <p className="max-w-md text-body-md text-on-surface-variant">{admin.promptsComingSoonDesc}</p>
           </div>
+        ) : (
+          <RagSettingsContent documents={documents} />
         )}
       </div>
     </section>
