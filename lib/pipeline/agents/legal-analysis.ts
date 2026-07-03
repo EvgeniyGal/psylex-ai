@@ -12,6 +12,10 @@ import { getRoomSidesForPipeline, isRoomLegalAnalysisComplete } from "@/lib/pipe
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { loadAgentPrompt } from "@/lib/pipeline/load-prompt";
 import {
+  buildNotFoundLegalAnalysis,
+  LEGAL_ANALYSIS_STRICT_RULES,
+} from "@/lib/pipeline/legal-analysis-not-found";
+import {
   getUniqueRoomLocales,
   localeInstruction,
   mergeLocalizedOutputs,
@@ -32,13 +36,34 @@ function filterRelevantResults<T extends { score: number }>(results: T[]) {
   return results.filter((result) => result.score >= RAG_DEFAULTS.minInquiryScore);
 }
 
+function formatExcerpts(
+  ragResults: Awaited<ReturnType<typeof ragSearchForRoom>>,
+): string {
+  if (ragResults.length === 0) {
+    return "";
+  }
+
+  return ragResults
+    .map(
+      (result, index) =>
+        `[${index + 1}] Document: ${result.documentName}\nURL: ${result.sourceUrl}\nExcerpt:\n${result.content}`,
+    )
+    .join("\n\n");
+}
+
 async function generateLegalAnalysisForLocale(params: {
   disputeInput: string;
   excerpts: string;
+  hasRelevantExcerpts: boolean;
   draftPrompt?: string;
   locale: Locale;
 }) {
-  const systemPrompt = await loadAgentPrompt("legal_analysis", params.draftPrompt);
+  if (!params.hasRelevantExcerpts) {
+    return buildNotFoundLegalAnalysis(params.locale);
+  }
+
+  const basePrompt = await loadAgentPrompt("legal_analysis", params.draftPrompt);
+  const systemPrompt = `${basePrompt}\n\n${LEGAL_ANALYSIS_STRICT_RULES}`;
   const client = await getOpenAIClient();
 
   const completion = await client.chat.completions.create({
@@ -59,7 +84,21 @@ async function generateLegalAnalysisForLocale(params: {
   });
 
   const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
-  return legalAnalysisSchema.parse(parseJsonFromModelResponse(raw));
+  const parsed = legalAnalysisSchema.safeParse(parseJsonFromModelResponse(raw));
+
+  if (!parsed.success) {
+    return buildNotFoundLegalAnalysis(params.locale);
+  }
+
+  if (parsed.data.status === "not_found") {
+    return parsed.data;
+  }
+
+  if (parsed.data.citations.length === 0 && parsed.data.applicableLaws.length === 0) {
+    return buildNotFoundLegalAnalysis(params.locale);
+  }
+
+  return parsed.data;
 }
 
 export async function runLegalAnalysisAgent(params: RunLegalAnalysisParams) {
@@ -90,16 +129,8 @@ export async function runLegalAnalysisAgent(params: RunLegalAnalysisParams) {
     const disputeInput = assembleLegalAnalysisDisputeInput({ room, side1, side2 });
     const queries = buildLegalSearchQueries(side1, side2);
     const ragResults = filterRelevantResults(await ragSearchForRoom(params.roomId, queries));
-
-    const excerpts =
-      ragResults.length > 0
-        ? ragResults
-            .map(
-              (result, index) =>
-                `[${index + 1}] Document: ${result.documentName}\nURL: ${result.sourceUrl}\nExcerpt:\n${result.content}`,
-            )
-            .join("\n\n")
-        : "No legal excerpts were retrieved from the corpus for this jurisdiction.";
+    const hasRelevantExcerpts = ragResults.length > 0;
+    const excerpts = formatExcerpts(ragResults);
 
     const locales = params.dryRun
       ? [params.targetLocale ?? normalizeLocale(side1.preferredLocale)]
@@ -111,6 +142,7 @@ export async function runLegalAnalysisAgent(params: RunLegalAnalysisParams) {
       byLocale[locale] = await generateLegalAnalysisForLocale({
         disputeInput,
         excerpts,
+        hasRelevantExcerpts,
         draftPrompt: params.draftPrompt,
         locale,
       });

@@ -10,6 +10,8 @@ import {
 } from "@/app/admin/settings/agent-prompt-actions";
 import { useLocale } from "@/components/locale-provider";
 import { AGENT_KEYS, type AgentKey } from "@/lib/pipeline/agent-keys";
+import { isLegalAnalysisNotFound } from "@/lib/pipeline/legal-analysis-not-found";
+import type { LegalAnalysis } from "@/lib/pipeline/schemas";
 
 const inputClass =
   "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
@@ -107,6 +109,11 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
     if (!testResult) return "";
     return JSON.stringify(testResult, null, 2);
   }, [testResult]);
+
+  const legalNotFoundResult =
+    activeTab === "legal_analysis" && isLegalAnalysisNotFound(testResult)
+      ? (testResult as LegalAnalysis)
+      : null;
 
   const onSave = () => {
     const formData = new FormData();
@@ -289,11 +296,21 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
         </button>
 
         {testResult ? (
-          <div>
-            <p className="mb-1 font-display text-label-md text-on-surface">{admin.agentTestResult}</p>
-            <pre className="max-h-96 overflow-auto rounded-lg bg-surface-container p-3 text-body-sm text-on-surface">
-              {resultJson}
-            </pre>
+          <div className="space-y-4">
+            {legalNotFoundResult ? (
+              <div className="rounded-lg border border-outline-variant/30 bg-surface-container p-4">
+                <p className="mb-2 font-display text-label-md text-on-surface">{admin.agentLegalNotFoundTitle}</p>
+                <p className="whitespace-pre-wrap text-body-md text-on-surface-variant">
+                  {legalNotFoundResult.analysis}
+                </p>
+              </div>
+            ) : null}
+            <div>
+              <p className="mb-1 font-display text-label-md text-on-surface">{admin.agentTestResult}</p>
+              <pre className="max-h-96 overflow-auto rounded-lg bg-surface-container p-3 text-body-sm text-on-surface">
+                {resultJson}
+              </pre>
+            </div>
           </div>
         ) : null}
       </div>

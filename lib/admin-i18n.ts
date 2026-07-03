@@ -139,6 +139,7 @@ export type AdminCopy = {
   agentTestDisputeAnswers: string;
   agentTestJurisdiction: string;
   agentTestResponseLocale: string;
+  agentLegalNotFoundTitle: string;
   agentPromptSaved: string;
   comingSoon: string;
   comingSoonDesc: string;
@@ -294,6 +295,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     agentTestDisputeAnswers: "Dispute answers",
     agentTestJurisdiction: "Jurisdiction",
     agentTestResponseLocale: "Response language",
+    agentLegalNotFoundTitle: "No relevant legal information found",
     agentPromptSaved: "Agent prompt saved",
     comingSoon: "COMING SOON",
     comingSoonDesc:
@@ -453,6 +455,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     agentTestDisputeAnswers: "Відповіді про спір",
     agentTestJurisdiction: "Юрисдикція",
     agentTestResponseLocale: "Мова відповіді",
+    agentLegalNotFoundTitle: "Релевантну правову інформацію не знайдено",
     agentPromptSaved: "Промпт агента збережено",
     comingSoon: "НЕЗАБАРОМ",
     comingSoonDesc:

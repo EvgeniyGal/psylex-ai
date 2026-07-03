@@ -31,29 +31,63 @@ export const interestsAnalysisSchema = z.object({
   summary: z.string(),
 });
 
-export const legalAnalysisSchema = z.object({
-  applicableLaws: z.array(
-    z.object({
-      name: z.string(),
-      summary: z.string(),
-      relevance: z.string(),
-    }),
-  ),
-  regulations: z.array(
-    z.object({
-      name: z.string(),
-      summary: z.string(),
-    }),
-  ),
-  analysis: z.string(),
-  citations: z.array(
-    z.object({
-      documentName: z.string(),
-      excerpt: z.string(),
-      sourceUrl: z.string().nullable().optional(),
-    }),
-  ),
+const legalCitationSchema = z.object({
+  documentName: z.string(),
+  excerpt: z.string(),
+  sourceUrl: z.string().nullable().optional(),
 });
+
+export const legalAnalysisSchema = z
+  .object({
+    status: z.enum(["found", "not_found"]).default("found"),
+    applicableLaws: z.array(
+      z.object({
+        name: z.string(),
+        summary: z.string(),
+        relevance: z.string(),
+      }),
+    ),
+    regulations: z.array(
+      z.object({
+        name: z.string(),
+        summary: z.string(),
+      }),
+    ),
+    analysis: z.string(),
+    citations: z.array(legalCitationSchema),
+  })
+  .superRefine((data, ctx) => {
+    if (data.status !== "not_found") return;
+
+    if (data.applicableLaws.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "applicableLaws must be empty when status is not_found",
+        path: ["applicableLaws"],
+      });
+    }
+    if (data.regulations.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "regulations must be empty when status is not_found",
+        path: ["regulations"],
+      });
+    }
+    if (data.citations.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "citations must be empty when status is not_found",
+        path: ["citations"],
+      });
+    }
+    if (!data.analysis.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "analysis must explain that no relevant information was found",
+        path: ["analysis"],
+      });
+    }
+  });
 
 export type PsychodynamicProfile = z.infer<typeof psychodynamicProfileSchema>;
 export type EmotionalTriggers = z.infer<typeof emotionalTriggersSchema>;
