@@ -2,13 +2,14 @@
 
 import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { startMediation } from "@/app/dispute-intake/actions";
+import { startMediation, runPostIntakePipelineForRoom } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import type { SideReadiness } from "@/lib/dispute-intake";
 import type { ParticipantRole } from "@/lib/participant-roles";
 
 type MediationLobbyProps = {
+  roomId: string;
   roomTitle: string;
   self: SideReadiness;
   opposite: SideReadiness | null;
@@ -35,6 +36,7 @@ function StatusBadge({ ready, readyLabel, notReadyLabel }: { ready: boolean; rea
 }
 
 export function MediationLobby({
+  roomId,
   roomTitle,
   self,
   opposite,
@@ -49,14 +51,32 @@ export function MediationLobby({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!pipelineRunning) return;
+    if (!pipelineRunning || !roomId) return;
 
-    const intervalId = window.setInterval(() => {
+    const kickPipeline = () => {
+      void runPostIntakePipelineForRoom(roomId)
+        .then((result) => {
+          if (result.status === "complete" || result.status === "ran") {
+            router.refresh();
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to run post-intake pipeline:", error);
+        });
+    };
+
+    kickPipeline();
+
+    const retryId = window.setInterval(kickPipeline, 30000);
+    const refreshId = window.setInterval(() => {
       router.refresh();
-    }, 20000);
+    }, 10000);
 
-    return () => window.clearInterval(intervalId);
-  }, [pipelineRunning, router]);
+    return () => {
+      window.clearInterval(retryId);
+      window.clearInterval(refreshId);
+    };
+  }, [pipelineRunning, roomId, router]);
 
   const handleStart = () => {
     startTransition(async () => {

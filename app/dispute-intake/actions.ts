@@ -12,7 +12,7 @@ import {
   canTriggerPostIntakePipeline,
   isPostIntakePipelineComplete,
 } from "@/lib/pipeline/gate";
-import { tryRunPostIntakePipeline } from "@/lib/pipeline/trigger";
+import { tryRunPostIntakePipeline, ensurePostIntakePipeline } from "@/lib/pipeline/trigger";
 import { disputeIntakeSchema } from "@/lib/dispute-intake-schema";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 
@@ -100,4 +100,29 @@ export async function startMediation() {
   }
 
   redirect("/room");
+}
+
+export async function runPostIntakePipelineForRoom(
+  roomId: string,
+): Promise<{ status: "complete" | "ran" | "ineligible" }> {
+  const { user } = await requireSideParticipant();
+
+  if (!roomId || !user.roomId || user.roomId !== roomId) {
+    throw new Error("Unauthorized");
+  }
+
+  const canTrigger = await canTriggerPostIntakePipeline(roomId);
+  if (!canTrigger) {
+    return { status: "ineligible" };
+  }
+
+  const complete = await isPostIntakePipelineComplete(roomId);
+  if (complete) {
+    revalidatePath("/mediation");
+    return { status: "complete" };
+  }
+
+  await ensurePostIntakePipeline(roomId);
+  revalidatePath("/mediation");
+  return { status: "ran" };
 }

@@ -13,6 +13,14 @@ import { logPipelineEvent } from "@/lib/pipeline/log-event";
 
 const runningRooms = new Set<string>();
 
+async function runAgentSafely(label: string, fn: () => Promise<unknown>) {
+  try {
+    await fn();
+  } catch (error) {
+    console.error(`Post-intake pipeline: ${label} failed:`, error);
+  }
+}
+
 export async function runPostIntakePipeline(roomId: string) {
   if (runningRooms.has(roomId)) return;
   if (!(await canTriggerPostIntakePipeline(roomId))) return;
@@ -28,20 +36,34 @@ export async function runPostIntakePipeline(roomId: string) {
     if (!side1 || !side2) return;
 
     await Promise.all([
-      runPsychodynamicAgent({ userId: side1.id, roomId }),
-      runPsychodynamicAgent({ userId: side2.id, roomId }),
-      runEmotionalTriggersAgent({ userId: side1.id, roomId }),
-      runEmotionalTriggersAgent({ userId: side2.id, roomId }),
+      runAgentSafely("psychodynamic side1", () =>
+        runPsychodynamicAgent({ userId: side1.id, roomId }),
+      ),
+      runAgentSafely("psychodynamic side2", () =>
+        runPsychodynamicAgent({ userId: side2.id, roomId }),
+      ),
+      runAgentSafely("emotional triggers side1", () =>
+        runEmotionalTriggersAgent({ userId: side1.id, roomId }),
+      ),
+      runAgentSafely("emotional triggers side2", () =>
+        runEmotionalTriggersAgent({ userId: side2.id, roomId }),
+      ),
     ]);
 
     await Promise.all([
-      runInterestsAgent({ roomId }),
-      runLegalAnalysisAgent({ roomId }),
+      runAgentSafely("interests", () => runInterestsAgent({ roomId })),
+      runAgentSafely("legal analysis", () => runLegalAnalysisAgent({ roomId })),
     ]);
 
     if (await isPostIntakePipelineComplete(roomId)) {
       await markPipelineCompleted(roomId);
       await logPipelineEvent({ roomId, eventType: "pipeline_completed" });
+    } else {
+      await logPipelineEvent({
+        roomId,
+        eventType: "agent_failed",
+        payload: { message: "Pipeline finished with incomplete agent outputs" },
+      });
     }
   } finally {
     runningRooms.delete(roomId);

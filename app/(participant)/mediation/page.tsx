@@ -39,6 +39,7 @@ export default async function MediationPage() {
       opposite={lobby.opposite}
       oppositeRole={lobby.oppositeRole}
       pipelineRunning={lobby.pipelineRunning}
+      roomId={lobby.room.id}
       roomTitle={lobby.room.title}
       self={lobby.self}
       viewerRole={role as ParticipantRole}
