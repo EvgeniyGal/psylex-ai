@@ -8,6 +8,8 @@ import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { requireParticipantSession } from "@/lib/portal-auth";
 import { getRoomPageData } from "@/lib/room/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function RoomPage() {
   const { userId, role } = await requireParticipantSession();
 
@@ -29,7 +31,7 @@ export default async function RoomPage() {
   }
 
   const lobby = await getMediationLobbyData(userId);
-  if (!lobby?.canStartMediation) {
+  if (!lobby?.room.mediationStartedAt) {
     redirect("/mediation");
   }
 

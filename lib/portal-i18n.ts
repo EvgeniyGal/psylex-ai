@@ -60,6 +60,12 @@ type PortalCopy = {
   mediationStart: string;
   mediationYourStatus: string;
   mediationAgentsWorking: string;
+  mediationHandshakeWaiting: string;
+  mediationHandshakeOppositeReady: string;
+  mediationHandshakeExpired: string;
+  mediationHandshakeWindowRemaining: string;
+  mediationCountdownLabel: string;
+  mediationSessionEnded: string;
   backToStart: string;
   logout: string;
   roomTitle: string;
@@ -173,6 +179,15 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationYourStatus: "Your status",
     mediationAgentsWorking:
       "Our analysis agents are preparing your mediation session. This may take several minutes. Please wait — the Start Mediation button will become available when analysis is complete.",
+    mediationHandshakeWaiting:
+      "You clicked Start Mediation. Waiting for the opposite side to click as well.",
+    mediationHandshakeOppositeReady:
+      "The opposite side is ready to start. Click Start Mediation within the next minute to join the session together.",
+    mediationHandshakeExpired:
+      "The one-minute start window expired. Both sides need to click Start Mediation again.",
+    mediationHandshakeWindowRemaining: "Time remaining for the opposite side to join: {seconds}s",
+    mediationCountdownLabel: "Session time remaining",
+    mediationSessionEnded: "The 20-minute mediation session has ended.",
     backToStart: "Back to start",
     logout: "Logout",
     roomTitle: "Mediation room",
@@ -285,6 +300,15 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationYourStatus: "Ваш статус",
     mediationAgentsWorking:
       "Агенти аналізу готують вашу сесію медіації. Це може зайняти кілька хвилин. Зачекайте — кнопка «Почати медіацію» стане доступною після завершення аналізу.",
+    mediationHandshakeWaiting:
+      "Ви натиснули «Почати медіацію». Очікуємо, поки інша сторона також натисне кнопку.",
+    mediationHandshakeOppositeReady:
+      "Інша сторона готова почати. Натисніть «Почати медіацію» протягом наступної хвилини, щоб разом увійти в сесію.",
+    mediationHandshakeExpired:
+      "Хвилинне вікно для старту минуло. Обидві сторони мають знову натиснути «Почати медіацію».",
+    mediationHandshakeWindowRemaining: "Час для приєднання іншої сторони: {seconds} с",
+    mediationCountdownLabel: "Час сесії",
+    mediationSessionEnded: "20-хвилинна сесія медіації завершилася.",
     backToStart: "На головну",
     logout: "Вийти",
     roomTitle: "Кімната медіації",

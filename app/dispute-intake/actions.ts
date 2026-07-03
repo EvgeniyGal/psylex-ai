@@ -15,6 +15,11 @@ import {
 import { tryRunPostIntakePipeline, ensurePostIntakePipeline } from "@/lib/pipeline/trigger";
 import { disputeIntakeSchema } from "@/lib/dispute-intake-schema";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
+import {
+  getHandshakeStatusForUser,
+  recordStartClick,
+  type HandshakeStatusResponse,
+} from "@/lib/mediation/handshake";
 
 async function requireSideParticipant() {
   const session = await getServerSession(authOptions);
@@ -81,25 +86,34 @@ export async function submitDisputeIntake(formData: FormData) {
   redirect("/mediation");
 }
 
-export async function startMediation() {
-  const { user } = await requireSideParticipant();
+export async function clickStartMediation(): Promise<HandshakeStatusResponse> {
+  const { user, role } = await requireSideParticipant();
 
   if (!hasSubmittedDisputeIntake(user)) {
-    redirect("/dispute-intake");
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
   }
 
   const { getMediationLobbyData } = await import("@/lib/dispute-intake");
   const lobby = await getMediationLobbyData(user.id);
 
-  if (!lobby?.bothReady) {
-    redirect("/mediation");
+  if (!lobby?.canStartMediation || !user.roomId) {
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
   }
 
-  if (!lobby.pipelineComplete) {
-    redirect("/mediation");
-  }
+  const result = await recordStartClick(
+    user.roomId,
+    user.role === "side1" || user.role === "side2" ? user.role : (role as "side1" | "side2"),
+  );
 
-  redirect("/room");
+  revalidatePath("/mediation");
+  revalidatePath("/room");
+
+  return result;
+}
+
+export async function getMediationHandshakeStatus(): Promise<HandshakeStatusResponse> {
+  const { user } = await requireSideParticipant();
+  return getHandshakeStatusForUser(user.id);
 }
 
 export async function runPostIntakePipelineForRoom(

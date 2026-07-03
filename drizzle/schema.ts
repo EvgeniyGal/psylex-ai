@@ -75,6 +75,10 @@ export const rooms = pgTable("rooms", {
   legalAnalysisAt: timestamp("legal_analysis_at", { withTimezone: true }),
   postIntakePipelineStartedAt: timestamp("post_intake_pipeline_started_at", { withTimezone: true }),
   postIntakePipelineCompletedAt: timestamp("post_intake_pipeline_completed_at", { withTimezone: true }),
+  side1MediationStartClickedAt: timestamp("side1_mediation_start_clicked_at", { withTimezone: true }),
+  side2MediationStartClickedAt: timestamp("side2_mediation_start_clicked_at", { withTimezone: true }),
+  mediationStartedAt: timestamp("mediation_started_at", { withTimezone: true }),
+  mediationDurationMinutes: integer("mediation_duration_minutes").notNull().default(20),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
