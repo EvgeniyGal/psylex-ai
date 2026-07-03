@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Admin management of the four dispute pipeline agent system prompts with testing and pipeline log monitoring.
+Admin management of the four post-intake analysis agent system prompts with per-agent dry-run testing and pipeline log monitoring.
 
 ## Requirements
 
@@ -18,17 +18,18 @@ The Settings page SHALL include a Prompts tab alongside the existing Credentials
 
 ### Requirement: Four agent system prompts
 
-The platform SHALL store editable system prompts for Agent 1 (Legal Domain), Agent 2 (Precedents), Agent 3 (Compatibility), and Agent 4 (Synthesis & Resolution).
+The platform SHALL store editable system prompts for Agent 1 (Psychodynamic Profile), Agent 2 (Interests Analysis), Agent 3 (Emotional Triggers), and Agent 4 (Legal Analysis). Each prompt SHALL be keyed by `agent_key`: `psychodynamic`, `interests`, `emotional_triggers`, `legal_analysis`.
 
 #### Scenario: Prompts stored per agent
 
 - **WHEN** an admin opens Settings and selects the Prompts tab
-- **THEN** four prompt fields are displayed, one per agent
+- **THEN** four agent sub-tabs are displayed
+- **AND** each sub-tab shows one editable system prompt field
 - **AND** each prompt can be viewed and edited independently
 
 ### Requirement: Admin prompt editing
 
-An admin SHALL be able to save changes to any agent system prompt. Saved prompts SHALL be used by the dispute AI pipeline on subsequent runs.
+An admin SHALL be able to save changes to any agent system prompt. Saved prompts SHALL be used by the post-intake analysis pipeline on subsequent runs.
 
 #### Scenario: Save prompt change
 
@@ -38,27 +39,72 @@ An admin SHALL be able to save changes to any agent system prompt. Saved prompts
 
 ### Requirement: Prompt testing
 
-An admin SHALL be able to test prompt changes against sample inputs and observe agent behavior without affecting a live room session.
+An admin SHALL be able to test prompt changes against real participant data and observe agent output without persisting results to live user or room records.
 
-#### Scenario: Test prompt in isolation
+#### Scenario: Test psychodynamic agent
 
-- **WHEN** an admin runs a prompt test for Agent 1 with sample situation descriptions
-- **THEN** the system invokes Agent 1 with the current (possibly unsaved draft) prompt and sample input
-- **AND** the test output is displayed to the admin
-- **AND** no live room pipeline state is modified
+- **WHEN** an admin selects a user with a ready `personal_bot_prompt` and runs a test for Agent 1
+- **THEN** the system displays the personal bot prompt as input
+- **AND** invokes Agent 1 with the current (possibly unsaved draft) prompt
+- **AND** displays the generated psychodynamic profile
+- **AND** no `psychodynamic_profile` column is updated on the live user record
+
+#### Scenario: Test interests agent
+
+- **WHEN** an admin selects a room where both sides have completed dispute intake and runs a test for Agent 2
+- **THEN** the system displays both sides' dispute-intake answers as input
+- **AND** invokes Agent 2 with the current prompt
+- **AND** displays the generated interests analysis
+- **AND** no `interests_analysis` column is updated on the live room record
+
+#### Scenario: Test emotional triggers agent
+
+- **WHEN** an admin selects a user with a ready personal bot prompt and completed dispute intake and runs a test for Agent 3
+- **THEN** the system displays the personal bot prompt and dispute-intake answers as input
+- **AND** invokes Agent 3 with the current prompt
+- **AND** displays the generated emotional triggers
+- **AND** no `emotional_triggers` column is updated on the live user record
+
+#### Scenario: Test legal analysis agent
+
+- **WHEN** an admin selects a room where both sides have completed dispute intake and runs a test for Agent 4
+- **THEN** the system displays both sides' dispute-intake answers and the room jurisdiction as input
+- **AND** invokes Agent 4 with RAG retrieval and the current prompt
+- **AND** displays the generated legal analysis with citations
+- **AND** no `legal_analysis` column is updated on the live room record
 
 ### Requirement: Pipeline log monitoring
 
-An admin SHALL be able to view session/room pipeline logs to validate pipeline correctness, including agent stage transitions, timestamps, and stored output summaries.
+An admin SHALL be able to view room pipeline logs to validate post-intake agent execution, including agent stage transitions, timestamps, and stored output summaries.
 
-#### Scenario: View room pipeline log
+#### Scenario: Log reflects post-intake agent stages
 
-- **WHEN** an admin opens pipeline logs for a room
-- **THEN** a chronological log of pipeline events is displayed (stage started, stage completed, clarification sent, options published, errors)
-- **AND** each entry includes timestamp and relevant room ID
+- **WHEN** a room completes the post-intake pipeline
+- **THEN** the log shows per-user agents (psychodynamic, emotional triggers) completing before room-level agents (interests, legal analysis)
+- **AND** each agent start and completion is recorded with timestamp and room ID
 
-#### Scenario: Log reflects agent stages
+### Requirement: Agent prompt sub-tabs
 
-- **WHEN** a room completes the full pipeline
-- **THEN** the log shows Agent 1 completion before Agents 2/3, Agents 2/3 before Agent 4, and options publication
-- **AND** jurisdiction clarification pauses are recorded if they occurred
+The Prompts tab SHALL display horizontal sub-tabs for each of the four post-intake agents: Psychodynamic Profile, Interests Analysis, Emotional Triggers, and Legal Analysis.
+
+#### Scenario: Sub-tab navigation
+
+- **WHEN** an admin opens the Prompts tab in Settings
+- **THEN** four sub-tabs are visible within the Prompts panel
+- **AND** selecting a sub-tab shows that agent's prompt editor and test panel
+
+### Requirement: Test data selectors
+
+Each agent test panel SHALL provide a selector appropriate to that agent's input requirements.
+
+#### Scenario: User selector for per-user agents
+
+- **WHEN** an admin opens the test panel for Agent 1 or Agent 3
+- **THEN** a dropdown lists users who meet that agent's prerequisites (personal bot prompt ready; dispute intake complete for Agent 3)
+- **AND** selecting a user loads that user's input data for display
+
+#### Scenario: Room selector for room-level agents
+
+- **WHEN** an admin opens the test panel for Agent 2 or Agent 4
+- **THEN** a dropdown lists rooms where both sides have completed dispute intake
+- **AND** selecting a room loads both sides' dispute-intake answers for display

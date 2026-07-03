@@ -56,8 +56,8 @@
 
 ## 8. Verification
 
-- [ ] 8.1 Manually test pipeline trigger: submit intake for both sides in a test room, verify all four outputs persisted
-- [ ] 8.2 Manually test mediation lobby: Start Mediation disabled while agents run, enabled after completion, auto-refresh works
-- [ ] 8.3 Manually test each admin agent sub-tab: save prompt, run dry-run test, confirm no live DB mutation
-- [ ] 8.4 Verify `pipeline_event_logs` records agent start/complete events for a full pipeline run
-- [ ] 8.5 Verify Agent 4 legal analysis returns citations when RAG corpus has matching documents for room jurisdiction
+- [x] 8.1 Manually test pipeline trigger: submit intake for both sides in a test room, verify all four outputs persisted
+- [x] 8.2 Manually test mediation lobby: Start Mediation disabled while agents run, enabled after completion, auto-refresh works
+- [x] 8.3 Manually test each admin agent sub-tab: save prompt, run dry-run test, confirm no live DB mutation
+- [x] 8.4 Verify `pipeline_event_logs` records agent start/complete events for a full pipeline run
+- [x] 8.5 Verify Agent 4 legal analysis returns citations when RAG corpus has matching documents for room jurisdiction
