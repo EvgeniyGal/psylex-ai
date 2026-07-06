@@ -1,16 +1,38 @@
 import path from "node:path";
 import PDFDocument from "pdfkit";
 
+export type MediationPdfSection = {
+  heading: string;
+  body: string;
+};
+
 export type MediationPdfContent = {
   title: string;
-  body: string;
+  sections: MediationPdfSection[];
+  agreementBody?: string;
   terms: string[];
   disclaimer: string;
   termsHeading: string;
+  agreementHeading?: string;
 };
 
 function fontPath(filename: string) {
   return path.join(process.cwd(), "assets", "fonts", filename);
+}
+
+function addSection(
+  doc: PDFKit.PDFDocument,
+  regularFont: string,
+  boldFont: string,
+  section: MediationPdfSection,
+) {
+  doc.moveDown(0.75);
+  doc.font(boldFont).fontSize(13).fillColor("#000000").text(section.heading);
+  doc.moveDown(0.4);
+  doc.font(regularFont).fontSize(11).text(section.body, {
+    align: "left",
+    lineGap: 4,
+  });
 }
 
 function renderPdf(content: MediationPdfContent): Promise<Buffer> {
@@ -35,17 +57,28 @@ function renderPdf(content: MediationPdfContent): Promise<Buffer> {
     doc.font(regularFont);
 
     doc.font(boldFont).fontSize(18).text(content.title, { align: "left" });
-    doc.moveDown(1);
 
-    doc.font(regularFont).fontSize(11).text(content.body, {
-      align: "left",
-      lineGap: 4,
-    });
+    for (const section of content.sections) {
+      addSection(doc, regularFont, boldFont, section);
+    }
+
+    if (content.agreementBody) {
+      doc.moveDown(0.75);
+      doc
+        .font(boldFont)
+        .fontSize(13)
+        .text(content.agreementHeading ?? content.termsHeading);
+      doc.moveDown(0.4);
+      doc.font(regularFont).fontSize(11).text(content.agreementBody, {
+        align: "left",
+        lineGap: 4,
+      });
+    }
 
     if (content.terms.length > 0) {
-      doc.moveDown(1);
+      doc.moveDown(0.75);
       doc.font(boldFont).fontSize(13).text(content.termsHeading);
-      doc.moveDown(0.5);
+      doc.moveDown(0.4);
       doc.font(regularFont).fontSize(11);
       for (const term of content.terms) {
         doc.text(`• ${term}`, { indent: 12, lineGap: 3 });

@@ -7,6 +7,8 @@ type MediationCountdownProps = {
   startedAt: string;
   durationMinutes: number;
   onEnded?: () => void;
+  /** When true, stop ticking and show session-ended (mediation finished before timer). */
+  sessionComplete?: boolean;
 };
 
 function formatRemaining(ms: number) {
@@ -16,22 +18,30 @@ function formatRemaining(ms: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function MediationCountdown({ startedAt, durationMinutes, onEnded }: MediationCountdownProps) {
+export function MediationCountdown({
+  startedAt,
+  durationMinutes,
+  onEnded,
+  sessionComplete = false,
+}: MediationCountdownProps) {
   const { portal: t } = useLocale();
   const endsAt = useMemo(
     () => new Date(startedAt).getTime() + durationMinutes * 60_000,
     [durationMinutes, startedAt],
   );
-  const [remainingMs, setRemainingMs] = useState(() => Math.max(0, endsAt - Date.now()));
+  // Defer time display until after mount to avoid SSR/client Date.now() hydration mismatch.
+  const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
   useEffect(() => {
+    if (sessionComplete) return;
+
     const tick = () => setRemainingMs(Math.max(0, endsAt - Date.now()));
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [endsAt]);
+  }, [endsAt, sessionComplete]);
 
-  const ended = remainingMs <= 0;
+  const ended = sessionComplete || (remainingMs !== null && remainingMs <= 0);
 
   useEffect(() => {
     if (ended) onEnded?.();
@@ -43,7 +53,9 @@ export function MediationCountdown({ startedAt, durationMinutes, onEnded }: Medi
       {ended ? (
         <p className="font-display text-display-md text-error">{t.mediationSessionEnded}</p>
       ) : (
-        <p className="font-display text-display-lg tabular-nums text-tertiary">{formatRemaining(remainingMs)}</p>
+        <p className="font-display text-display-lg tabular-nums text-tertiary" suppressHydrationWarning>
+          {remainingMs === null ? "--:--" : formatRemaining(remainingMs)}
+        </p>
       )}
     </div>
   );

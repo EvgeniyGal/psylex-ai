@@ -16,13 +16,14 @@ import {
   toPartyAdaptations,
 } from "@/lib/mediation/messages";
 import { runMediationAgent } from "@/lib/mediation/run-agent";
+import type { Locale } from "@/lib/i18n";
+import { portalCopy } from "@/lib/portal-i18n";
 import {
   mediationAgreementDraftSchema,
   mediationCompromiseSchema,
   mediationDataSufficiencySchema,
   mediationDialogueQuestionSchema,
   mediationModerationSchema,
-  mediationNudgeSchema,
   mediationOpeningSchema,
   mediationOptionsSchema,
   mediationRoundSummarySchema,
@@ -199,9 +200,18 @@ async function generateAndPublishOptions(roomId: string) {
     })
     .where(eq(rooms.id, roomId));
 
+  const canonical = portalCopy.en.mediationOptionsReady;
   await insertSystemMessage({
     roomId,
-    content: "Solution options are ready. Please review and vote independently.",
+    content: canonical,
+    canonicalContent: canonical,
+    adaptations: toPartyAdaptations({
+      canonicalContent: canonical,
+      partyA:
+        portalCopy[(ctx.partyA.preferredLocale as Locale) ?? "en"].mediationOptionsReady,
+      partyB:
+        portalCopy[(ctx.partyB.preferredLocale as Locale) ?? "en"].mediationOptionsReady,
+    }),
   });
 
   await logPipelineEvent({
@@ -334,35 +344,10 @@ export async function tickMediationTimers(roomId: string) {
     room.mediationTurnDeadlineAt &&
     Date.now() > room.mediationTurnDeadlineAt.getTime()
   ) {
-    if (!room.mediationTurnNudged) {
-      const { ctx } = await buildContext(room);
-      const nudge = await runMediationAgent({
-        mode: "nudge",
-        context: ctx,
-        schema: mediationNudgeSchema,
-        extraInstruction: `Nudge ${room.mediationActiveParty} to respond.`,
-      });
-
-      await insertAgentMessage({
-        roomId: room.id,
-        canonicalContent: nudge.canonicalContent,
-        adaptations: toPartyAdaptations(nudge),
-        messageKind: "mediation_nudge",
-      });
-
-      await db
-        .update(rooms)
-        .set({
-          mediationTurnNudged: true,
-          mediationTurnDeadlineAt: new Date(Date.now() + REPLY_TIMEOUT_MS),
-        })
-        .where(eq(rooms.id, roomId));
-    } else {
-      const timedOutParty = room.mediationActiveParty as PartyRole;
-      await clearTurn(roomId);
-      const fresh = await loadRoom(roomId);
-      if (fresh) await afterPartyReply(fresh, timedOutParty);
-    }
+    const timedOutParty = room.mediationActiveParty as PartyRole;
+    await clearTurn(roomId);
+    const fresh = await loadRoom(roomId);
+    if (fresh) await afterPartyReply(fresh, timedOutParty);
   }
 
   if (bothReady(room) && room.mediationPhase === "dialogue") {
@@ -648,7 +633,9 @@ export async function getMediationRoomState(userId: string) {
     }
   }
 
-  room = (await tickMediationTimers(room!.id)) ?? room;
+  if (room!.mediationPhase !== "completed") {
+    room = (await tickMediationTimers(room!.id)) ?? room;
+  }
 
   const role = partyRoleFromUser(participant.user);
   const messages = await listRoomMessages(room!.id);
@@ -659,7 +646,7 @@ export async function getMediationRoomState(userId: string) {
     id: message.id,
     senderType: message.senderType,
     messageKind: message.messageKind,
-    content: resolveMessageForViewer(message, role),
+    content: resolveMessageForViewer(message, role, participant.user.preferredLocale),
     createdAt: message.createdAt.toISOString(),
     isOwn: message.senderUserId === userId,
   }));

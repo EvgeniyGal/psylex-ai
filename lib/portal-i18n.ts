@@ -88,6 +88,7 @@ type PortalCopy = {
   mediationAttackRedirected: string;
   mediationActionFailed: string;
   mediationOptionsTitle: string;
+  mediationOptionsReady: string;
   mediationLegalInfo: string;
   mediationFulfillment: string;
   mediationRefusalRisks: string;
@@ -105,6 +106,10 @@ type PortalCopy = {
   mediationWaitingOtherAccept: string;
   mediationSessionCompleted: string;
   mediationDownloadResults: string;
+  mediationPdfPsychodynamicProfile: string;
+  mediationPdfLegislation: string;
+  mediationPdfSolution: string;
+  mediationPdfNotAvailable: string;
   mediationEmailPlaceholder: string;
   mediationEmailSend: string;
   mediationEmailComingSoon: string;
@@ -250,6 +255,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationAttackRedirected: "Please focus on the substance of the dispute.",
     mediationActionFailed: "Action failed. Please try again.",
     mediationOptionsTitle: "Solution options",
+    mediationOptionsReady:
+      "Solution options are ready. Please review and vote independently.",
     mediationLegalInfo: "Legal information (not advice)",
     mediationFulfillment: "Fulfillment likelihood",
     mediationRefusalRisks: "Risks if refused",
@@ -268,6 +275,10 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationWaitingOtherAccept: "Waiting for the other party to accept.",
     mediationSessionCompleted: "Session completed · Filing receipt saved",
     mediationDownloadResults: "Download results",
+    mediationPdfPsychodynamicProfile: "Psychodynamic profile",
+    mediationPdfLegislation: "Legislation",
+    mediationPdfSolution: "Solution",
+    mediationPdfNotAvailable: "Not available for this session.",
     mediationEmailPlaceholder: "Email for agreement (optional)",
     mediationEmailSend: "Send",
     mediationEmailComingSoon: "Email delivery is coming soon. Use download for now.",
@@ -420,6 +431,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationAttackRedirected: "Будь ласка, зосередьтеся на суті спору.",
     mediationActionFailed: "Не вдалося виконати дію. Спробуйте ще раз.",
     mediationOptionsTitle: "Варіанти рішення",
+    mediationOptionsReady:
+      "Варіанти рішення готові. Перегляньте їх і проголосуйте незалежно.",
     mediationLegalInfo: "Правова інформація (не порада)",
     mediationFulfillment: "Ймовірність виконання",
     mediationRefusalRisks: "Ризики відмови",
@@ -438,6 +451,10 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationWaitingOtherAccept: "Очікуємо прийняття від іншої сторони.",
     mediationSessionCompleted: "Сесію завершено · Квитанцію збережено",
     mediationDownloadResults: "Завантажити результати",
+    mediationPdfPsychodynamicProfile: "Психодинамічний профіль",
+    mediationPdfLegislation: "Законодавство",
+    mediationPdfSolution: "Рішення",
+    mediationPdfNotAvailable: "Недоступно для цієї сесії.",
     mediationEmailPlaceholder: "Email для угоди (необовʼязково)",
     mediationEmailSend: "Надіслати",
     mediationEmailComingSoon: "Надсилання email незабаром. Поки що скористайтеся завантаженням.",

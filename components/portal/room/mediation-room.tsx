@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -42,6 +42,8 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
   const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
 
+  const isSessionComplete = state.room.phase === "completed";
+
   const refresh = useCallback(async () => {
     try {
       const next = await fetchMediationRoomState();
@@ -52,19 +54,30 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
   }, []);
 
   useEffect(() => {
+    if (isSessionComplete) return;
+
     const id = window.setInterval(() => {
       void refresh();
     }, POLL_MS);
     return () => window.clearInterval(id);
-  }, [refresh]);
+  }, [refresh, isSessionComplete]);
 
   const isMyTurn =
     state.room.phase === "dialogue" && state.room.activeParty === viewerRole;
 
-  const replyRemaining = useMemo(
-    () => (isMyTurn ? formatReplyRemaining(state.room.turnDeadlineAt) : null),
-    [isMyTurn, state.room.turnDeadlineAt],
-  );
+  const [replyRemaining, setReplyRemaining] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isMyTurn || !state.room.turnDeadlineAt) {
+      setReplyRemaining(null);
+      return;
+    }
+
+    const tick = () => setReplyRemaining(formatReplyRemaining(state.room.turnDeadlineAt));
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [isMyTurn, state.room.turnDeadlineAt]);
 
   const showReadyButton =
     state.room.phase === "opening" ||
@@ -159,11 +172,14 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
 
   return (
     <div className="space-y-6">
-      <MediationCountdown
-        durationMinutes={state.room.mediationDurationMinutes}
-        onEnded={refresh}
-        startedAt={state.room.mediationStartedAt}
-      />
+      {!isSessionComplete ? (
+        <MediationCountdown
+          durationMinutes={state.room.mediationDurationMinutes}
+          onEnded={refresh}
+          sessionComplete={isSessionComplete}
+          startedAt={state.room.mediationStartedAt}
+        />
+      ) : null}
 
       <div className="glass-panel rounded-xl p-4 text-body-sm text-on-surface-variant">
         <p>
@@ -173,7 +189,7 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
           <p>
             {t.mediationRoundLabel}: {state.room.round}
             {isMyTurn ? ` · ${t.mediationYourTurn}` : ""}
-            {replyRemaining ? ` · ${t.mediationReplyTimer}: ${replyRemaining}` : ""}
+            {replyRemaining ? ` · ${t.mediationReplyTimer}: ${replyRemaining}` : isMyTurn ? ` · ${t.mediationReplyTimer}: --:--` : ""}
           </p>
         ) : null}
       </div>

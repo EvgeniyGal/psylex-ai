@@ -60,11 +60,9 @@ Each participant SHALL have **2 minutes** to submit a reply when it is their tur
 #### Scenario: Reply timer expires
 
 - **WHEN** the 2-minute reply timer expires without a submission
-- **THEN** the Mediation Agent posts a nudge prompting the party to respond to the current question
-- **AND** a fresh 2-minute reply deadline is set for the same turn
-- **WHEN** the party still does not reply before the second deadline expires
 - **THEN** the turn is marked timed out
-- **AND** the dialogue state advances so the session does not stall
+- **AND** the dialogue state advances to the next turn or round summary
+- **AND** no nudge message is posted
 
 ### Requirement: Ready for solution options button
 

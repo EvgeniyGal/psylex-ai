@@ -112,11 +112,11 @@ This change introduces a fifth agent—the **Mediation Agent**—and a full sess
 
 **Implementation note:** `adaptations` JSONB keys by side; each value is already locale-appropriate text produced by the agent for that party's locale + profile.
 
-### 12. Reply timeout policy: nudge
+### 12. Reply timeout policy: single wait
 
-**Decision:** When the 2-minute reply timer expires without a submission, the Mediation Agent posts a **nudge** (gentle prompt to respond on the current question). The turn stays active; a fresh 2-minute deadline is set. After **one** nudge cycle, if still no reply, the turn is marked timed out and dialogue advances so the session does not stall.
+**Decision:** When the 2-minute reply timer expires without a submission, the turn times out immediately and dialogue advances (next party question or round summary). No nudge or second deadline.
 
-**Rationale:** Nudge respects participant engagement; single retry avoids infinite waiting.
+**Rationale:** Product request — one question, one 2-minute window per turn.
 
 ### 13. Email delivery deferred
 
@@ -152,6 +152,6 @@ This change introduces a fifth agent—the **Mediation Agent**—and a full sess
 | Topic | Decision |
 |-------|----------|
 | Email transport | Deferred; v1 shows Send button only, no mail integration |
-| Reply timeout | Nudge once, then advance turn if still no reply |
+| Reply timeout | Single 2-minute wait per question; advance turn if no reply (no nudge) |
 | Adaptation | Per party: `preferred_locale` + `psychodynamic_profile` (digestible framing for that party) |
 | Mediator visibility | N/A in v1; future mediator views use canonical content only |
