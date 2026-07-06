@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   deleteDocument,
@@ -14,6 +14,11 @@ import { ModalOverlay } from "@/components/ui/modal";
 import { LEGAL_DOCUMENT_CATEGORIES, getCategoryLabel } from "@/lib/rag/categories";
 import type { LegalDocumentCategory, LegalDocumentRow, RoomJurisdiction } from "@/lib/rag/types";
 import type { RagInquiryResult } from "@/lib/rag/types";
+import {
+  USA_SUB_JURISDICTIONS_SORTED,
+  getUsaSubJurisdictionLabel,
+  type UsaSubJurisdiction,
+} from "@/lib/rag/usa-jurisdictions";
 
 const inputClass =
   "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
@@ -23,7 +28,7 @@ type RagSettingsContentProps = {
 };
 
 type ModalState =
-  | { type: "upload"; jurisdiction: RoomJurisdiction }
+  | { type: "upload"; jurisdiction: RoomJurisdiction; usaSubJurisdiction?: UsaSubJurisdiction }
   | { type: "edit"; document: LegalDocumentRow }
   | { type: "delete"; document: LegalDocumentRow }
   | null;
@@ -53,8 +58,10 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
   const [activeJurisdictionTab, setActiveJurisdictionTab] = useState<JurisdictionTab>("ukraine");
   const [ukraineCategoryFilter, setUkraineCategoryFilter] = useState<"" | LegalDocumentCategory>("");
   const [usaCategoryFilter, setUsaCategoryFilter] = useState<"" | LegalDocumentCategory>("");
+  const [usaSubJurisdictionFilter, setUsaSubJurisdictionFilter] = useState<"" | UsaSubJurisdiction>("");
   const [testJurisdiction, setTestJurisdiction] = useState<RoomJurisdiction>("ukraine");
   const [testCategory, setTestCategory] = useState<"" | LegalDocumentCategory>("");
+  const [testUsaSubJurisdiction, setTestUsaSubJurisdiction] = useState<"" | UsaSubJurisdiction>("");
   const [testDocumentId, setTestDocumentId] = useState("");
   const [testQuestion, setTestQuestion] = useState("");
   const [testResult, setTestResult] = useState<RagInquiryResult | null>(null);
@@ -72,12 +79,27 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
   const usaDocuments = useMemo(
     () =>
       documents.filter(
-        (doc) => doc.jurisdiction === "usa" && (!usaCategoryFilter || doc.category === usaCategoryFilter),
+        (doc) =>
+          doc.jurisdiction === "usa" &&
+          (!usaCategoryFilter || doc.category === usaCategoryFilter) &&
+          (!usaSubJurisdictionFilter || doc.usaSubJurisdiction === usaSubJurisdictionFilter),
       ),
-    [documents, usaCategoryFilter],
+    [documents, usaCategoryFilter, usaSubJurisdictionFilter],
   );
 
   const readyDocuments = documents.filter((doc) => doc.status === "ready");
+  const testSelectableDocuments = useMemo(
+    () =>
+      readyDocuments.filter(
+        (doc) =>
+          doc.jurisdiction === testJurisdiction &&
+          (!testCategory || doc.category === testCategory) &&
+          (testJurisdiction !== "usa" ||
+            !testUsaSubJurisdiction ||
+            doc.usaSubJurisdiction === testUsaSubJurisdiction),
+      ),
+    [readyDocuments, testJurisdiction, testCategory, testUsaSubJurisdiction],
+  );
   const isUploading = pending && modal?.type === "upload";
 
   const activeCategoryFilter =
@@ -85,6 +107,12 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
   const setActiveCategoryFilter =
     activeJurisdictionTab === "ukraine" ? setUkraineCategoryFilter : setUsaCategoryFilter;
   const activeDocuments = activeJurisdictionTab === "ukraine" ? ukraineDocuments : usaDocuments;
+
+  useEffect(() => {
+    if (testDocumentId && !testSelectableDocuments.some((doc) => doc.id === testDocumentId)) {
+      setTestDocumentId("");
+    }
+  }, [testDocumentId, testSelectableDocuments]);
 
   const runMutation = (action: () => Promise<void>, successMessage: string) => {
     startTransition(async () => {
@@ -137,6 +165,9 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
         formData.set("locale", locale);
         if (testDocumentId) formData.set("documentId", testDocumentId);
         if (testCategory) formData.set("category", testCategory);
+        if (testJurisdiction === "usa" && testUsaSubJurisdiction) {
+          formData.set("usaSubJurisdiction", testUsaSubJurisdiction);
+        }
         const result = await testInquiry(formData);
         setTestResult(result);
       } catch (error) {
@@ -167,26 +198,65 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
     </select>
   );
 
+  const renderUsaSubJurisdictionFilter = (
+    value: "" | UsaSubJurisdiction,
+    onChange: (value: "" | UsaSubJurisdiction) => void,
+  ) => (
+    <select
+      className={inputClass}
+      onChange={(event) => onChange(event.target.value as "" | UsaSubJurisdiction)}
+      value={value}
+    >
+      <option value="">{admin.ragAllUsaSubJurisdictions}</option>
+      {USA_SUB_JURISDICTIONS_SORTED.map((code) => (
+        <option key={code} value={code}>
+          {getUsaSubJurisdictionLabel(code, locale)}
+        </option>
+      ))}
+    </select>
+  );
+
   const renderDocumentTable = (
     rows: LegalDocumentRow[],
     categoryFilter: "" | LegalDocumentCategory,
     onCategoryFilterChange: (value: "" | LegalDocumentCategory) => void,
     jurisdiction: RoomJurisdiction,
+    usaSubJurisdictionFilterValue: "" | UsaSubJurisdiction,
+    onUsaSubJurisdictionFilterChange: (value: "" | UsaSubJurisdiction) => void,
   ) => (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-3">
         <button
-          className="rounded-lg bg-tertiary px-4 py-2 text-body-sm font-bold text-on-tertiary"
-          onClick={() => setModal({ type: "upload", jurisdiction })}
+          className="btn-primary px-4 py-2 text-body-sm"
+          onClick={() =>
+            setModal({
+              type: "upload",
+              jurisdiction,
+              usaSubJurisdiction:
+                jurisdiction === "usa" && usaSubJurisdictionFilterValue
+                  ? usaSubJurisdictionFilterValue
+                  : undefined,
+            })
+          }
           type="button"
         >
           {admin.ragUploadDocument}
         </button>
       </div>
 
-      <div>
-        <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragCategoryFilter}</label>
-        {renderCategoryFilter(categoryFilter, onCategoryFilterChange)}
+      <div className="grid gap-4 md:grid-cols-2">
+        {jurisdiction === "usa" ? (
+          <div>
+            <label className="mb-1 block text-body-sm text-on-surface-variant">
+              {admin.ragUsaSubJurisdictionFilter}
+            </label>
+            {renderUsaSubJurisdictionFilter(usaSubJurisdictionFilterValue, onUsaSubJurisdictionFilterChange)}
+          </div>
+        ) : null}
+        <div className={jurisdiction === "usa" ? "" : "md:col-span-2"}>
+          <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragCategoryFilter}</label>
+          {renderCategoryFilter(categoryFilter, onCategoryFilterChange)}
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -197,6 +267,9 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
             <thead className="bg-surface-container-low text-on-surface-variant">
               <tr>
                 <th className="px-4 py-3">{admin.ragDocumentName}</th>
+                {jurisdiction === "usa" ? (
+                  <th className="px-4 py-3">{admin.ragUsaSubJurisdiction}</th>
+                ) : null}
                 <th className="px-4 py-3">{admin.ragCategory}</th>
                 <th className="px-4 py-3">{admin.ragSourceUrl}</th>
                 <th className="px-4 py-3">{admin.tableStatus}</th>
@@ -209,6 +282,13 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
               {rows.map((doc) => (
                 <tr className="border-t border-outline-variant/10" key={doc.id}>
                   <td className="px-4 py-3 font-medium text-on-surface">{doc.name}</td>
+                  {jurisdiction === "usa" ? (
+                    <td className="px-4 py-3 text-on-surface-variant">
+                      {doc.usaSubJurisdiction
+                        ? getUsaSubJurisdictionLabel(doc.usaSubJurisdiction, locale)
+                        : "—"}
+                    </td>
+                  ) : null}
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-primary/10 px-2 py-1 text-label-md text-primary">
                       {getCategoryLabel(doc.category, locale)}
@@ -294,12 +374,23 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
           ))}
         </div>
 
-        {renderDocumentTable(
-          activeDocuments,
-          activeCategoryFilter,
-          setActiveCategoryFilter,
-          activeJurisdictionTab,
-        )}
+        {activeJurisdictionTab === "ukraine"
+          ? renderDocumentTable(
+              activeDocuments,
+              activeCategoryFilter,
+              setActiveCategoryFilter,
+              activeJurisdictionTab,
+              "",
+              () => {},
+            )
+          : renderDocumentTable(
+              activeDocuments,
+              activeCategoryFilter,
+              setActiveCategoryFilter,
+              activeJurisdictionTab,
+              usaSubJurisdictionFilter,
+              setUsaSubJurisdictionFilter,
+            )}
       </div>
 
       <div className="glass-panel space-y-4 rounded-xl p-6">
@@ -309,7 +400,12 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
             <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.jurisdictionLabel}</label>
             <select
               className={inputClass}
-              onChange={(event) => setTestJurisdiction(event.target.value as RoomJurisdiction)}
+              onChange={(event) => {
+                const next = event.target.value as RoomJurisdiction;
+                setTestJurisdiction(next);
+                setTestDocumentId("");
+                if (next !== "usa") setTestUsaSubJurisdiction("");
+              }}
               value={testJurisdiction}
             >
               <option value="ukraine">{admin.ragJurisdictionUkraine}</option>
@@ -318,8 +414,22 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
           </div>
           <div>
             <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragCategoryFilter}</label>
-            {renderCategoryFilter(testCategory, setTestCategory)}
+            {renderCategoryFilter(testCategory, (value) => {
+              setTestCategory(value);
+              setTestDocumentId("");
+            })}
           </div>
+          {testJurisdiction === "usa" ? (
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-body-sm text-on-surface-variant">
+                {admin.ragUsaSubJurisdictionFilter}
+              </label>
+              {renderUsaSubJurisdictionFilter(testUsaSubJurisdiction, (value) => {
+                setTestUsaSubJurisdiction(value);
+                setTestDocumentId("");
+              })}
+            </div>
+          ) : null}
           <div className="md:col-span-2">
             <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragTestSelectDocument}</label>
             <select
@@ -328,13 +438,11 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
               value={testDocumentId}
             >
               <option value="">{admin.ragTestAllDocuments}</option>
-              {readyDocuments
-                .filter((doc) => doc.jurisdiction === testJurisdiction)
-                .map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.name}
-                  </option>
-                ))}
+              {testSelectableDocuments.map((doc) => (
+                <option key={doc.id} value={doc.id}>
+                  {doc.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="md:col-span-2">
@@ -347,7 +455,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
           </div>
         </div>
         <button
-          className="rounded-lg bg-tertiary px-6 py-2.5 text-body-sm font-bold text-on-tertiary disabled:opacity-60"
+          className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
           disabled={pending || !testQuestion.trim()}
           onClick={onTestInquiry}
           type="button"
@@ -405,6 +513,27 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
               <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragSourceUrl}</label>
               <input className={inputClass} disabled={isUploading} name="sourceUrl" required type="url" />
             </div>
+            {modal?.type === "upload" && modal.jurisdiction === "usa" ? (
+              <div>
+                <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragUsaSubJurisdiction}</label>
+                <select
+                  className={inputClass}
+                  defaultValue={modal.usaSubJurisdiction ?? ""}
+                  disabled={isUploading}
+                  name="usaSubJurisdiction"
+                  required
+                >
+                  <option disabled value="">
+                    —
+                  </option>
+                  {USA_SUB_JURISDICTIONS_SORTED.map((code) => (
+                    <option key={code} value={code}>
+                      {getUsaSubJurisdictionLabel(code, locale)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div>
               <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragCategory}</label>
               <select className={inputClass} disabled={isUploading} name="category" required defaultValue="">
@@ -432,7 +561,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
                 {admin.cancel}
               </button>
               <button
-                className="flex items-center gap-2 rounded-lg bg-tertiary px-4 py-2 font-bold text-on-tertiary disabled:opacity-60"
+                className="btn-primary flex items-center gap-2 px-4 py-2 disabled:opacity-60"
                 disabled={isUploading}
                 type="submit"
               >
@@ -473,6 +602,26 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
                 type="url"
               />
             </div>
+            {modal.document.jurisdiction === "usa" ? (
+              <div>
+                <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragUsaSubJurisdiction}</label>
+                <select
+                  className={inputClass}
+                  defaultValue={modal.document.usaSubJurisdiction ?? ""}
+                  name="usaSubJurisdiction"
+                  required
+                >
+                  <option disabled value="">
+                    —
+                  </option>
+                  {USA_SUB_JURISDICTIONS_SORTED.map((code) => (
+                    <option key={code} value={code}>
+                      {getUsaSubJurisdictionLabel(code, locale)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div>
               <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragCategory}</label>
               <select className={inputClass} defaultValue={modal.document.category} name="category" required>
@@ -488,7 +637,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
                 {admin.cancel}
               </button>
               <button
-                className="rounded-lg bg-tertiary px-4 py-2 font-bold text-on-tertiary disabled:opacity-60"
+                className="btn-primary px-4 py-2 disabled:opacity-60"
                 disabled={pending}
                 type="submit"
               >

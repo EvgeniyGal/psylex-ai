@@ -188,7 +188,7 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
           value={currentDraft}
         />
         <button
-          className="rounded-lg bg-tertiary px-6 py-2.5 text-body-sm font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 disabled:opacity-60"
+          className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
           disabled={savePending || !currentDraft.trim()}
           onClick={onSave}
           type="button"

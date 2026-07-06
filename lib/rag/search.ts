@@ -27,10 +27,12 @@ function normalizeScores(values: number[]) {
 
 function buildFilters({
   jurisdiction,
+  usaSubJurisdiction,
   category,
   documentId,
-}: Pick<SearchLegalCorpusParams, "jurisdiction" | "category" | "documentId">) {
+}: Pick<SearchLegalCorpusParams, "jurisdiction" | "usaSubJurisdiction" | "category" | "documentId">) {
   const filters: SQL[] = [sql`ld.jurisdiction = ${jurisdiction}`];
+  if (usaSubJurisdiction) filters.push(sql`ld.usa_sub_jurisdiction = ${usaSubJurisdiction}`);
   if (category) filters.push(sql`ld.category = ${category}`);
   if (documentId) filters.push(sql`ld.id = ${documentId}::uuid`);
   return sql.join(filters, sql` AND `);
@@ -102,6 +104,7 @@ export async function searchLegalCorpus(params: SearchLegalCorpusParams): Promis
   const {
     query,
     jurisdiction,
+    usaSubJurisdiction,
     category,
     documentId,
     topK = 5,
@@ -111,7 +114,7 @@ export async function searchLegalCorpus(params: SearchLegalCorpusParams): Promis
   const trimmedQuery = query.trim();
   if (!trimmedQuery) return [];
 
-  const filters = buildFilters({ jurisdiction, category, documentId });
+  const filters = buildFilters({ jurisdiction, usaSubJurisdiction, category, documentId });
   const queryEmbedding = await embedQuery(trimmedQuery);
   const candidateLimit = topK * RAG_DEFAULTS.searchCandidateMultiplier;
 

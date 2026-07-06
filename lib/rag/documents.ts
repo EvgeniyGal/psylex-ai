@@ -2,6 +2,16 @@ import { asc, and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { legalDocuments } from "@/drizzle/schema";
 import type { LegalDocumentCategory, LegalDocumentRow, RoomJurisdiction } from "@/lib/rag/types";
+import { parseUsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
+
+function mapLegalDocumentRow(
+  row: Omit<LegalDocumentRow, "usaSubJurisdiction"> & { usaSubJurisdiction: string | null },
+): LegalDocumentRow {
+  return {
+    ...row,
+    usaSubJurisdiction: parseUsaSubJurisdiction(row.usaSubJurisdiction),
+  };
+}
 
 export async function getDocumentsByJurisdiction(
   jurisdiction: RoomJurisdiction,
@@ -16,6 +26,7 @@ export async function getDocumentsByJurisdiction(
       name: legalDocuments.name,
       sourceUrl: legalDocuments.sourceUrl,
       jurisdiction: legalDocuments.jurisdiction,
+      usaSubJurisdiction: legalDocuments.usaSubJurisdiction,
       category: legalDocuments.category,
       originalFilename: legalDocuments.originalFilename,
       mimeType: legalDocuments.mimeType,
@@ -29,16 +40,17 @@ export async function getDocumentsByJurisdiction(
     .where(filters.length === 1 ? filters[0] : and(...filters))
     .orderBy(asc(legalDocuments.createdAt));
 
-  return rows;
+  return rows.map(mapLegalDocumentRow);
 }
 
 export async function getAllLegalDocuments(): Promise<LegalDocumentRow[]> {
-  return db
+  const rows = await db
     .select({
       id: legalDocuments.id,
       name: legalDocuments.name,
       sourceUrl: legalDocuments.sourceUrl,
       jurisdiction: legalDocuments.jurisdiction,
+      usaSubJurisdiction: legalDocuments.usaSubJurisdiction,
       category: legalDocuments.category,
       originalFilename: legalDocuments.originalFilename,
       mimeType: legalDocuments.mimeType,
@@ -50,4 +62,6 @@ export async function getAllLegalDocuments(): Promise<LegalDocumentRow[]> {
     })
     .from(legalDocuments)
     .orderBy(asc(legalDocuments.createdAt));
+
+  return rows.map(mapLegalDocumentRow);
 }

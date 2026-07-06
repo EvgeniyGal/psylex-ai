@@ -1,4 +1,5 @@
 import type { legalDocumentCategory, legalDocumentStatus, roomJurisdiction } from "@/drizzle/schema";
+import type { UsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 
 export type LegalDocumentStatus = (typeof legalDocumentStatus.enumValues)[number];
 export type LegalDocumentCategory = (typeof legalDocumentCategory.enumValues)[number];
@@ -9,6 +10,7 @@ export type LegalDocumentRow = {
   name: string;
   sourceUrl: string;
   jurisdiction: RoomJurisdiction;
+  usaSubJurisdiction: UsaSubJurisdiction | null;
   category: LegalDocumentCategory;
   originalFilename: string;
   mimeType: string;
@@ -53,6 +55,7 @@ export type RagInquiryResult = {
 export type SearchLegalCorpusParams = {
   query: string;
   jurisdiction: RoomJurisdiction;
+  usaSubJurisdiction?: UsaSubJurisdiction;
   category?: LegalDocumentCategory;
   documentId?: string;
   topK?: number;

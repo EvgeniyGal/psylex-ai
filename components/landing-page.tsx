@@ -38,6 +38,7 @@ export function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader
+        showUplBanner
         trailing={
           <>
             <LocaleSwitcher />
@@ -109,9 +110,9 @@ export function LandingPage() {
             {t.winFooter}
           </p>
 
-          <div className="mx-auto max-w-[760px] rounded-r-md border border-hair border-l-[3px] border-l-ink bg-surface-container-lowest px-[18px] py-3.5 text-[12.5px] text-ink-soft">
-            <b className="font-semibold text-ink">{t.disclaimer.split(".")[0]}.</b>
-            {t.disclaimer.slice(t.disclaimer.indexOf(".") + 1)}
+          <div className="mx-auto max-w-[760px] rounded-r-[10px] border border-hair border-l-[3px] border-l-ink bg-[#F0F2F5] px-[18px] py-3.5 text-[12.5px] leading-snug text-ink-soft">
+            <b className="font-semibold text-ink">{t.landingUplCardLead}</b>
+            {t.landingUplCardBody}
           </div>
         </section>
 

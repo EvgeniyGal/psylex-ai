@@ -13,6 +13,7 @@ import { getAllLegalDocuments } from "@/lib/rag/documents";
 import { validateUploadFile } from "@/lib/rag/extract";
 import { processDocument } from "@/lib/rag/ingest";
 import { runRagInquiry } from "@/lib/rag/inquiry";
+import { isUsaSubJurisdiction, parseUsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 import { isRoomJurisdiction } from "@/lib/room/jurisdiction";
 
 async function requireAdmin() {
@@ -23,19 +24,49 @@ async function requireAdmin() {
   return session;
 }
 
-const uploadSchema = z.object({
-  name: z.string().trim().min(1),
-  sourceUrl: z.string().trim().url(),
-  jurisdiction: z.string().refine(isRoomJurisdiction, "Invalid jurisdiction"),
-  category: z.string().refine(isLegalDocumentCategory, "Invalid category"),
-});
+const uploadSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    sourceUrl: z.string().trim().url(),
+    jurisdiction: z.string().refine(isRoomJurisdiction, "Invalid jurisdiction"),
+    usaSubJurisdiction: z.string().optional(),
+    category: z.string().refine(isLegalDocumentCategory, "Invalid category"),
+  })
+  .superRefine((value, ctx) => {
+    if (value.jurisdiction === "usa") {
+      if (!value.usaSubJurisdiction || !isUsaSubJurisdiction(value.usaSubJurisdiction)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "US state or territory is required.",
+          path: ["usaSubJurisdiction"],
+        });
+      }
+    } else if (value.usaSubJurisdiction) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "US state or territory is only valid for USA documents.",
+        path: ["usaSubJurisdiction"],
+      });
+    }
+  });
 
-const updateSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().trim().min(1),
-  sourceUrl: z.string().trim().url(),
-  category: z.string().refine(isLegalDocumentCategory, "Invalid category"),
-});
+const updateSchema = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string().trim().min(1),
+    sourceUrl: z.string().trim().url(),
+    usaSubJurisdiction: z.string().optional(),
+    category: z.string().refine(isLegalDocumentCategory, "Invalid category"),
+  })
+  .superRefine((value, ctx) => {
+    if (value.usaSubJurisdiction && !isUsaSubJurisdiction(value.usaSubJurisdiction)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid US state or territory.",
+        path: ["usaSubJurisdiction"],
+      });
+    }
+  });
 
 export async function uploadDocument(formData: FormData) {
   await requireAdmin();
@@ -46,10 +77,12 @@ export async function uploadDocument(formData: FormData) {
     throw new Error("Document file is required.");
   }
 
+  const usaSubJurisdictionValue = String(formData.get("usaSubJurisdiction") ?? "").trim();
   const parsed = uploadSchema.parse({
     name: formData.get("name"),
     sourceUrl: formData.get("sourceUrl"),
     jurisdiction: formData.get("jurisdiction"),
+    usaSubJurisdiction: usaSubJurisdictionValue || undefined,
     category: formData.get("category"),
   });
 
@@ -62,6 +95,8 @@ export async function uploadDocument(formData: FormData) {
       name: parsed.name,
       sourceUrl: parsed.sourceUrl,
       jurisdiction: parsed.jurisdiction,
+      usaSubJurisdiction:
+        parsed.jurisdiction === "usa" && parsed.usaSubJurisdiction ? parsed.usaSubJurisdiction : null,
       category: parsed.category,
       originalFilename: file.name,
       mimeType,
@@ -83,18 +118,33 @@ export async function uploadDocument(formData: FormData) {
 export async function updateDocument(formData: FormData) {
   await requireAdmin();
 
+  const usaSubJurisdictionValue = String(formData.get("usaSubJurisdiction") ?? "").trim();
   const parsed = updateSchema.parse({
     id: formData.get("id"),
     name: formData.get("name"),
     sourceUrl: formData.get("sourceUrl"),
+    usaSubJurisdiction: usaSubJurisdictionValue || undefined,
     category: formData.get("category"),
   });
+
+  const [existing] = await db
+    .select({ jurisdiction: legalDocuments.jurisdiction })
+    .from(legalDocuments)
+    .where(eq(legalDocuments.id, parsed.id))
+    .limit(1);
+
+  if (!existing) throw new Error("Document not found.");
+  if (existing.jurisdiction === "usa" && !parsed.usaSubJurisdiction) {
+    throw new Error("US state or territory is required.");
+  }
 
   await db
     .update(legalDocuments)
     .set({
       name: parsed.name,
       sourceUrl: parsed.sourceUrl,
+      usaSubJurisdiction:
+        existing.jurisdiction === "usa" && parsed.usaSubJurisdiction ? parsed.usaSubJurisdiction : null,
       category: parsed.category,
       updatedAt: new Date(),
     })
@@ -137,6 +187,7 @@ export async function testInquiry(formData: FormData) {
   const question = String(formData.get("question") ?? "").trim();
   const documentId = String(formData.get("documentId") ?? "").trim();
   const categoryValue = String(formData.get("category") ?? "").trim();
+  const usaSubJurisdictionValue = String(formData.get("usaSubJurisdiction") ?? "").trim();
   const localeValue = String(formData.get("locale") ?? "en");
   const locale = localeValue === "uk" ? "uk" : "en";
 
@@ -144,6 +195,10 @@ export async function testInquiry(formData: FormData) {
   if (!question) throw new Error("Question is required.");
 
   const category = categoryValue && isLegalDocumentCategory(categoryValue) ? categoryValue : undefined;
+  const usaSubJurisdiction =
+    usaSubJurisdictionValue && isUsaSubJurisdiction(usaSubJurisdictionValue)
+      ? usaSubJurisdictionValue
+      : undefined;
 
   if (documentId) {
     const [document] = await db.select().from(legalDocuments).where(eq(legalDocuments.id, documentId)).limit(1);
@@ -153,6 +208,7 @@ export async function testInquiry(formData: FormData) {
     return runRagInquiry({
       question,
       jurisdiction: document.jurisdiction,
+      usaSubJurisdiction: parseUsaSubJurisdiction(document.usaSubJurisdiction) ?? undefined,
       category: document.category,
       documentId: document.id,
       locale,
@@ -162,6 +218,7 @@ export async function testInquiry(formData: FormData) {
   return runRagInquiry({
     question,
     jurisdiction,
+    usaSubJurisdiction: jurisdiction === "usa" ? usaSubJurisdiction : undefined,
     category,
     locale,
   });

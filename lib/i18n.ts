@@ -23,6 +23,16 @@ type Copy = {
   modeASteps: { title: string; body: string }[];
   modeBSteps: { title: string; body: string }[];
   disclaimer: string;
+  landingUplCardLead: string;
+  landingUplCardBody: string;
+  uplBannerLead: string;
+  uplBannerBody: string;
+  footerCompany: string;
+  footerFounder: string;
+  footerPatent: string;
+  footerDemoLanding: string;
+  footerDemoModeA: string;
+  footerDemoModeB: string;
   footerLinks: { disclaimer: string; privacy: string; howItWorks: string };
   signInTitle: string;
   signInSubtitle: string;
@@ -101,6 +111,18 @@ export const copy: Record<Locale, Copy> = {
       },
     ],
     disclaimer: "PsyLex provides general information only. Not legal advice. Not therapy.",
+    landingUplCardLead: "Legal information, not legal advice.",
+    landingUplCardBody:
+      " PsyLex provides legal information only, not legal services. Every legal statement cites its source with an “information as of 2024–2025” note; a mediator confirms relevance before parties see it, and parties are referred to a licensed attorney for advice.",
+    uplBannerLead: "Legal information, not legal advice.",
+    uplBannerBody:
+      'Every legal statement in this demo cites its source; where no source is loaded, the system says "no relevant provision found."',
+    footerCompany: "AI Innovation Management LLC",
+    footerFounder: "Kateryna Klymenko",
+    footerPatent: "Patent Pending 64/088,425",
+    footerDemoLanding: "2026 · Demo",
+    footerDemoModeA: "2026 · Demo Mode A",
+    footerDemoModeB: "2026 · Demo Mode B",
     footerLinks: { disclaimer: "Disclaimer", privacy: "Privacy", howItWorks: "How it works" },
     signInTitle: "Sign in",
     signInSubtitle: "Sign in to access your PsyLex mediation portal",
@@ -177,6 +199,18 @@ export const copy: Record<Locale, Copy> = {
       },
     ],
     disclaimer: "PsyLex надає лише загальну інформацію. Це не юридична порада і не терапія.",
+    landingUplCardLead: "Правова інформація, а не юридична порада.",
+    landingUplCardBody:
+      " PsyLex надає лише правову інформацію, а не юридичні послуги. Кожне правове твердження цитує джерело з приміткою “information as of 2024–2025”; медіатор підтверджує релевантність до того, як її побачать сторони, а для отримання поради сторони скеровуються до ліцензованого адвоката.",
+    uplBannerLead: "Правова інформація, а не юридична порада.",
+    uplBannerBody:
+      "Кожне правове твердження в цій демонстрації має посилання на джерело; якщо джерело не завантажено, система повідомляє: «не знайдено відповідного положення».",
+    footerCompany: "AI Innovation Management LLC",
+    footerFounder: "Kateryna Klymenko",
+    footerPatent: "Patent Pending 64/088,425",
+    footerDemoLanding: "2026 · Demo",
+    footerDemoModeA: "2026 · Demo Mode A",
+    footerDemoModeB: "2026 · Demo Mode B",
     footerLinks: { disclaimer: "Відмова", privacy: "Конфіденційність", howItWorks: "Як це працює" },
     signInTitle: "Увійти",
     signInSubtitle: "Увійдіть, щоб отримати доступ до порталу медіації PsyLex",

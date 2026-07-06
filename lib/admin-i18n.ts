@@ -100,6 +100,9 @@ export type AdminCopy = {
   ragAllCategories: string;
   ragJurisdictionUkraine: string;
   ragJurisdictionUsa: string;
+  ragUsaSubJurisdiction: string;
+  ragUsaSubJurisdictionFilter: string;
+  ragAllUsaSubJurisdictions: string;
   ragUpload: string;
   ragUploading: string;
   ragUploadingHint: string;
@@ -255,6 +258,9 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragAllCategories: "All categories",
     ragJurisdictionUkraine: "Ukraine",
     ragJurisdictionUsa: "United States",
+    ragUsaSubJurisdiction: "State / territory",
+    ragUsaSubJurisdictionFilter: "Filter by state / territory",
+    ragAllUsaSubJurisdictions: "All states & territories",
     ragUpload: "Upload",
     ragUploading: "Uploading document…",
     ragUploadingHint: "Extracting text and building the search index. This may take a moment.",
@@ -415,6 +421,9 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragAllCategories: "Усі категорії",
     ragJurisdictionUkraine: "Україна",
     ragJurisdictionUsa: "США",
+    ragUsaSubJurisdiction: "Штат / територія",
+    ragUsaSubJurisdictionFilter: "Фільтр за штатом / територією",
+    ragAllUsaSubJurisdictions: "Усі штати та території",
     ragUpload: "Завантажити",
     ragUploading: "Завантаження документа…",
     ragUploadingHint: "Витягуємо текст і будуємо пошуковий індекс. Це може зайняти деякий час.",

@@ -4,10 +4,12 @@ import { getPlatformSettings } from "@/lib/platform-settings";
 import { RAG_DEFAULTS, RAG_INQUIRY_NOT_FOUND } from "@/lib/rag/config";
 import { searchLegalCorpus } from "@/lib/rag/search";
 import type { LegalDocumentCategory, RagInquiryResult, RoomJurisdiction } from "@/lib/rag/types";
+import type { UsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 
 type RunInquiryParams = {
   question: string;
   jurisdiction: RoomJurisdiction;
+  usaSubJurisdiction?: UsaSubJurisdiction;
   category?: LegalDocumentCategory;
   documentId?: string;
   locale?: Locale;
@@ -45,6 +47,7 @@ export async function runRagInquiry(params: RunInquiryParams): Promise<RagInquir
   const results = await searchLegalCorpus({
     query: params.question,
     jurisdiction: params.jurisdiction,
+    usaSubJurisdiction: params.usaSubJurisdiction,
     category: params.category,
     documentId: params.documentId,
     topK: 6,

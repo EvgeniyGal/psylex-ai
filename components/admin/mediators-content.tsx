@@ -97,7 +97,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
           <p className="text-body-md text-on-surface-variant">{admin.mediatorsSubtitle}</p>
         </div>
         <Link
-          className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg transition-all hover:shadow-tertiary/10 active:scale-95"
+          className="btn-primary flex items-center gap-2 px-8 py-3 active:translate-y-px"
           href="/admin/mediators/new"
         >
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>

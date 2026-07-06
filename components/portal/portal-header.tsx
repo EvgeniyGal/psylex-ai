@@ -1,15 +1,19 @@
 "use client";
 
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { PortalLocaleSwitcher } from "@/components/portal/portal-locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteHeader } from "@/components/site-header";
+import { isPartyRole } from "@/lib/participant-roles";
 
 export function PortalHeader() {
   const { portal: t } = useLocale();
+  const { data: session } = useSession();
+  const showUplBanner = isPartyRole(session?.user?.role ?? "");
 
   return (
     <SiteHeader
+      showUplBanner={showUplBanner}
       trailing={
         <>
           <PortalLocaleSwitcher />

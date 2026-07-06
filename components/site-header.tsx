@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
+import { UplBanner } from "@/components/upl-banner";
 import { cn } from "@/lib/utils";
 
 export function useHeaderScrolled(threshold = 10) {
@@ -25,6 +26,7 @@ type SiteHeaderProps = {
   brandHref?: string;
   className?: string;
   fixed?: boolean;
+  showUplBanner?: boolean;
   trailing?: ReactNode;
 };
 
@@ -32,6 +34,7 @@ export function SiteHeader({
   brandHref = "/",
   className,
   fixed = false,
+  showUplBanner = false,
   trailing,
 }: SiteHeaderProps) {
   const scrolled = useHeaderScrolled();
@@ -57,6 +60,7 @@ export function SiteHeader({
         </Link>
         {trailing ? <div className="flex items-center gap-4">{trailing}</div> : null}
       </div>
+      {showUplBanner ? <UplBanner /> : null}
     </header>
   );
 }

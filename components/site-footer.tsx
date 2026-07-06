@@ -1,44 +1,42 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useLocale } from "@/components/locale-provider";
+import { ReferenceFooter } from "@/components/reference-footer";
+import type { FooterDemoMode } from "@/lib/footer-demo-mode";
+import { isLandingFooterPath } from "@/lib/footer-demo-mode";
 
 export function SiteFooter() {
   const pathname = usePathname();
-  const { landing: t } = useLocale();
+  const [demoMode, setDemoMode] = useState<FooterDemoMode>("landing");
 
-  if (pathname.startsWith("/admin")) {
-    return null;
-  }
+  useEffect(() => {
+    if (isLandingFooterPath(pathname)) {
+      setDemoMode("landing");
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetch(`/api/footer-context?path=${encodeURIComponent(pathname)}`)
+      .then((response) => response.json())
+      .then((data: { demoMode?: FooterDemoMode }) => {
+        if (!cancelled && data.demoMode) {
+          setDemoMode(data.demoMode);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setDemoMode("landing");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   return (
-    <footer className="relative z-10 mt-auto w-full border-t border-hair bg-paper py-8">
-      <div className="mx-auto grid max-w-container-max grid-cols-1 gap-6 px-margin-mobile md:grid-cols-2 md:px-margin-desktop">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2.5">
-            <Image alt="PsyLex" className="h-7 w-auto" height={28} src="/logo.webp" unoptimized width={28} />
-            <span className="wordmark font-display text-[17px] text-ink">PsyLex</span>
-          </div>
-          <p className="max-w-md text-[12px] text-ink-soft">{t.disclaimer}</p>
-          <p className="mt-auto text-[12px] text-ink-soft">© 2026 AI Innovation Management LLC</p>
-        </div>
-        <nav className="flex flex-col gap-2 md:items-end md:text-right">
-          <a className="text-body-sm text-ink-soft transition-colors hover:text-ink" href="#">
-            {t.footerLinks.disclaimer}
-          </a>
-          <a className="text-body-sm text-ink-soft transition-colors hover:text-ink" href="#">
-            {t.footerLinks.privacy}
-          </a>
-          <Link
-            className="text-body-sm text-ink-soft transition-colors hover:text-ink"
-            href="/#how-it-works"
-          >
-            {t.footerLinks.howItWorks}
-          </Link>
-        </nav>
-      </div>
-    </footer>
+    <div className="relative z-10 mt-auto w-full px-margin-mobile py-8 md:px-margin-desktop">
+      <ReferenceFooter demoMode={demoMode} />
+    </div>
   );
 }

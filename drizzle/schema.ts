@@ -173,6 +173,7 @@ export const legalDocuments = pgTable("legal_documents", {
   name: text("name").notNull(),
   sourceUrl: text("source_url").notNull(),
   jurisdiction: roomJurisdiction("jurisdiction").notNull(),
+  usaSubJurisdiction: text("usa_sub_jurisdiction"),
   category: legalDocumentCategory("category").notNull(),
   originalFilename: text("original_filename").notNull(),
   mimeType: text("mime_type").notNull(),

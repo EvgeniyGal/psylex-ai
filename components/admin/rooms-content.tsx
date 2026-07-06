@@ -255,7 +255,7 @@ export function RoomsContent({
         </div>
         {showCreate ? (
           <Link
-            className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-3 font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 active:scale-95"
+            className="btn-primary flex items-center gap-2 px-8 py-3 active:translate-y-px"
             href={`${basePath}/new`}
           >
             <span className="material-symbols-outlined">add</span>

@@ -65,7 +65,7 @@ export function MediatorCreateContent() {
             {admin.cancel}
           </Link>
           <button
-            className="flex items-center gap-2 rounded-lg bg-tertiary px-8 py-2.5 text-body-sm font-bold text-on-tertiary shadow-lg shadow-tertiary/10 transition-all hover:brightness-110 disabled:opacity-60"
+            className="btn-primary flex items-center gap-2 px-8 py-2.5 text-body-sm disabled:opacity-60"
             disabled={pending}
             type="submit"
           >
