@@ -35,13 +35,13 @@ const vector1536 = customType<{ data: number[]; driverData: string }>({
 export const userRole = pgEnum("user_role", [
   "admin",
   "mediator",
-  "side1",
-  "side2",
+  "party_a",
+  "party_b",
 ]);
 
 export const preferredLocale = pgEnum("preferred_locale", ["en", "uk"]);
 
-export const SIDE_ROLES = ["side1", "side2"] as const;
+export const PARTY_ROLES = ["party_a", "party_b"] as const;
 
 export const roomJurisdiction = pgEnum("room_jurisdiction", ["ukraine", "usa"]);
 
@@ -75,8 +75,8 @@ export const rooms = pgTable("rooms", {
   legalAnalysisAt: timestamp("legal_analysis_at", { withTimezone: true }),
   postIntakePipelineStartedAt: timestamp("post_intake_pipeline_started_at", { withTimezone: true }),
   postIntakePipelineCompletedAt: timestamp("post_intake_pipeline_completed_at", { withTimezone: true }),
-  side1MediationStartClickedAt: timestamp("side1_mediation_start_clicked_at", { withTimezone: true }),
-  side2MediationStartClickedAt: timestamp("side2_mediation_start_clicked_at", { withTimezone: true }),
+  partyAMediationStartClickedAt: timestamp("party_a_mediation_start_clicked_at", { withTimezone: true }),
+  partyBMediationStartClickedAt: timestamp("party_b_mediation_start_clicked_at", { withTimezone: true }),
   mediationStartedAt: timestamp("mediation_started_at", { withTimezone: true }),
   mediationDurationMinutes: integer("mediation_duration_minutes").notNull().default(20),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

@@ -32,10 +32,10 @@ export async function createRoom(formData: FormData) {
 
   const title = required(formData.get("title"), "title");
   const description = required(formData.get("description"), "description");
-  const side1Title = required(formData.get("side1Title"), "side1Title");
-  const side1Description = required(formData.get("side1Description"), "side1Description");
-  const side2Title = required(formData.get("side2Title"), "side2Title");
-  const side2Description = required(formData.get("side2Description"), "side2Description");
+  const partyATitle = required(formData.get("partyATitle"), "partyATitle");
+  const partyADescription = required(formData.get("partyADescription"), "partyADescription");
+  const partyBTitle = required(formData.get("partyBTitle"), "partyBTitle");
+  const partyBDescription = required(formData.get("partyBDescription"), "partyBDescription");
   const jurisdictionRaw = required(formData.get("jurisdiction"), "jurisdiction");
   if (!isRoomJurisdiction(jurisdictionRaw)) {
     throw new Error("Invalid jurisdiction");
@@ -55,17 +55,17 @@ export async function createRoom(formData: FormData) {
     {
       login: generateLogin(),
       password: generatePassword(),
-      role: "side1",
-      title: side1Title,
-      description: side1Description,
+      role: "party_a",
+      title: partyATitle,
+      description: partyADescription,
       roomId: room.id,
     },
     {
       login: generateLogin(),
       password: generatePassword(),
-      role: "side2",
-      title: side2Title,
-      description: side2Description,
+      role: "party_b",
+      title: partyBTitle,
+      description: partyBDescription,
       roomId: room.id,
     },
   ]);

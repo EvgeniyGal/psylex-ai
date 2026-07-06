@@ -4,7 +4,7 @@ import { runLegalAnalysisAgent } from "@/lib/pipeline/agents/legal-analysis";
 import { runPsychodynamicAgent } from "@/lib/pipeline/agents/psychodynamic";
 import {
   canTriggerPostIntakePipeline,
-  getRoomSidesForPipeline,
+  getRoomPartiesForPipeline,
   isPostIntakePipelineComplete,
   markPipelineCompleted,
   markPipelineStarted,
@@ -32,21 +32,21 @@ export async function runPostIntakePipeline(roomId: string) {
     await markPipelineStarted(roomId);
     await logPipelineEvent({ roomId, eventType: "pipeline_triggered" });
 
-    const { side1, side2 } = await getRoomSidesForPipeline(roomId);
-    if (!side1 || !side2) return;
+    const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
+    if (!partyA || !partyB) return;
 
     await Promise.all([
-      runAgentSafely("psychodynamic side1", () =>
-        runPsychodynamicAgent({ userId: side1.id, roomId }),
+      runAgentSafely("psychodynamic party A", () =>
+        runPsychodynamicAgent({ userId: partyA.id, roomId }),
       ),
-      runAgentSafely("psychodynamic side2", () =>
-        runPsychodynamicAgent({ userId: side2.id, roomId }),
+      runAgentSafely("psychodynamic party B", () =>
+        runPsychodynamicAgent({ userId: partyB.id, roomId }),
       ),
-      runAgentSafely("emotional triggers side1", () =>
-        runEmotionalTriggersAgent({ userId: side1.id, roomId }),
+      runAgentSafely("emotional triggers party A", () =>
+        runEmotionalTriggersAgent({ userId: partyA.id, roomId }),
       ),
-      runAgentSafely("emotional triggers side2", () =>
-        runEmotionalTriggersAgent({ userId: side2.id, roomId }),
+      runAgentSafely("emotional triggers party B", () =>
+        runEmotionalTriggersAgent({ userId: partyB.id, roomId }),
       ),
     ]);
 

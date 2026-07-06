@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rooms, type rooms as roomsTable } from "@/drizzle/schema";
 import { getMediationLobbyData } from "@/lib/dispute-intake";
+import type { PartyRole } from "@/lib/participant-roles";
 
 export const HANDSHAKE_WINDOW_MS = 60_000;
 
@@ -24,25 +25,25 @@ export type HandshakeStatusResponse = {
 type RoomHandshakeRow = Pick<
   typeof roomsTable.$inferSelect,
   | "id"
-  | "side1MediationStartClickedAt"
-  | "side2MediationStartClickedAt"
+  | "partyAMediationStartClickedAt"
+  | "partyBMediationStartClickedAt"
   | "mediationStartedAt"
 >;
 
-function clickForRole(room: RoomHandshakeRow, role: "side1" | "side2") {
-  return role === "side1" ? room.side1MediationStartClickedAt : room.side2MediationStartClickedAt;
+function clickForRole(room: RoomHandshakeRow, role: PartyRole) {
+  return role === "party_a" ? room.partyAMediationStartClickedAt : room.partyBMediationStartClickedAt;
 }
 
-function oppositeClickForRole(room: RoomHandshakeRow, role: "side1" | "side2") {
-  return role === "side1" ? room.side2MediationStartClickedAt : room.side1MediationStartClickedAt;
+function oppositeClickForRole(room: RoomHandshakeRow, role: PartyRole) {
+  return role === "party_a" ? room.partyBMediationStartClickedAt : room.partyAMediationStartClickedAt;
 }
 
 function bothClicksWithinWindow(room: RoomHandshakeRow) {
-  const side1 = room.side1MediationStartClickedAt;
-  const side2 = room.side2MediationStartClickedAt;
-  if (!side1 || !side2) return false;
+  const partyA = room.partyAMediationStartClickedAt;
+  const partyB = room.partyBMediationStartClickedAt;
+  if (!partyA || !partyB) return false;
 
-  const delta = Math.abs(side1.getTime() - side2.getTime());
+  const delta = Math.abs(partyA.getTime() - partyB.getTime());
   return delta <= HANDSHAKE_WINDOW_MS;
 }
 
@@ -52,7 +53,7 @@ function soloClickExpired(clickAt: Date, now: Date) {
 
 export function evaluateHandshake(
   room: RoomHandshakeRow,
-  viewerRole: "side1" | "side2",
+  viewerRole: PartyRole,
   now: Date = new Date(),
 ): HandshakeState {
   if (room.mediationStartedAt) {
@@ -102,8 +103,8 @@ async function clearHandshakeClicks(roomId: string) {
   await db
     .update(rooms)
     .set({
-      side1MediationStartClickedAt: null,
-      side2MediationStartClickedAt: null,
+      partyAMediationStartClickedAt: null,
+      partyBMediationStartClickedAt: null,
     })
     .where(eq(rooms.id, roomId));
 }
@@ -111,11 +112,11 @@ async function clearHandshakeClicks(roomId: string) {
 async function finalizeMediationStart(roomId: string, room: RoomHandshakeRow) {
   if (room.mediationStartedAt) return room.mediationStartedAt;
 
-  const side1 = room.side1MediationStartClickedAt;
-  const side2 = room.side2MediationStartClickedAt;
-  if (!side1 || !side2 || !bothClicksWithinWindow(room)) return null;
+  const partyA = room.partyAMediationStartClickedAt;
+  const partyB = room.partyBMediationStartClickedAt;
+  if (!partyA || !partyB || !bothClicksWithinWindow(room)) return null;
 
-  const startedAt = new Date(Math.max(side1.getTime(), side2.getTime()));
+  const startedAt = new Date(Math.max(partyA.getTime(), partyB.getTime()));
   await db
     .update(rooms)
     .set({ mediationStartedAt: startedAt })
@@ -127,8 +128,8 @@ async function loadRoomHandshake(roomId: string) {
   const [room] = await db
     .select({
       id: rooms.id,
-      side1MediationStartClickedAt: rooms.side1MediationStartClickedAt,
-      side2MediationStartClickedAt: rooms.side2MediationStartClickedAt,
+      partyAMediationStartClickedAt: rooms.partyAMediationStartClickedAt,
+      partyBMediationStartClickedAt: rooms.partyBMediationStartClickedAt,
       mediationStartedAt: rooms.mediationStartedAt,
     })
     .from(rooms)
@@ -140,7 +141,7 @@ async function loadRoomHandshake(roomId: string) {
 async function resolveHandshakeState(
   roomId: string,
   room: RoomHandshakeRow,
-  role: "side1" | "side2",
+  role: PartyRole,
   now: Date,
 ): Promise<HandshakeState> {
   if (room.mediationStartedAt) {
@@ -162,7 +163,7 @@ async function resolveHandshakeState(
   return state;
 }
 
-export async function recordStartClick(roomId: string, role: "side1" | "side2"): Promise<HandshakeStatusResponse> {
+export async function recordStartClick(roomId: string, role: PartyRole): Promise<HandshakeStatusResponse> {
   const now = new Date();
   const room = await loadRoomHandshake(roomId);
   if (!room) {
@@ -183,9 +184,9 @@ export async function recordStartClick(roomId: string, role: "side1" | "side2"):
   await db
     .update(rooms)
     .set(
-      role === "side1"
-        ? { side1MediationStartClickedAt: now }
-        : { side2MediationStartClickedAt: now },
+      role === "party_a"
+        ? { partyAMediationStartClickedAt: now }
+        : { partyBMediationStartClickedAt: now },
     )
     .where(eq(rooms.id, roomId));
 

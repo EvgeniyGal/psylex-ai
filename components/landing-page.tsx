@@ -1,10 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SiteHeader } from "@/components/site-header";
 import { useLocale } from "@/components/locale-provider";
+
+const beatBorders = ["border-t-med", "border-t-law", "border-t-risk"] as const;
 
 function WorkflowSteps({
   steps,
@@ -12,20 +13,13 @@ function WorkflowSteps({
   steps: { title: string; body: string }[];
 }) {
   return (
-    <div className="relative space-y-8">
+    <div className="space-y-4">
       {steps.map((step, index) => (
-        <div className="relative flex gap-6" key={step.title}>
-          <div className="flex flex-col items-center">
-            <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-tertiary bg-primary-container font-bold text-tertiary">
-              {index + 1}
-            </div>
-            {index < steps.length - 1 ? (
-              <div className="absolute top-8 h-full w-0.5 bg-tertiary/30" />
-            ) : null}
-          </div>
-          <div className={index < steps.length - 1 ? "pb-8" : ""}>
-            <h4 className="mb-1 font-bold">{step.title}</h4>
-            <p className="text-body-md text-on-surface-variant">{step.body}</p>
+        <div className="flex gap-4" key={step.title}>
+          <div className="font-display text-sm italic text-law">{index + 1}.</div>
+          <div>
+            <h4 className="font-display text-[15.5px] leading-snug text-ink">{step.title}</h4>
+            <p className="mt-1 text-body-sm text-ink-soft">{step.body}</p>
           </div>
         </div>
       ))}
@@ -35,6 +29,11 @@ function WorkflowSteps({
 
 export function LandingPage() {
   const { landing: t } = useLocale();
+  const beats = [
+    { key: "b1", k: "01", title: t.win1, border: beatBorders[0] },
+    { key: "b2", k: "02", title: t.win2, border: beatBorders[1] },
+    { key: "b3", k: "03", title: t.win3, border: beatBorders[2] },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -43,7 +42,7 @@ export function LandingPage() {
           <>
             <LocaleSwitcher />
             <Link
-              className="hidden text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80 md:block"
+              className="hidden text-[13px] font-medium tracking-wide text-ink-soft transition-colors hover:text-ink md:block"
               href="/login"
             >
               {t.login}
@@ -52,125 +51,112 @@ export function LandingPage() {
         }
       />
 
-      <main className="flex-grow">
-        <section className="relative flex min-h-[80vh] items-center overflow-hidden bg-primary-container pb-stack-lg pt-stack-lg">
-          <div className="absolute inset-0 z-0 flex items-center justify-center">
-            <div className="absolute h-[80vw] w-[80vw] max-h-[800px] max-w-[800px] rounded-full bg-tertiary/20 blur-[120px] mix-blend-screen" />
-            <Image
-              alt="Cinematic Prism Resolution"
-              className="absolute inset-0 z-10 h-full w-full object-cover opacity-40 mix-blend-screen"
-              fill
-              priority
-              src="/stitch/prism-concept.png"
-            />
-            <div className="absolute inset-0 z-20 bg-gradient-to-t from-primary-container to-transparent" />
+      <main className="flex-grow px-margin-mobile py-6 md:px-margin-desktop md:py-10">
+        <section className="mx-auto max-w-landing pt-6 md:pt-12">
+          <div className="mb-3 flex items-center justify-center gap-2.5 text-eyebrow uppercase text-ink-soft">
+            <span className="h-[7px] w-[7px] rounded-full bg-law" />
+            <span>PsyLex</span>
           </div>
-          <div className="relative z-30 mx-auto w-full max-w-container-max px-margin-mobile text-center md:px-margin-desktop">
-            <h1 className="mx-auto mb-stack-md max-w-5xl font-display text-[40px] font-bold leading-tight tracking-tight text-on-surface md:text-[64px]">
-              {t.headline}
-              {t.headlineAccent ? (
-                <>
-                  <br />
-                  <span className="text-tertiary">{t.headlineAccent}</span>
-                </>
-              ) : null}
-            </h1>
-            <p className="mx-auto mb-stack-lg max-w-2xl text-body-lg text-on-surface-variant">{t.subheadline}</p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link className="btn-primary w-full px-8 py-4 text-body-md transition-opacity hover:opacity-90 sm:w-auto" href="/login">
-                {t.start}
-              </Link>
-              <Link
-                className="btn-secondary w-full px-8 py-4 text-body-md transition-colors hover:bg-tertiary hover:text-primary-container sm:w-auto"
-                href="/login"
+
+          <h1 className="wordmark mb-2 text-center font-display text-display-lg text-ink">
+            {t.headline}
+            {t.headlineAccent ? (
+              <>
+                <br />
+                <em className="text-law">{t.headlineAccent}</em>
+              </>
+            ) : null}
+          </h1>
+
+          <p className="mx-auto mb-6 max-w-[620px] text-center text-body-md text-ink-soft">{t.subheadline}</p>
+
+          <div className="mb-8 flex justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-hair bg-surface-container px-3.5 py-1.5 text-[13px] text-ink-soft">
+              <b className="font-semibold text-ink">{t.psylexTitle}</b>
+              · {t.modeB}
+            </span>
+          </div>
+
+          <div className="mb-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              className="inline-flex items-center gap-2.5 rounded-full border border-ink bg-ink px-[34px] py-[13px] text-base font-medium text-white transition-colors hover:bg-[#0f1a2e] active:translate-y-px"
+              href="/login"
+            >
+              {t.start}
+              <span className="font-display italic text-law-mark">→</span>
+            </Link>
+            <Link
+              className="btn-secondary px-6 py-3 text-body-md sm:w-auto"
+              href="/login"
+            >
+              {t.mediators}
+            </Link>
+          </div>
+
+          <div className="mb-8 grid grid-cols-1 gap-3.5 md:grid-cols-3">
+            {beats.map((beat) => (
+              <div
+                className={`rounded border border-hair border-t-[3px] bg-surface-container px-[18px] py-4 ${beat.border}`}
+                key={beat.key}
               >
-                {t.mediators}
-              </Link>
+                <div className="mb-1 font-display text-sm italic text-ink-soft">{beat.k}</div>
+                <h3 className="mb-1.5 font-display text-headline-md text-ink">{beat.title}</h3>
+              </div>
+            ))}
+          </div>
+
+          <p className="mx-auto mb-8 max-w-3xl text-center font-display text-lg italic text-ink-soft md:text-xl">
+            {t.winFooter}
+          </p>
+
+          <div className="mx-auto max-w-[760px] rounded-r-md border border-hair border-l-[3px] border-l-ink bg-surface-container-lowest px-[18px] py-3.5 text-[12.5px] text-ink-soft">
+            <b className="font-semibold text-ink">{t.disclaimer.split(".")[0]}.</b>
+            {t.disclaimer.slice(t.disclaimer.indexOf(".") + 1)}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-16 max-w-container-max">
+          <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-5">
+            <div className="rounded border border-hair border-t-[3px] border-t-party-a bg-surface-container p-5 lg:col-span-3">
+              <h3 className="mb-4 text-center font-display text-headline-md text-ink">{t.psylexTitle}</h3>
+              <ul className="mx-auto max-w-sm space-y-3">
+                {t.psylexPoints.map((point) => (
+                  <li className="flex items-start text-body-sm text-ink-soft" key={point}>
+                    <span className="material-symbols-outlined mr-2 mt-0.5 text-base text-party-a">check</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded border border-hair border-t-[3px] border-t-risk bg-surface-container p-5 lg:col-span-2">
+              <h3 className="mb-4 text-center font-display text-headline-md text-ink">{t.attorneyTitle}</h3>
+              <ul className="mx-auto max-w-sm space-y-3">
+                {t.attorneyPoints.map((point) => (
+                  <li className="flex items-start text-body-sm text-ink-soft" key={point}>
+                    <span className="material-symbols-outlined mr-2 mt-0.5 text-base text-risk">close</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
 
-        <section className="bg-surface py-stack-lg">
-          <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
-            <div className="mb-stack-md grid grid-cols-1 gap-gutter md:grid-cols-3">
-              {[t.win1, t.win2, t.win3].map((item, i) => (
-                <div className="card-glow flex flex-col items-center rounded-xl p-stack-md text-center" key={item}>
-                  <span
-                    className="material-symbols-outlined mb-4 text-4xl text-tertiary"
-                    style={{ fontVariationSettings: i < 2 ? "'FILL' 1" : undefined }}
-                  >
-                    {i < 2 ? "check_circle" : "draw"}
-                  </span>
-                  <p className="text-body-md text-on-surface">{item}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mx-auto max-w-3xl text-center text-body-md italic text-on-surface-variant md:text-2xl">
-              {t.winFooter}
-            </p>
+        <section className="mx-auto mt-16 max-w-container-max" id="how-it-works">
+          <div className="mb-3 flex items-center gap-2.5 text-eyebrow uppercase text-ink-soft">
+            <span className="h-[7px] w-[7px] rounded-full bg-law" />
+            <span>{t.howTitle}</span>
           </div>
-        </section>
+          <h2 className="mb-8 font-display text-headline-lg text-ink">{t.howTitle}</h2>
 
-        <section className="bg-[#F5F7FA] py-stack-lg">
-          <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
-            <div className="grid grid-cols-1 gap-stack-lg lg:grid-cols-5">
-              <div className="relative overflow-hidden rounded-xl border border-[#2A3D66] bg-primary-container p-stack-md shadow-lg lg:col-span-3">
-                <div className="absolute right-0 top-0 h-32 w-32 rounded-bl-full bg-tertiary opacity-10 blur-2xl" />
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-tertiary/30 bg-card">
-                  <span className="material-symbols-outlined text-3xl text-tertiary">handshake</span>
-                </div>
-                <h3 className="mb-stack-sm text-center font-display text-headline-md text-tertiary">{t.psylexTitle}</h3>
-                <ul className="relative z-10 mx-auto max-w-sm space-y-4">
-                  {t.psylexPoints.map((point) => (
-                    <li className="flex items-start text-body-md text-on-surface" key={point}>
-                      <span className="material-symbols-outlined mr-3 mt-1 text-tertiary">check</span>
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-xl border border-gray-200 bg-white p-stack-md shadow-sm lg:col-span-2">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                  <span className="material-symbols-outlined text-3xl text-primary-container">gavel</span>
-                </div>
-                <h3 className="mb-stack-sm text-center font-display text-headline-md text-primary-container">
-                  {t.attorneyTitle}
-                </h3>
-                <ul className="mx-auto max-w-sm space-y-4">
-                  {t.attorneyPoints.map((point) => (
-                    <li className="flex items-start text-body-md text-primary-container" key={point}>
-                      <span className="material-symbols-outlined mr-3 mt-1 text-error">close</span>
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded border border-hair border-t-[3px] border-t-party-b bg-surface-container p-5">
+              <h3 className="mb-4 font-display text-headline-md text-ink">{t.modeA}</h3>
+              <WorkflowSteps steps={t.modeASteps} />
             </div>
-          </div>
-        </section>
-
-        <section className="bg-primary-container py-stack-lg text-on-surface" id="how-it-works">
-          <div className="mx-auto max-w-container-max px-margin-mobile md:px-margin-desktop">
-            <h2 className="mb-stack-lg text-center font-display text-headline-lg">{t.howTitle}</h2>
-            <div className="grid grid-cols-1 gap-stack-lg lg:grid-cols-2">
-              <div className="rounded-xl border border-tertiary/20 bg-surface-container-high/30 p-stack-md">
-                <div className="mb-6 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-tertiary text-primary-container">
-                    <span className="material-symbols-outlined">person</span>
-                  </div>
-                  <h3 className="font-display text-headline-md text-tertiary">{t.modeA}</h3>
-                </div>
-                <WorkflowSteps steps={t.modeASteps} />
-              </div>
-              <div className="rounded-xl border border-tertiary/20 bg-surface-container-high/30 p-stack-md">
-                <div className="mb-6 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-tertiary text-primary-container">
-                    <span className="material-symbols-outlined">groups</span>
-                  </div>
-                  <h3 className="font-display text-headline-md text-tertiary">{t.modeB}</h3>
-                </div>
-                <WorkflowSteps steps={t.modeBSteps} />
-              </div>
+            <div className="rounded border border-hair border-t-[3px] border-t-med bg-surface-container p-5">
+              <h3 className="mb-4 font-display text-headline-md text-ink">{t.modeB}</h3>
+              <WorkflowSteps steps={t.modeBSteps} />
             </div>
           </div>
         </section>

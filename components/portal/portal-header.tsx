@@ -14,7 +14,7 @@ export function PortalHeader() {
         <>
           <PortalLocaleSwitcher />
           <button
-            className="flex items-center gap-1.5 text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80"
+            className="flex items-center gap-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:text-ink"
             onClick={() => signOut({ callbackUrl: "/" })}
             type="button"
           >

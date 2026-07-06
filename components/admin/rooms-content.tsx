@@ -14,7 +14,7 @@ type UserRow = {
   id: string;
   login: string;
   password: string;
-  role: "admin" | "mediator" | "side1" | "side2";
+  role: "admin" | "mediator" | "party_a" | "party_b";
   title: string;
   description: string;
   roomId: string | null;
@@ -35,10 +35,10 @@ type SortDir = "asc" | "desc";
 type RoomListTab = "admin" | "mediator";
 
 type RoomTableRow = RoomRow & {
-  side1: UserRow | null;
-  side2: UserRow | null;
-  side1Title: string;
-  side2Title: string;
+  partyA: UserRow | null;
+  partyB: UserRow | null;
+  partyATitle: string;
+  partyBTitle: string;
   mediatorTitle: string;
 };
 
@@ -77,7 +77,7 @@ function SideRow({
       <span className="text-body-sm text-on-surface">{title}</span>
       {participant && showCredentialCopy ? (
         <button
-          className="flex shrink-0 items-center justify-center rounded-lg border border-outline-variant/30 p-1.5 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+          className="flex shrink-0 items-center justify-center rounded-lg border border-outline-variant/30 p-1.5 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
           onClick={() => onCopy(participant)}
           title={copyLabel}
           type="button"
@@ -91,26 +91,26 @@ function SideRow({
 }
 
 function SidesCell({
-  side1,
-  side2,
-  side1Title,
-  side2Title,
+  partyA,
+  partyB,
+  partyATitle,
+  partyBTitle,
   onCopy,
   copyLabel,
   showCredentialCopy,
 }: {
-  side1: UserRow | null;
-  side2: UserRow | null;
-  side1Title: string;
-  side2Title: string;
+  partyA: UserRow | null;
+  partyB: UserRow | null;
+  partyATitle: string;
+  partyBTitle: string;
   onCopy: (participant: UserRow) => void;
   copyLabel: string;
   showCredentialCopy: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side1} showCredentialCopy={showCredentialCopy} title={side1Title} />
-      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={side2} showCredentialCopy={showCredentialCopy} title={side2Title} />
+      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={partyA} showCredentialCopy={showCredentialCopy} title={partyATitle} />
+      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={partyB} showCredentialCopy={showCredentialCopy} title={partyBTitle} />
     </div>
   );
 }
@@ -144,16 +144,16 @@ export function RoomsContent({
     return roomRows.map((room) => {
       const participants =
         participantsByRoom.find((item) => item.roomId === room.id)?.users ?? [];
-      const side1 = participants.find((p) => p.role === "side1") ?? null;
-      const side2 = participants.find((p) => p.role === "side2") ?? null;
+      const partyA = participants.find((p) => p.role === "party_a") ?? null;
+      const partyB = participants.find((p) => p.role === "party_b") ?? null;
 
       return {
         ...room,
         createdAt: new Date(room.createdAt),
-        side1,
-        side2,
-        side1Title: side1?.title ?? "",
-        side2Title: side2?.title ?? "",
+        partyA,
+        partyB,
+        partyATitle: partyA?.title ?? "",
+        partyBTitle: partyB?.title ?? "",
         mediatorTitle: room.mediatorTitle ?? admin.unknownMediator,
       };
     });
@@ -175,8 +175,8 @@ export function RoomsContent({
       const haystack = [
         row.title,
         row.description,
-        row.side1Title,
-        row.side2Title,
+        row.partyATitle,
+        row.partyBTitle,
         row.mediatorTitle,
         jurisdictionDisplay[row.jurisdiction],
       ]
@@ -192,7 +192,7 @@ export function RoomsContent({
 
     rows.sort((a, b) => {
       const value = (row: RoomTableRow) => {
-        if (sortKey === "sides") return `${row.side1Title} ${row.side2Title}`;
+        if (sortKey === "sides") return `${row.partyATitle} ${row.partyBTitle}`;
         if (sortKey === "jurisdiction") return jurisdictionDisplay[row.jurisdiction];
         if (sortKey === "mediator") return row.mediatorTitle;
         return row[sortKey];
@@ -270,7 +270,7 @@ export function RoomsContent({
             <button
               className={
                 activeTab === tab
-                  ? "border-b-2 border-tertiary px-4 py-3 font-display text-body-md font-semibold text-tertiary"
+                  ? "border-b-2 border-law px-4 py-3 font-display text-body-md font-semibold text-ink"
                   : "px-4 py-3 font-display text-body-md text-on-surface-variant transition-colors hover:text-on-surface"
               }
               key={tab}
@@ -297,7 +297,7 @@ export function RoomsContent({
               search
             </span>
             <input
-              className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary"
+              className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
               onChange={(event) => setSearch(event.target.value)}
               placeholder={admin.searchPlaceholder}
               type="search"
@@ -356,15 +356,15 @@ export function RoomsContent({
                           copyLabel={admin.copyCredentials}
                           onCopy={onCopyCredentials}
                           showCredentialCopy={showCredentialCopy}
-                          side1={room.side1}
-                          side1Title={room.side1Title}
-                          side2={room.side2}
-                          side2Title={room.side2Title}
+                          partyA={room.partyA}
+                          partyATitle={room.partyATitle}
+                          partyB={room.partyB}
+                          partyBTitle={room.partyBTitle}
                         />
                       </td>
                       <td className="w-0 whitespace-nowrap px-4 py-3">
                         <button
-                          className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                          className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
                           onClick={() => router.push(`${basePath}/${room.id}`)}
                           title={admin.openCard}
                           type="button"

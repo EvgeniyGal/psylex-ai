@@ -53,7 +53,7 @@ export function CredentialActions({
   return (
     <div className="mt-6 flex gap-3">
       <button
-        className="flex flex-1 items-center justify-center gap-2 rounded border border-tertiary px-4 py-2 text-body-sm font-semibold text-tertiary transition-all hover:bg-tertiary hover:text-on-tertiary"
+        className="flex flex-1 items-center justify-center gap-2 rounded-full border border-ink bg-ink px-4 py-2 text-body-sm font-medium text-white transition-all hover:bg-[#0f1a2e]"
         onClick={onCopy}
         type="button"
       >
@@ -61,7 +61,7 @@ export function CredentialActions({
         {admin.copyCredentials}
       </button>
       <button
-        className="flex flex-1 items-center justify-center gap-2 rounded bg-surface-container-high px-4 py-2 text-body-sm font-semibold text-on-surface transition-all hover:bg-surface-container-highest disabled:opacity-60"
+        className="flex flex-1 items-center justify-center gap-2 rounded-full border border-hair bg-surface-container px-4 py-2 text-body-sm font-medium text-ink transition-all hover:border-[#c9ced6]"
         disabled={pending}
         onClick={onMagicLink}
         type="button"

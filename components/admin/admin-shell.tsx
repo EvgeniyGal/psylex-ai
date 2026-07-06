@@ -20,13 +20,13 @@ export function AdminSidebar() {
   const { admin } = useLocale();
 
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-outline-variant/10 bg-surface-container py-stack-md shadow-sm">
+    <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-hair bg-surface-container py-stack-md">
       <div className="mb-10 px-6">
         <div className="flex items-center gap-3">
-          <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/logo.webp" unoptimized width={32} />
-          <span className="font-display text-headline-md font-bold text-primary">PsyLex</span>
+          <Image alt="PsyLex" className="h-7 w-auto" height={28} src="/logo.webp" unoptimized width={28} />
+          <span className="wordmark font-display text-[17px] text-ink">PsyLex</span>
         </div>
-        <p className="mt-1 font-display text-label-md uppercase tracking-widest text-on-surface-variant">
+        <p className="mt-1 text-label-md uppercase text-ink-soft">
           {admin.adminConsole}
         </p>
       </div>
@@ -40,8 +40,8 @@ export function AdminSidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 transition-all",
                 active
-                  ? "border-l-4 border-tertiary bg-tertiary/10 text-tertiary"
-                  : "text-on-surface-variant hover:bg-white/5 hover:text-on-surface",
+                  ? "border-l-4 border-law bg-law-fill text-on-tertiary"
+                  : "text-ink-soft hover:bg-paper hover:text-ink",
               )}
               href={item.href}
             >
@@ -53,11 +53,11 @@ export function AdminSidebar() {
       </nav>
 
       <div className="mt-auto space-y-3 px-4">
-        <div className="flex justify-center rounded-lg border border-outline-variant/20 py-3">
+        <div className="flex justify-center rounded-full border border-hair py-3">
           <LocaleSwitcher />
         </div>
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/30 px-4 py-3 font-bold text-on-surface-variant transition-colors hover:border-tertiary hover:text-tertiary"
+          className="btn-secondary flex w-full items-center justify-center gap-2 px-4 py-3"
           onClick={() => signOut({ callbackUrl: "/login" })}
           type="button"
         >
@@ -77,15 +77,15 @@ export function AdminTopBar() {
     <header
       className={siteHeaderSurfaceClassName(
         scrolled,
-        "fixed left-64 right-0 top-0 z-40 flex h-20 items-center justify-between px-gutter",
+        "fixed left-64 right-0 top-0 z-40 flex h-14 items-center justify-between px-gutter",
       )}
     >
-      <h2 className="font-display text-headline-md text-primary">{admin.portalTitle}</h2>
+      <h2 className="font-display text-headline-md text-ink">{admin.portalTitle}</h2>
       <div className="flex items-center gap-6">
-        <button className="text-primary-fixed-dim transition-opacity hover:opacity-80" type="button">
+        <button className="text-ink-soft transition-colors hover:text-ink" type="button">
           <span className="material-symbols-outlined">notifications</span>
         </button>
-        <button className="text-primary-fixed-dim transition-opacity hover:opacity-80" type="button">
+        <button className="text-ink-soft transition-colors hover:text-ink" type="button">
           <span className="material-symbols-outlined">help_outline</span>
         </button>
       </div>

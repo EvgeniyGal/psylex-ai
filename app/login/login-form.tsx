@@ -61,12 +61,12 @@ export function LoginForm() {
   };
 
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden bg-surface-container-low">
+    <main className="relative flex min-h-screen flex-col overflow-hidden bg-paper">
       <SiteHeader
         trailing={
           <>
             <Link
-              className="hidden items-center gap-1.5 text-label-md text-primary-fixed-dim transition-opacity hover:opacity-80 sm:flex"
+              className="hidden items-center gap-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:text-ink sm:flex"
               href="/"
             >
               <span className="material-symbols-outlined text-base">home</span>
@@ -78,27 +78,24 @@ export function LoginForm() {
       />
 
       <div className="relative flex flex-grow items-center justify-center px-6">
-        <div className="pointer-events-none absolute -right-32 -top-32 h-[400px] w-[400px] rounded-full bg-tertiary/10 blur-[100px]" />
-        <div className="pointer-events-none absolute -bottom-32 -left-32 h-[400px] w-[400px] rounded-full bg-primary/10 blur-[100px]" />
-
         <div className="relative z-10 w-full max-w-md">
           <div className="mb-8 flex flex-col items-center gap-3">
-            <h1 className="font-display text-headline-lg text-on-surface">{t.signInTitle}</h1>
-            <p className="text-center text-body-sm text-on-surface-variant">{t.signInSubtitle}</p>
+            <h1 className="font-display text-headline-lg text-ink">{t.signInTitle}</h1>
+            <p className="text-center text-body-sm text-ink-soft">{t.signInSubtitle}</p>
           </div>
 
           <form
-            className="glass-panel space-y-5 rounded-2xl p-8"
+            className="glass-panel space-y-5 p-8"
             onKeyDown={handleFormKeyDown}
             onSubmit={handleSubmit(onSubmit)}
           >
             <div>
-              <label className="mb-2 block font-display text-label-md text-on-surface-variant">
+              <label className="mb-2 block text-label-md text-ink-soft">
                 {t.loginLabel}
               </label>
               <input
                 autoComplete="username"
-                className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 font-mono text-sm text-on-surface focus:border-tertiary focus:ring-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-md border border-hair bg-paper px-4 py-3 font-mono text-sm text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSubmitting}
                 enterKeyHint="next"
                 placeholder="psylex_..."
@@ -109,13 +106,13 @@ export function LoginForm() {
               ) : null}
             </div>
             <div>
-              <label className="mb-2 block font-display text-label-md text-on-surface-variant">
+              <label className="mb-2 block text-label-md text-ink-soft">
                 {t.passwordLabel}
               </label>
               <div className="relative">
                 <input
                   autoComplete="current-password"
-                  className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low py-3 pl-4 pr-12 text-on-surface focus:border-tertiary focus:ring-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-md border border-hair bg-paper py-3 pl-4 pr-12 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isSubmitting}
                   enterKeyHint="go"
                   type={showPassword ? "text" : "password"}
@@ -123,7 +120,7 @@ export function LoginForm() {
                 />
                 <button
                   aria-label={showPassword ? t.hidePassword : t.showPassword}
-                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-60"
+                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isSubmitting}
                   onClick={() => setShowPassword((visible) => !visible)}
                   type="button"
@@ -151,8 +148,8 @@ export function LoginForm() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-body-sm text-on-surface-variant">
-            <Link className="text-tertiary hover:underline" href="/">
+          <p className="mt-6 text-center text-body-sm text-ink-soft">
+            <Link className="text-law hover:underline" href="/">
               {t.backToLanding}
             </Link>
           </p>

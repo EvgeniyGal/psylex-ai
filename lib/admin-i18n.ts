@@ -27,10 +27,10 @@ export type AdminCopy = {
   participants: string;
   roomTitleLabel: string;
   roomDescriptionLabel: string;
-  side1TitleLabel: string;
-  side1DescriptionLabel: string;
-  side2TitleLabel: string;
-  side2DescriptionLabel: string;
+  partyATitleLabel: string;
+  partyADescriptionLabel: string;
+  partyBTitleLabel: string;
+  partyBDescriptionLabel: string;
   titleLabel: string;
   descriptionLabel: string;
   noRooms: string;
@@ -181,10 +181,10 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     participants: "Participants",
     roomTitleLabel: "Room title",
     roomDescriptionLabel: "Room description",
-    side1TitleLabel: "Title / Name",
-    side1DescriptionLabel: "Description",
-    side2TitleLabel: "Title / Name",
-    side2DescriptionLabel: "Description",
+    partyATitleLabel: "Title / Name",
+    partyADescriptionLabel: "Description",
+    partyBTitleLabel: "Title / Name",
+    partyBDescriptionLabel: "Description",
     titleLabel: "Title",
     descriptionLabel: "Description",
     noRooms: "No rooms yet. Create your first room to generate Sides credentials.",
@@ -306,8 +306,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     integrations: "Integrations",
     settingsPlaceholder: (name) => `Placeholder for ${name.toLowerCase()} settings.`,
     roles: {
-      side1: "Side 1",
-      side2: "Side 2",
+      party_a: "Party A",
+      party_b: "Party B",
       mediator: "Mediator",
       admin: "Admin",
     },
@@ -341,10 +341,10 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     participants: "Учасники",
     roomTitleLabel: "Назва кімнати",
     roomDescriptionLabel: "Опис кімнати",
-    side1TitleLabel: "Назва / Ім'я",
-    side1DescriptionLabel: "Опис",
-    side2TitleLabel: "Назва / Ім'я",
-    side2DescriptionLabel: "Опис",
+    partyATitleLabel: "Назва / Ім'я",
+    partyADescriptionLabel: "Опис",
+    partyBTitleLabel: "Назва / Ім'я",
+    partyBDescriptionLabel: "Опис",
     titleLabel: "Назва",
     descriptionLabel: "Опис",
     noRooms: "Кімнат ще немає. Створіть першу кімнату для генерації облікових даних сторін.",
@@ -466,8 +466,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     integrations: "Інтеграції",
     settingsPlaceholder: (name) => `Заглушка для налаштувань: ${name.toLowerCase()}.`,
     roles: {
-      side1: "Сторона 1",
-      side2: "Сторона 2",
+      party_a: "Сторона А",
+      party_b: "Сторона Б",
       mediator: "Медіатор",
       admin: "Адмін",
     },

@@ -6,7 +6,7 @@ import { createMediator } from "@/app/admin/mediators/actions";
 import { useLocale } from "@/components/locale-provider";
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 export function MediatorCreateContent() {
   const { admin } = useLocale();

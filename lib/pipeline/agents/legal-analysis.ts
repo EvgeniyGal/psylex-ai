@@ -8,7 +8,7 @@ import {
   assembleLegalAnalysisDisputeInput,
   buildLegalSearchQueries,
 } from "@/lib/pipeline/assemble-input";
-import { getRoomSidesForPipeline, isRoomLegalAnalysisComplete } from "@/lib/pipeline/gate";
+import { getRoomPartiesForPipeline, isRoomLegalAnalysisComplete } from "@/lib/pipeline/gate";
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { loadAgentPrompt } from "@/lib/pipeline/load-prompt";
 import {
@@ -105,8 +105,8 @@ export async function runLegalAnalysisAgent(params: RunLegalAnalysisParams) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, params.roomId)).limit(1);
   if (!room) throw new Error("Room not found.");
 
-  const { side1, side2 } = await getRoomSidesForPipeline(params.roomId);
-  if (!side1 || !side2) throw new Error("Room must have both sides.");
+  const { partyA, partyB } = await getRoomPartiesForPipeline(params.roomId);
+  if (!partyA || !partyB) throw new Error("Room must have both parties.");
 
   if (!params.dryRun && isRoomLegalAnalysisComplete(room)) {
     await logPipelineEvent({
@@ -126,15 +126,15 @@ export async function runLegalAnalysisAgent(params: RunLegalAnalysisParams) {
   }
 
   try {
-    const disputeInput = assembleLegalAnalysisDisputeInput({ room, side1, side2 });
-    const queries = buildLegalSearchQueries(side1, side2);
+    const disputeInput = assembleLegalAnalysisDisputeInput({ room, partyA, partyB });
+    const queries = buildLegalSearchQueries(partyA, partyB);
     const ragResults = filterRelevantResults(await ragSearchForRoom(params.roomId, queries));
     const hasRelevantExcerpts = ragResults.length > 0;
     const excerpts = formatExcerpts(ragResults);
 
     const locales = params.dryRun
-      ? [params.targetLocale ?? normalizeLocale(side1.preferredLocale)]
-      : getUniqueRoomLocales([side1, side2]);
+      ? [params.targetLocale ?? normalizeLocale(partyA.preferredLocale)]
+      : getUniqueRoomLocales([partyA, partyB]);
 
     const byLocale: Partial<Record<Locale, LegalAnalysis>> = {};
 

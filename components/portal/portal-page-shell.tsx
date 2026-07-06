@@ -12,7 +12,7 @@ export function PortalPageShell({ children, className }: PortalPageShellProps) {
   return (
     <div
       className={cn(
-        "flex min-h-screen flex-col bg-surface-container-low font-sans text-on-background",
+        "flex min-h-screen flex-col bg-paper font-sans text-ink",
         className,
       )}
     >

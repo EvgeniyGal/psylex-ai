@@ -1,10 +1,12 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rooms, users } from "@/drizzle/schema";
+import { partyRoleLabel } from "@/lib/party-labels";
+import { isPartyRole } from "@/lib/participant-roles";
 import { formatDisputeIntakeAnswers } from "@/lib/pipeline/assemble-input";
 import {
   canTriggerPostIntakePipeline,
-  getRoomSidesForPipeline,
+  getRoomPartiesForPipeline,
   listRoomsWithBothSidesIntakeComplete,
   listUsersForEmotionalTriggersTest,
   listUsersWithPersonalBot,
@@ -18,7 +20,7 @@ export async function getEligibleTestUsers(agentKey: "psychodynamic" | "emotiona
 
   return usersList.map((user) => ({
     id: user.id,
-    label: `${user.title} (${user.role})`,
+    label: `${user.title} (${isPartyRole(user.role) ? partyRoleLabel(user.role) : user.role})`,
     role: user.role,
   }));
 }
@@ -36,9 +38,13 @@ export async function getUserTestInputPreview(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user) return null;
 
+  const roleLabel = isPartyRole(user.role)
+    ? partyRoleLabel(user.role, user.preferredLocale)
+    : user.role;
+
   return {
     personalBotPrompt: user.personalBotPrompt ?? "",
-    disputeAnswers: formatDisputeIntakeAnswers(user, user.role),
+    disputeAnswers: formatDisputeIntakeAnswers(user, roleLabel),
     preferredLocale: user.preferredLocale,
   };
 }
@@ -47,15 +53,15 @@ export async function getRoomTestInputPreview(roomId: string) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   if (!room) return null;
 
-  const { side1, side2 } = await getRoomSidesForPipeline(roomId);
-  if (!side1 || !side2) return null;
+  const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
+  if (!partyA || !partyB) return null;
 
   return {
     jurisdiction: room.jurisdiction,
-    side1Answers: formatDisputeIntakeAnswers(side1, "Side 1"),
-    side2Answers: formatDisputeIntakeAnswers(side2, "Side 2"),
-    side1Locale: side1.preferredLocale,
-    side2Locale: side2.preferredLocale,
+    partyAAnswers: formatDisputeIntakeAnswers(partyA, partyRoleLabel("party_a", partyA.preferredLocale)),
+    partyBAnswers: formatDisputeIntakeAnswers(partyB, partyRoleLabel("party_b", partyB.preferredLocale)),
+    partyALocale: partyA.preferredLocale,
+    partyBLocale: partyB.preferredLocale,
     bothSidesReady: await canTriggerPostIntakePipeline(roomId),
   };
 }

@@ -6,14 +6,14 @@ import { users } from "@/drizzle/schema";
 import { getMediationLobbyData, hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { requireParticipantSession } from "@/lib/portal-auth";
-import type { ParticipantRole } from "@/lib/participant-roles";
+import { isPartyRole } from "@/lib/participant-roles";
 
 export const dynamic = "force-dynamic";
 
 export default async function MediationPage() {
   const { userId, role } = await requireParticipantSession();
 
-  if (role !== "side1" && role !== "side2") {
+  if (!isPartyRole(role)) {
     redirect("/mediator/rooms");
   }
 
@@ -48,7 +48,7 @@ export default async function MediationPage() {
       roomId={lobby.room.id}
       roomTitle={lobby.room.title}
       self={lobby.self}
-      viewerRole={role as ParticipantRole}
+      viewerRole={role}
     />
   );
 }

@@ -13,17 +13,17 @@ import type { TestKey } from "@/lib/test-keys";
 const STATUS_POLL_INTERVAL_MS = 30 * 60 * 1000;
 
 const openTestButtonClass =
-  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded border border-tertiary bg-tertiary/15 px-3 py-2 text-tertiary transition-colors hover:bg-tertiary/25 sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
+  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-hair bg-surface-container px-3 py-2 text-ink transition-colors hover:border-[#c9ced6] sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
 const passedBadgeClass =
-  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded border border-success bg-success/10 px-3 py-2 text-success sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
+  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-party-a-line bg-party-a-fill px-3 py-2 text-party-a sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
 const failedBadgeClass =
-  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded border border-error bg-error/10 px-3 py-2 text-error sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
+  "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-risk-line bg-risk-fill px-3 py-2 text-risk sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
 const testCardClass =
-  "test-card relative flex w-full flex-col gap-4 rounded-xl border border-white/10 bg-card p-6 text-left transition-all sm:flex-row sm:items-center";
+  "test-card relative flex w-full flex-col gap-4 rounded border border-hair border-t-[3px] border-t-law bg-surface-container p-6 text-left transition-all sm:flex-row sm:items-center";
 const testActionsClass =
-  "flex w-full flex-col items-stretch gap-2 border-t border-white/10 pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:justify-end sm:border-t-0 sm:pt-0";
+  "flex w-full flex-col items-stretch gap-2 border-t border-hair pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:justify-end sm:border-t-0 sm:pt-0";
 const testActionsEndClass =
-  "flex w-full flex-col items-stretch gap-2 border-t border-white/10 pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:justify-end sm:border-t-0 sm:pt-0";
+  "flex w-full flex-col items-stretch gap-2 border-t border-hair pt-4 sm:w-auto sm:shrink-0 sm:flex-row sm:items-center sm:justify-end sm:border-t-0 sm:pt-0";
 
 type TestDefinition = {
   key: TestKey;
@@ -224,7 +224,7 @@ export function TestingDashboard({
             </div>
             {showUpdateTestButton ? (
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-highest px-6 py-3 font-sans text-body-md text-on-surface transition-colors hover:border-tertiary hover:text-tertiary disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
+                className="btn-secondary flex w-full items-center justify-center gap-2 px-6 py-3 text-body-md disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
                 disabled={isUpdatePending}
                 onClick={handleUpdateStatus}
                 type="button"
@@ -239,7 +239,7 @@ export function TestingDashboard({
             ) : null}
             {showUpdateBotButton ? (
               <button
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-highest px-6 py-3 font-sans text-body-md text-on-surface transition-colors hover:border-tertiary hover:text-tertiary disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
+                className="btn-secondary flex w-full items-center justify-center gap-2 px-6 py-3 text-body-md disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
                 disabled={isUpdatePending}
                 onClick={handleUpdateStatus}
                 type="button"

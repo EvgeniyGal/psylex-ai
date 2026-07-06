@@ -116,7 +116,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
               search
             </span>
             <input
-              className="w-full rounded-lg border border-outline-variant/20 bg-surface-container-low py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary"
+              className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
               onChange={(event) => setSearch(event.target.value)}
               placeholder={admin.searchPlaceholder}
               type="search"
@@ -167,7 +167,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                       <td className="w-0 whitespace-nowrap px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <button
-                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
                             onClick={() => router.push(`/admin/mediators/${mediator.id}`)}
                             title={admin.openCard}
                             type="button"
@@ -176,7 +176,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                             <span className="sr-only">{admin.openCard}</span>
                           </button>
                           <button
-                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
                             onClick={() => onCopyCredentials(mediator)}
                             title={admin.copyCredentials}
                             type="button"

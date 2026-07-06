@@ -13,22 +13,25 @@ function isPersonalBotReady(user: {
 
 export { isPersonalBotReady };
 
-export async function getRoomSidesForPipeline(roomId: string) {
+export async function getRoomPartiesForPipeline(roomId: string) {
   const sides = await getRoomSides(roomId);
-  const side1 = sides.find((side) => side.role === "side1") ?? null;
-  const side2 = sides.find((side) => side.role === "side2") ?? null;
-  return { side1, side2, sides };
+  const partyA = sides.find((side) => side.role === "party_a") ?? null;
+  const partyB = sides.find((side) => side.role === "party_b") ?? null;
+  return { partyA, partyB, sides };
 }
 
+/** @deprecated Use getRoomPartiesForPipeline */
+export const getRoomSidesForPipeline = getRoomPartiesForPipeline;
+
 export async function canTriggerPostIntakePipeline(roomId: string) {
-  const { side1, side2 } = await getRoomSidesForPipeline(roomId);
-  if (!side1 || !side2) return false;
+  const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
+  if (!partyA || !partyB) return false;
 
   return (
-    hasSubmittedDisputeIntake(side1) &&
-    hasSubmittedDisputeIntake(side2) &&
-    isPersonalBotReady(side1) &&
-    isPersonalBotReady(side2)
+    hasSubmittedDisputeIntake(partyA) &&
+    hasSubmittedDisputeIntake(partyB) &&
+    isPersonalBotReady(partyA) &&
+    isPersonalBotReady(partyB)
   );
 }
 
@@ -56,14 +59,14 @@ export async function isPostIntakePipelineComplete(roomId: string) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   if (!room) return false;
 
-  const { side1, side2 } = await getRoomSidesForPipeline(roomId);
-  if (!side1 || !side2) return false;
+  const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
+  if (!partyA || !partyB) return false;
 
   return (
-    isUserPsychodynamicComplete(side1) &&
-    isUserPsychodynamicComplete(side2) &&
-    isUserEmotionalTriggersComplete(side1) &&
-    isUserEmotionalTriggersComplete(side2) &&
+    isUserPsychodynamicComplete(partyA) &&
+    isUserPsychodynamicComplete(partyB) &&
+    isUserEmotionalTriggersComplete(partyA) &&
+    isUserEmotionalTriggersComplete(partyB) &&
     isRoomInterestsComplete(room) &&
     isRoomLegalAnalysisComplete(room)
   );

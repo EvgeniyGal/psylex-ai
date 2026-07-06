@@ -45,12 +45,12 @@ export function ModalOverlay({
 
   return createPortal(
     <div
-      className={cn("fixed inset-0 z-[100] flex items-center justify-center p-4", className)}
+      className={cn("fixed inset-0 z-[100] flex items-center justify-center p-5", className)}
       role="presentation"
     >
       <button
         aria-label="Close"
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[rgba(22,35,59,0.42)]"
         onClick={onClose}
         type="button"
       />
@@ -100,32 +100,32 @@ export function Modal({
     <div
       aria-labelledby="modal-title"
       aria-modal="true"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-5"
       role="dialog"
     >
       <button
         aria-label="Close"
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[rgba(22,35,59,0.42)]"
         onClick={onClose}
         type="button"
       />
       <div
         className={cn(
-          "glass-panel relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl shadow-2xl",
+          "relative z-10 flex max-h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-hair bg-surface-container shadow-modal",
           className,
         )}
         ref={panelRef}
       >
-        <div className="flex items-center justify-between border-b border-outline-variant/10 px-6 py-4">
-          <h2 className="font-display text-headline-md text-on-surface" id="modal-title">
+        <div className="flex items-center justify-between gap-3 border-b border-hair px-6 py-4">
+          <h2 className="font-display text-[22px] font-medium leading-tight text-ink" id="modal-title">
             {title}
           </h2>
           <button
-            className="rounded p-1 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full border border-hair bg-paper text-[13px] text-ink-soft transition-colors hover:border-[#c9ced6] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-law focus-visible:outline-offset-2"
             onClick={onClose}
             type="button"
           >
-            <span className="material-symbols-outlined text-[22px]">close</span>
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
         <div className="custom-scrollbar overflow-y-auto px-6 py-5">{children}</div>

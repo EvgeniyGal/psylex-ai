@@ -3,7 +3,11 @@ import { db } from "@/lib/db";
 import { rooms, userTestCompletions, users, type users as usersTable } from "@/drizzle/schema";
 import { TEST_KEYS } from "@/lib/test-keys";
 import { getRoomSides } from "@/lib/room/helpers";
-import type { ParticipantRole } from "@/lib/participant-roles";
+import {
+  getOppositePartyRole,
+  isPartyRole,
+  type PartyRole,
+} from "@/lib/participant-roles";
 import {
   canTriggerPostIntakePipeline,
   isPostIntakePipelineComplete,
@@ -11,7 +15,7 @@ import {
 
 export type SideReadiness = {
   userId: string;
-  role: "side1" | "side2";
+  role: PartyRole;
   title: string;
   testsComplete: boolean;
   personalBotReady: boolean;
@@ -25,10 +29,8 @@ export function hasSubmittedDisputeIntake(user: Pick<UserRow, "disputeIntakeSubm
   return !!user.disputeIntakeSubmittedAt;
 }
 
-export function getOppositeSideRole(role: ParticipantRole): "side1" | "side2" | null {
-  if (role === "side1") return "side2";
-  if (role === "side2") return "side1";
-  return null;
+export function getOppositeSideRole(role: PartyRole): PartyRole {
+  return getOppositePartyRole(role);
 }
 
 async function getCompletedTestCount(userId: string) {
@@ -44,7 +46,7 @@ async function getCompletedTestCount(userId: string) {
 }
 
 export async function getSideReadiness(user: UserRow): Promise<SideReadiness | null> {
-  if (user.role !== "side1" && user.role !== "side2") return null;
+  if (!isPartyRole(user.role)) return null;
 
   const completedCount = await getCompletedTestCount(user.id);
   const testsComplete = completedCount === TEST_KEYS.length;
@@ -64,16 +66,14 @@ export async function getSideReadiness(user: UserRow): Promise<SideReadiness | n
 
 export async function getMediationLobbyData(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  if (!user?.roomId || (user.role !== "side1" && user.role !== "side2")) {
+  if (!user?.roomId || !isPartyRole(user.role)) {
     return null;
   }
 
   const selfReadiness = await getSideReadiness(user);
   if (!selfReadiness) return null;
 
-  const oppositeRole = getOppositeSideRole(user.role);
-  if (!oppositeRole) return null;
-
+  const oppositeRole = getOppositePartyRole(user.role);
   const sides = await getRoomSides(user.roomId);
   const oppositeUser = sides.find((side) => side.role === oppositeRole) ?? null;
   const oppositeReadiness = oppositeUser ? await getSideReadiness(oppositeUser) : null;

@@ -14,7 +14,7 @@ import { isLegalAnalysisNotFound } from "@/lib/pipeline/legal-analysis-not-found
 import type { LegalAnalysis } from "@/lib/pipeline/schemas";
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 type AgentPromptRow = {
   agentKey: AgentKey;
@@ -29,10 +29,10 @@ type TestOption = { id: string; label: string };
 type UserPreview = { personalBotPrompt: string; disputeAnswers: string; preferredLocale: string } | null;
 type RoomPreview = {
   jurisdiction: string;
-  side1Answers: string;
-  side2Answers: string;
-  side1Locale: string;
-  side2Locale: string;
+  partyAAnswers: string;
+  partyBAnswers: string;
+  partyALocale: string;
+  partyBLocale: string;
   bothSidesReady: boolean;
 } | null;
 
@@ -141,7 +141,7 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
       }
     } else {
       formData.set("roomId", selectedRoomId);
-      formData.set("targetLocale", roomPreview?.side1Locale ?? "en");
+      formData.set("targetLocale", roomPreview?.partyALocale ?? "en");
     }
 
     startTestTransition(async () => {
@@ -163,7 +163,7 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
           <button
             className={
               activeTab === key
-                ? "border-b-2 border-tertiary px-4 py-3 font-display text-body-md font-semibold text-tertiary"
+                ? "border-b-2 border-law px-4 py-3 font-display text-body-md font-semibold text-ink"
                 : "px-4 py-3 font-display text-body-md text-on-surface-variant transition-colors hover:text-on-surface"
             }
             key={key}
@@ -261,24 +261,24 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
             {roomPreview ? (
               <>
                 <p className="text-body-sm text-on-surface-variant">
-                  {admin.agentTestResponseLocale}: Side 1 — {roomPreview.side1Locale === "uk" ? "Українська" : "English"}
-                  {roomPreview.side1Locale !== roomPreview.side2Locale
-                    ? `; Side 2 — ${roomPreview.side2Locale === "uk" ? "Українська" : "English"} (pipeline stores both)`
+                  {admin.agentTestResponseLocale}: {admin.roles.party_a} — {roomPreview.partyALocale === "uk" ? "Українська" : "English"}
+                  {roomPreview.partyALocale !== roomPreview.partyBLocale
+                    ? `; ${admin.roles.party_b} — ${roomPreview.partyBLocale === "uk" ? "Українська" : "English"} (pipeline stores both)`
                     : ""}
                 </p>
                 <p className="text-body-sm text-on-surface-variant">
                   {admin.agentTestJurisdiction}: {roomPreview.jurisdiction}
                 </p>
                 <div>
-                  <p className="mb-1 text-body-sm text-on-surface-variant">Side 1</p>
+                  <p className="mb-1 text-body-sm text-on-surface-variant">{admin.roles.party_a}</p>
                   <pre className="max-h-40 overflow-auto rounded-lg bg-surface-container p-3 text-body-sm text-on-surface">
-                    {roomPreview.side1Answers}
+                    {roomPreview.partyAAnswers}
                   </pre>
                 </div>
                 <div>
-                  <p className="mb-1 text-body-sm text-on-surface-variant">Side 2</p>
+                  <p className="mb-1 text-body-sm text-on-surface-variant">{admin.roles.party_b}</p>
                   <pre className="max-h-40 overflow-auto rounded-lg bg-surface-container p-3 text-body-sm text-on-surface">
-                    {roomPreview.side2Answers}
+                    {roomPreview.partyBAnswers}
                   </pre>
                 </div>
               </>
@@ -287,7 +287,7 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
         )}
 
         <button
-          className="rounded-lg border border-tertiary px-6 py-2.5 text-body-sm font-bold text-tertiary transition-all hover:bg-tertiary/10 disabled:opacity-60"
+          className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
           disabled={testPending || (isUserAgent ? !selectedUserId : !selectedRoomId)}
           onClick={onTest}
           type="button"

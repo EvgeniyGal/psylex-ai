@@ -6,7 +6,7 @@ import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 
 const textareaClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 font-sans text-body-md text-on-surface outline-none transition-colors focus:border-tertiary focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-4 py-3 font-sans text-body-md text-ink outline-none transition-colors focus:border-law focus:ring-1 focus:ring-law";
 
 function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: string }) {
   const { pending } = useFormStatus();

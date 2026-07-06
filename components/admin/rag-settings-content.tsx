@@ -16,7 +16,7 @@ import type { LegalDocumentCategory, LegalDocumentRow, RoomJurisdiction } from "
 import type { RagInquiryResult } from "@/lib/rag/types";
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 type RagSettingsContentProps = {
   documents: LegalDocumentRow[];
@@ -41,7 +41,7 @@ function statusLabel(
 }
 
 function statusClass(status: LegalDocumentRow["status"]) {
-  if (status === "ready") return "bg-tertiary/15 text-tertiary";
+  if (status === "ready") return "bg-law-fill text-on-tertiary";
   if (status === "failed") return "bg-error/15 text-error";
   if (status === "processing") return "bg-primary/15 text-primary";
   return "bg-on-surface-variant/10 text-on-surface-variant";
@@ -230,7 +230,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
                   <td className="w-0 whitespace-nowrap px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <button
-                        className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-tertiary hover:text-tertiary"
+                        className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
                         onClick={() => setModal({ type: "edit", document: doc })}
                         title={admin.ragEditDocument}
                         type="button"
@@ -279,7 +279,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
             <button
               className={
                 activeJurisdictionTab === tab
-                  ? "border-b-2 border-tertiary px-4 py-3 font-display text-body-md font-semibold text-tertiary"
+                  ? "border-b-2 border-law px-4 py-3 font-display text-body-md font-semibold text-ink"
                   : "px-4 py-3 font-display text-body-md text-on-surface-variant transition-colors hover:text-on-surface"
               }
               key={tab}

@@ -22,7 +22,7 @@ export const emotionalTriggersSchema = z.object({
 export const interestsAnalysisSchema = z.object({
   conflictingInterests: z.array(
     z.object({
-      side: z.enum(["side1", "side2"]),
+      side: z.enum(["party_a", "party_b"]),
       interest: z.string(),
       rationale: z.string(),
     }),

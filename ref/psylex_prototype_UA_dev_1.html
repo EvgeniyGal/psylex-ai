@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PsyLex · Режим B — HOA демо (українська версія для розробників)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F7F9; --surface:#FFFFFF; --ink:#16233B; --ink-soft:#495468; --hair:#E3E6EB;
+    --law:#B7842B; --law-fill:#FBF3E2; --law-line:#ECD9A6; --law-mark:#F6DFA6;
+    --a:#2E8B7A; --a-fill:#E9F4F0; --a-line:#BFE0D6;
+    --b:#2A5A8C; --b-fill:#E9F0F8; --b-line:#C4D6EA;
+    --med:#6B4E8E; --med-fill:#F0EBF7; --med-line:#D7C9E8;
+    --risk:#B24A3B; --risk-fill:#FAECE9; --risk-line:#EAC7BF;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  .wordmark{font-family:"Newsreader",serif;font-weight:500;letter-spacing:.02em}
+
+  /* ===== App bar ===== */
+  .appbar{
+    background:var(--surface); border-bottom:1px solid var(--hair);
+    padding:10px clamp(16px,3vw,32px);
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:20;
+  }
+  .appbar .brand{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;white-space:nowrap}
+  .appbar .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--law)}
+  .appbar .brand .wordmark{font-size:17px;letter-spacing:.02em;text-transform:none;color:var(--ink)}
+  .appbar .spacer{flex:1}
+
+  /* Presenter view-switcher */
+  .viewswitch{display:none;align-items:center;gap:8px}
+  .viewswitch.active{display:flex}
+  .viewswitch .vlabel{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .seg{display:inline-flex;background:var(--paper);border:1px solid var(--hair);border-radius:999px;padding:3px;gap:2px}
+  .seg button{
+    font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-soft);
+    background:transparent;border:none;border-radius:999px;padding:5px 14px;cursor:pointer;
+    transition:background .15s,color .15s;
+  }
+  .seg button:focus-visible{outline:2px solid var(--law);outline-offset:1px}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .seg button[data-role="partyA"][aria-pressed="true"]{background:var(--a)}
+  .seg button[data-role="partyB"][aria-pressed="true"]{background:var(--b)}
+
+  /* ===== Persistent UPL banner ===== */
+  .upl-banner{
+    background:var(--law-fill); border-bottom:1px solid var(--law-line);
+    padding:7px clamp(16px,3vw,32px); font-size:12.5px; color:#8A6413;
+    display:flex; align-items:center; gap:8px; justify-content:center; text-align:center;
+  }
+  .upl-banner b{font-weight:600}
+
+  /* ===== Step rail ===== */
+  .steprail{
+    display:none; background:var(--surface); border-bottom:1px solid var(--hair);
+    padding:0 clamp(16px,3vw,32px);
+    overflow-x:auto; scrollbar-width:thin;
+  }
+  .steprail.active{display:block}
+  .steprail .inner{display:flex;gap:2px;max-width:1080px;margin:0 auto}
+  .steprail button{
+    font-family:inherit;font-size:12.5px;font-weight:500;color:var(--ink-soft);
+    background:transparent;border:none;border-bottom:2px solid transparent;
+    padding:10px 12px 8px;cursor:pointer;white-space:nowrap;
+    transition:color .15s,border-color .15s;
+  }
+  .steprail button:hover{color:var(--ink)}
+  .steprail button:focus-visible{outline:2px solid var(--law);outline-offset:-2px}
+  .steprail button[aria-current="step"]{color:var(--ink);border-bottom-color:var(--law)}
+  .steprail button .n{font-family:"Newsreader",serif;font-style:italic;color:var(--law);margin-right:5px}
+
+  /* ===== Main stage ===== */
+  main{flex:1;padding:clamp(16px,3vw,40px)}
+  .wrap{max-width:1080px;margin:0 auto}
+  .screen{display:none}
+  .screen.active{display:block}
+
+  /* ===== Footer nav ===== */
+  .flownav{
+    display:none; justify-content:space-between; align-items:center;
+    max-width:1080px; margin:28px auto 0; gap:12px;
+  }
+  .flownav.active{display:flex}
+  .btn{
+    font-family:inherit;font-size:14.5px;font-weight:500;
+    border-radius:999px;padding:10px 22px;cursor:pointer;
+    transition:background .15s,border-color .15s,transform .1s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--ink);color:#fff;border:1px solid var(--ink)}
+  .btn-primary:hover{background:#0f1a2e}
+  .btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--hair)}
+  .btn-ghost:hover{border-color:#c9ced6}
+  .btn[disabled]{opacity:.4;cursor:default;transform:none}
+
+  /* ===== Landing (Screen 0) ===== */
+  .landing{max-width:880px;margin:0 auto;padding-top:clamp(12px,4vh,48px)}
+  .landing .eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;justify-content:center}
+  .landing .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--law)}
+  .landing h1{
+    font-family:"Newsreader",serif;font-weight:400;text-align:center;
+    font-size:clamp(40px,7vw,72px);line-height:1.04;letter-spacing:-.015em;
+    margin:.6rem 0 .4rem;
+  }
+  .landing h1 .wordmark{font-weight:500}
+  .landing h1 em{font-style:italic;color:var(--law)}
+  .landing .sub{
+    text-align:center;color:var(--ink-soft);font-size:16px;max-width:620px;margin:0 auto 1.6rem;
+  }
+  .landing .case-chip{
+    display:flex;justify-content:center;margin-bottom:2rem;
+  }
+  .landing .case-chip span{
+    display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);
+    background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:6px 14px;
+  }
+  .landing .case-chip b{color:var(--ink);font-weight:600}
+  .cta-row{display:flex;justify-content:center;margin-bottom:2.6rem}
+  .cta{
+    font-family:inherit;font-size:16px;font-weight:500;color:#fff;
+    background:var(--ink);border:1px solid var(--ink);border-radius:999px;
+    padding:13px 34px;cursor:pointer;display:inline-flex;align-items:center;gap:10px;
+    transition:background .15s,transform .1s;
+  }
+  .cta:hover{background:#0f1a2e}
+  .cta:focus-visible{outline:2px solid var(--law);outline-offset:3px}
+  .cta:active{transform:translateY(1px)}
+  .cta .arrow{font-family:"Newsreader",serif;font-style:italic;color:var(--law-mark)}
+
+  .beats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:2rem}
+  @media(max-width:760px){.beats{grid-template-columns:1fr}}
+  .beat{
+    background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);
+    padding:18px 18px 16px;border-top:3px solid var(--hair);
+  }
+  .beat.b1{border-top-color:var(--med)}
+  .beat.b2{border-top-color:var(--law)}
+  .beat.b3{border-top-color:var(--risk)}
+  .beat .k{font-family:"Newsreader",serif;font-style:italic;font-size:14px;color:var(--ink-soft);margin-bottom:4px}
+  .beat h3{font-family:"Newsreader",serif;font-weight:500;font-size:19px;margin:0 0 6px;line-height:1.25}
+  .beat p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+
+  .landing .upl-card{
+    background:#F0F2F5;border:1px solid var(--hair);border-left:3px solid var(--ink);
+    border-radius:0 10px 10px 0;padding:14px 18px;font-size:12.5px;color:var(--ink-soft);
+    max-width:760px;margin:0 auto;
+  }
+  .landing .upl-card b{color:var(--ink);font-weight:600}
+  .landing .foot{
+    text-align:center;font-size:12px;color:var(--ink-soft);margin-top:2rem;
+    display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center;
+  }
+  .landing .foot .sep{color:var(--hair)}
+
+  /* ===== Stub screens (placeholders for M2–M5) ===== */
+  .stub{
+    background:var(--surface);border:1px dashed var(--hair);border-radius:var(--radius);
+    padding:clamp(24px,5vw,56px);text-align:center;max-width:760px;margin:0 auto;
+  }
+  .stub .tag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:10px}
+  .stub h2{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(24px,3.4vw,34px);margin:0 0 8px;line-height:1.15}
+  .stub p{color:var(--ink-soft);font-size:14.5px;max-width:520px;margin:0 auto}
+  .stub .ms{display:inline-block;margin-top:16px;font-size:12px;color:#8A6413;background:var(--law-fill);border:1px solid var(--law-line);border-radius:6px;padding:3px 10px;font-weight:600}
+
+  .reveal{opacity:0;transform:translateY(10px)}
+  .screen.active .reveal{animation:rise .6s cubic-bezier(.2,.7,.3,1) forwards}
+  .r1{animation-delay:.05s}.r2{animation-delay:.16s}.r3{animation-delay:.27s}.r4{animation-delay:.38s}.r5{animation-delay:.49s}
+  @keyframes rise{to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.reveal,.screen.active .reveal{animation:none;opacity:1;transform:none}}
+
+  /* ===== Screen 5 · Adaptation split view ===== */
+  .s5 .eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .s5 .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--law)}
+  .s5 h1{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(28px,4.4vw,46px);line-height:1.08;margin:.5rem 0 .1rem;letter-spacing:-.01em}
+  .s5 h1 em{font-style:italic;color:var(--law)}
+  .s5 .sub{color:var(--ink-soft);font-size:15px;margin:0 0 1.4rem}
+  .s5 .context{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:5px 12px;margin-bottom:1.4rem}
+  .s5 .context b{color:var(--ink);font-weight:600}
+
+  .s5 .law-card{background:var(--law-fill);border:1px solid var(--law-line);border-radius:var(--radius);padding:18px 20px;position:relative}
+  .s5 .law-card .tag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:#8A6413;font-weight:600;margin-bottom:8px}
+  .s5 .law-card .tag::before{content:"";width:14px;height:2px;background:var(--law)}
+  .s5 .law-card p{margin:0;font-size:15.5px;color:#4a3c1c}
+  .s5 .cite{margin-top:12px;font-size:12.5px;color:#8A6413;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .s5 .cite .badge{background:#fff;border:1px solid var(--law-line);border-radius:6px;padding:2px 8px;font-weight:600}
+
+  .s5 .controls{display:flex;justify-content:center;margin:18px 0}
+  .s5 .toggle{font-family:inherit;font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:border-color .15s,background .15s}
+  .s5 .toggle:hover{border-color:#c9ced6}
+  .s5 .toggle:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .s5 .toggle .sw{width:30px;height:17px;border-radius:999px;background:#D6DAE1;position:relative;transition:background .18s;flex:none}
+  .s5 .toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .18s}
+  .s5.show-facts .toggle .sw{background:var(--law)}
+  .s5.show-facts .toggle .sw::after{transform:translateX(13px)}
+
+  .s5 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){.s5 .grid{grid-template-columns:1fr}}
+
+  .s5 .panel{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:20px;border-top:3px solid var(--hair)}
+  .s5 .panel.a{border-top-color:var(--a)}
+  .s5 .panel.b{border-top-color:var(--b)}
+  .s5 .who{display:flex;align-items:center;gap:11px;margin-bottom:4px}
+  .s5 .who .avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:600;font-size:13px;flex:none}
+  .s5 .panel.a .avatar{background:var(--a-fill);color:var(--a);border:1px solid var(--a-line)}
+  .s5 .panel.b .avatar{background:var(--b-fill);color:var(--b);border:1px solid var(--b-line)}
+  .s5 .who .role{font-weight:600;font-size:15px}
+  .s5 .who .side{font-size:12px;color:var(--ink-soft)}
+  .s5 .profile{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+  .s5 .chip{font-size:11.5px;padding:3px 9px;border-radius:999px;font-weight:500}
+  .s5 .panel.a .chip{background:var(--a-fill);color:#1e6455}
+  .s5 .panel.b .chip{background:var(--b-fill);color:#204a74}
+  .s5 .msg{font-family:"Newsreader",serif;font-size:16.5px;line-height:1.62;color:#26314a;margin:0}
+  .s5 mark{background:transparent;color:inherit;padding:0 1px;border-radius:3px;transition:background .25s,box-shadow .25s}
+  .s5.show-facts mark{background:var(--law-mark);box-shadow:0 0 0 1px #E8CE86 inset}
+  .s5 .foot-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--hair);font-size:12px;color:var(--ink-soft);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .s5 .foot-note .badge{background:var(--paper);border:1px solid var(--hair);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--ink)}
+
+  .s5 .caption{text-align:center;font-family:"Newsreader",serif;font-style:italic;font-size:16px;color:var(--ink-soft);margin:22px auto 0;max-width:760px}
+  .s5 .caption b{font-style:normal;color:var(--ink);font-weight:500}
+  .s5 .hint{text-align:center;font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+  .s5 .hint.hidden{display:none}
+
+  .s5 .upl{margin-top:26px;background:#F0F2F5;border:1px solid var(--hair);border-left:3px solid var(--ink);border-radius:0 10px 10px 0;padding:12px 16px;font-size:12.5px;color:var(--ink-soft)}
+  .s5 .upl b{color:var(--ink);font-weight:600}
+
+  /* ===== Screens 1–2 shared header ===== */
+  .shead-block .eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .shead-block .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--law)}
+  .shead-block h1{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(26px,3.8vw,40px);line-height:1.1;margin:.5rem 0 .1rem;letter-spacing:-.01em}
+  .shead-block h1 em{font-style:italic;color:var(--law)}
+  .shead-block .sub{color:var(--ink-soft);font-size:15px;margin:0 0 1.2rem}
+
+  /* ===== M6 · delivery status on assessment cards ===== */
+  .assess .dlv{margin-top:10px;padding-top:8px;border-top:1px dashed var(--hair);font-size:11.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+  .assess .dlv .ok{color:#1e6455;font-weight:600}
+  .s2 .preview-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .btn-preview{font-family:inherit;font-size:12.5px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:7px 16px;cursor:pointer;transition:border-color .15s}
+  .btn-preview:hover{border-color:#c9ced6}
+  .btn-preview:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .s2[data-view="partyA"] .preview-row,.s2[data-view="partyB"] .preview-row{display:none}
+
+  /* ===== M6 · modal (assessment preview) ===== */
+  .modal-veil{position:fixed;inset:0;background:rgba(22,35,59,.42);display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+  .modal-veil.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);max-width:560px;width:100%;max-height:86vh;overflow:auto;padding:24px 26px;box-shadow:0 18px 50px rgba(22,35,59,.22)}
+  .modal .mhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px}
+  .modal h3{font-family:"Newsreader",serif;font-weight:500;font-size:22px;margin:0;line-height:1.2}
+  .modal .msub{font-size:12.5px;color:var(--ink-soft);margin:2px 0 14px}
+  .modal .x{font-family:inherit;font-size:13px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--hair);border-radius:999px;width:30px;height:30px;cursor:pointer;flex:none;display:grid;place-items:center}
+  .modal .x:hover{color:var(--ink);border-color:#c9ced6}
+  .modal .x:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .q-item{padding:13px 0;border-top:1px solid var(--hair)}
+  .q-item .qn{font-family:"Newsreader",serif;font-style:italic;font-size:13px;color:var(--law)}
+  .q-item .qt{font-size:14.5px;line-height:1.55;margin:2px 0 10px}
+  .likert{display:flex;align-items:center;gap:0;justify-content:space-between;max-width:360px}
+  .likert .lp{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+  .likert .lp .dot{width:16px;height:16px;border-radius:50%;border:2px solid #c9ced6;background:var(--paper)}
+  .likert .lp .ll{font-size:10px;color:var(--ink-soft);text-align:center;white-space:nowrap}
+  .likert .lp:first-child .ll,.likert .lp:last-child .ll{font-weight:600}
+  .modal .mfoot{margin-top:14px;padding-top:12px;border-top:1px solid var(--hair);font-size:12px;color:var(--ink-soft)}
+  .modal .mfoot b{color:var(--ink);font-weight:600}
+
+  /* ===== M6 · presenter script drawer ===== */
+  .btn-script{display:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink);background:var(--law-fill);border:1px solid var(--law-line);border-radius:999px;padding:6px 15px;cursor:pointer;transition:border-color .15s;white-space:nowrap;align-items:center;gap:7px}
+  .btn-script.active{display:inline-flex}
+  .btn-script:hover{border-color:#d9c07a}
+  .btn-script:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .btn-script .sdot{width:7px;height:7px;border-radius:50%;background:var(--law);flex:none}
+
+  .drawer-veil{position:fixed;inset:0;background:rgba(22,35,59,.25);display:none;z-index:50}
+  .drawer-veil.open{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(400px,92vw);background:var(--surface);border-left:1px solid var(--hair);box-shadow:-14px 0 40px rgba(22,35,59,.14);z-index:55;transform:translateX(102%);transition:transform .28s cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column}
+  .drawer.open{transform:none}
+  @media(prefers-reduced-motion:reduce){.drawer{transition:none}}
+  .drawer .dr-head{padding:18px 22px 12px;border-bottom:1px solid var(--hair);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .drawer .dr-head h3{font-family:"Newsreader",serif;font-weight:500;font-size:21px;margin:0;line-height:1.2}
+  .drawer .dr-head .dsub{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .drawer .dr-body{flex:1;overflow:auto;padding:6px 22px 18px}
+  .beat-item{padding:14px 0;border-bottom:1px solid var(--hair)}
+  .beat-item:last-child{border-bottom:none}
+  .beat-item .bnum{font-family:"Newsreader",serif;font-style:italic;font-size:14px;color:var(--law);margin-bottom:3px}
+  .beat-item .bq{font-family:"Newsreader",serif;font-size:15.5px;line-height:1.5;color:#26314a;margin:0 0 6px}
+  .beat-item .bdir{font-size:11.5px;color:var(--ink-soft);margin-bottom:8px}
+  .beat-item .bgo{font-family:inherit;font-size:12px;font-weight:500;color:var(--ink);background:var(--paper);border:1px solid var(--hair);border-radius:999px;padding:5px 13px;cursor:pointer;transition:border-color .15s}
+  .beat-item .bgo:hover{border-color:#c9ced6}
+  .beat-item .bgo:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .drawer .dr-foot{padding:12px 22px;border-top:1px solid var(--hair);font-size:11.5px;color:var(--ink-soft)}
+
+  /* ===== Screen 1 · Session setup ===== */
+  .s1 .setup-grid{display:grid;grid-template-columns:minmax(260px,1fr) 1.6fr;gap:18px;align-items:start}
+  @media(max-width:820px){.s1 .setup-grid{grid-template-columns:1fr}}
+  .kv{display:flex;flex-direction:column;gap:10px}
+  .kv .row{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-bottom:1px solid var(--hair)}
+  .kv .row:last-child{border-bottom:none}
+  .kv .k{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .kv .v{font-size:14px;font-weight:500}
+  .kv .v .badge{background:var(--law-fill);border:1px solid var(--law-line);border-radius:6px;padding:1px 7px;font-weight:600;font-size:11.5px;color:#8A6413;margin-left:6px;white-space:nowrap}
+  .kv .v small{display:block;font-weight:400;font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+
+  .ppl{display:flex;flex-direction:column;gap:12px}
+  .pcard{border:1px solid var(--hair);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;background:var(--surface)}
+  .pcard .avatar{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:600;font-size:13.5px;flex:none;margin-top:1px}
+  .pcard.pm{background:linear-gradient(90deg,var(--med-fill) 0%,#fff 55%);border-color:var(--med-line)}
+  .pcard.pm .avatar{background:#fff;color:var(--med);border:1px solid var(--med-line)}
+  .pcard.pa .avatar{background:var(--a-fill);color:var(--a);border:1px solid var(--a-line)}
+  .pcard.pb .avatar{background:var(--b-fill);color:var(--b);border:1px solid var(--b-line)}
+  .pcard .pname{font-weight:600;font-size:14.5px}
+  .pcard .pname .side{font-weight:400;font-size:12px;color:var(--ink-soft);margin-left:6px}
+  .pcard .pstory{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-top:3px}
+  .pcard .ptag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#54397a;margin-top:6px}
+  .pcard.added{animation:cardIn .5s cubic-bezier(.2,.7,.3,1)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.pcard.added{animation:none}}
+
+  .pslot{border:1px dashed #c9ced6;border-radius:10px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:transparent}
+  .pslot .slbl{font-size:13.5px;color:var(--ink-soft)}
+  .pslot .slbl b{color:var(--ink);font-weight:600}
+  .btn-add{font-family:inherit;font-size:13px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:7px 16px;cursor:pointer;transition:border-color .15s;white-space:nowrap}
+  .btn-add:hover{border-color:#c9ced6}
+  .btn-add:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .s1 .ready{display:none;margin-top:14px;font-size:13px;color:#1e6455;background:var(--a-fill);border:1px solid var(--a-line);border-radius:10px;padding:10px 14px}
+  .s1 .ready.show{display:block;animation:cardIn .4s cubic-bezier(.2,.7,.3,1)}
+  .s1 .hint-line{margin-top:10px;font-size:12.5px;color:var(--ink-soft)}
+
+  /* ===== Screen 2 · Three-party profiling ===== */
+  .s2 .banner-med{display:inline-flex;align-items:center;gap:9px;background:var(--med-fill);border:1px solid var(--med-line);border-radius:999px;padding:6px 14px;font-size:13px;color:#54397a;font-weight:500;margin-bottom:16px}
+  .s2 .banner-med .mdot{width:8px;height:8px;border-radius:50%;background:var(--med);flex:none}
+  .s2 .prof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:860px){.s2 .prof-grid{grid-template-columns:1fr}}
+  .assess{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:16px 18px;border-top:3px solid var(--hair);display:flex;flex-direction:column}
+  .assess.pa{border-top-color:var(--a)}
+  .assess.pb{border-top-color:var(--b)}
+  .assess.pm{border-top-color:var(--med)}
+  .assess .who{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .assess .avatar{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:600;font-size:12.5px;flex:none}
+  .assess.pa .avatar{background:var(--a-fill);color:var(--a);border:1px solid var(--a-line)}
+  .assess.pb .avatar{background:var(--b-fill);color:var(--b);border:1px solid var(--b-line)}
+  .assess.pm .avatar{background:var(--med-fill);color:var(--med);border:1px solid var(--med-line)}
+  .assess .aname{font-weight:600;font-size:14px}
+  .assess .aside{font-size:11.5px;color:var(--ink-soft)}
+  .assess .astate{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-soft);margin-bottom:8px}
+  .assess .astate .count{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);min-width:52px}
+  .assess .abar{flex:1;height:5px;border-radius:99px;background:var(--paper);overflow:hidden}
+  .assess .abar i{display:block;height:100%;width:0;border-radius:99px;background:var(--law)}
+  .assess.done .abar i{background:var(--a)}
+  .assess .astate .st{font-weight:600}
+  .assess.done .astate .st{color:#1e6455}
+  .assess .result{opacity:0;transform:translateY(6px);transition:opacity .4s,transform .4s;margin-top:2px}
+  .assess.done .result{opacity:1;transform:none}
+  .assess .rneed{font-size:13px;color:var(--ink-soft);padding-top:8px;border-top:1px solid var(--hair)}
+  .assess .rneed b{color:var(--ink);font-weight:600}
+  .assess .dims{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+  .assess .dim{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-soft)}
+  .assess .dim .dl{min-width:88px}
+  .assess .dim .dt{flex:1;height:5px;border-radius:99px;background:var(--paper);overflow:hidden}
+  .assess .dim .dt i{display:block;height:100%;width:0;border-radius:99px;transition:width .8s cubic-bezier(.3,.6,.3,1)}
+  .assess.pa .dim .dt i{background:var(--a)}
+  .assess.pb .dim .dt i{background:var(--b)}
+  .assess.pm .dim .dt i{background:var(--med)}
+  .assess .dim .dv{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);min-width:26px;text-align:right}
+  .assess .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .assess .chip{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500}
+  .assess.pa .chip{background:var(--a-fill);color:#1e6455}
+  .assess.pb .chip{background:var(--b-fill);color:#204a74}
+  .assess.pm .chip{background:var(--med-fill);color:#54397a}
+  .assess .pm-flag{margin-top:10px;font-size:11.5px;color:#54397a;font-weight:600}
+  .s2 .echo{display:none;margin-top:16px;text-align:center;font-family:"Newsreader",serif;font-style:italic;font-size:15.5px;color:var(--ink-soft)}
+  .s2 .echo.show{display:block;animation:cardIn .5s cubic-bezier(.2,.7,.3,1)}
+  .s2 .echo b{font-style:normal;color:#54397a;font-weight:500}
+  @media(prefers-reduced-motion:reduce){.assess .abar i,.assess .dim .dt i{transition:none}.s2 .echo.show{animation:none}}
+
+  /* Party views on Screens 1–2 */
+  .s1[data-view="partyA"] .mediator-view,.s1[data-view="partyB"] .mediator-view,
+  .s2[data-view="partyA"] .assess.pb,.s2[data-view="partyA"] .assess.pm,
+  .s2[data-view="partyB"] .assess.pa,.s2[data-view="partyB"] .assess.pm,
+  .s2[data-view="partyA"] .banner-med,.s2[data-view="partyB"] .banner-med,
+  .s2[data-view="partyA"] .echo,.s2[data-view="partyB"] .echo{display:none}
+  .s1 .party-view{display:none;max-width:640px;margin:0 auto}
+  .s1[data-view="partyA"] .party-view,.s1[data-view="partyB"] .party-view{display:block}
+  .s2[data-view="partyA"] .prof-grid,.s2[data-view="partyB"] .prof-grid{grid-template-columns:1fr;max-width:520px;margin:0 auto}
+  .pv-banner{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:6px 14px;margin-bottom:16px}
+  .pv-banner .pdot{width:8px;height:8px;border-radius:50%;flex:none}
+  .s1[data-view="partyA"] .pv-banner .pdot,.s2[data-view="partyA"] .pv-banner .pdot{background:var(--a)}
+  .s1[data-view="partyB"] .pv-banner .pdot,.s2[data-view="partyB"] .pv-banner .pdot{background:var(--b)}
+  .s2 .pv-banner{display:none}
+  .s2[data-view="partyA"] .pv-banner,.s2[data-view="partyB"] .pv-banner{display:inline-flex}
+
+  /* ===== Screen 3 · AI analysis ===== */
+  .s3-stage{max-width:560px;margin:clamp(24px,8vh,80px) auto 0;text-align:center}
+  .s3-stage .eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;justify-content:center}
+  .s3-stage .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--law)}
+  .s3-stage h1{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(26px,3.8vw,38px);line-height:1.1;margin:.5rem 0 1.6rem;letter-spacing:-.01em}
+  .s3-stage h1 em{font-style:italic;color:var(--law)}
+  .s3-tasks{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:8px 22px;text-align:left}
+  .s3-task{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--hair)}
+  .s3-task:last-child{border-bottom:none}
+  .s3-task .ic{width:26px;height:26px;border-radius:50%;border:2px solid var(--hair);display:grid;place-items:center;flex:none;font-size:13px;color:#fff;transition:background .25s,border-color .25s}
+  .s3-task.done .ic{background:var(--a);border-color:var(--a)}
+  .s3-task .lbl{font-weight:500;font-size:15px}
+  .s3-task .sub-lbl{font-size:12.5px;color:var(--ink-soft)}
+  .s3-task .bar{flex:1;height:4px;border-radius:99px;background:var(--paper);overflow:hidden;min-width:80px}
+  .s3-task .bar i{display:block;height:100%;width:0;border-radius:99px;background:var(--law);transition:width 1s cubic-bezier(.3,.6,.3,1)}
+  .s3-task.run .bar i{width:70%}
+  .s3-task.done .bar i{width:100%;background:var(--a)}
+  .s3-note{margin-top:14px;font-size:12.5px;color:var(--ink-soft)}
+  .s3-done-cta{margin-top:22px;display:none}
+  .s3-done-cta.show{display:block}
+  @media(prefers-reduced-motion:reduce){.s3-task .bar i{transition:none}}
+
+  /* ===== Screen 4 · Mediator dashboard ===== */
+  .s4 .eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+  .s4 .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--law)}
+  .s4 h1{font-family:"Newsreader",serif;font-weight:400;font-size:clamp(26px,3.8vw,40px);line-height:1.1;margin:.5rem 0 .1rem;letter-spacing:-.01em}
+  .s4 h1 em{font-style:italic;color:var(--law)}
+  .s4 .sub{color:var(--ink-soft);font-size:15px;margin:0 0 1.2rem}
+
+  .risk-alert{background:var(--risk-fill);border:1px solid var(--risk-line);border-left:4px solid var(--risk);border-radius:0 var(--radius) var(--radius) 0;padding:18px 20px;margin-bottom:18px}
+  .risk-alert .rtag{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--risk);font-weight:600;margin-bottom:8px}
+  .risk-alert .rtag .pulse{width:9px;height:9px;border-radius:50%;background:var(--risk);animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(178,74,59,.35)}50%{box-shadow:0 0 0 6px rgba(178,74,59,0)}}
+  @media(prefers-reduced-motion:reduce){.risk-alert .rtag .pulse{animation:none}}
+  .risk-alert .rlead{font-family:"Newsreader",serif;font-size:17.5px;line-height:1.55;color:#5a2f26;margin:0 0 10px}
+  .risk-alert .rlead b{font-weight:600}
+  .risk-alert .rmeasures-title{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--risk);margin:0 0 6px}
+  .risk-alert ol{margin:0;padding-left:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+  @media(max-width:720px){.risk-alert ol{grid-template-columns:1fr}}
+  .risk-alert ol li{font-size:14px;color:#5a2f26;display:flex;gap:9px;align-items:baseline}
+  .risk-alert ol li .n{font-family:"Newsreader",serif;font-style:italic;color:var(--risk);flex:none}
+  .risk-alert .rfoot{margin-top:12px;padding-top:10px;border-top:1px solid var(--risk-line);font-size:12px;color:#8a5346;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .risk-alert .rfoot .badge{background:#fff;border:1px solid var(--risk-line);border-radius:6px;padding:2px 8px;font-weight:600;color:var(--risk)}
+
+  .s4 .dash{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:860px){.s4 .dash{grid-template-columns:1fr}}
+  .s4 .col{display:flex;flex-direction:column;gap:18px}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:18px 20px}
+  .card .ctag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:12px}
+  .card .ctag::before{content:"";width:14px;height:2px;background:var(--law)}
+  .card.psy .ctag::before{background:var(--med)}
+
+  .prof-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--hair)}
+  .prof-row:last-child{border-bottom:none;padding-bottom:2px}
+  .prof-row .avatar{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:600;font-size:12.5px;flex:none;margin-top:2px}
+  .prof-row.pa .avatar{background:var(--a-fill);color:var(--a);border:1px solid var(--a-line)}
+  .prof-row.pb .avatar{background:var(--b-fill);color:var(--b);border:1px solid var(--b-line)}
+  .prof-row.pm .avatar{background:var(--med-fill);color:var(--med);border:1px solid var(--med-line)}
+  .prof-row .pr-name{font-weight:600;font-size:14px}
+  .prof-row .pr-name .side{font-weight:400;font-size:12px;color:var(--ink-soft);margin-left:6px}
+  .prof-row .pr-need{font-size:13px;color:var(--ink-soft);margin-top:1px}
+  .prof-row .pr-need b{color:var(--ink);font-weight:500}
+  .prof-row .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .prof-row .chip{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500}
+  .prof-row.pa .chip{background:var(--a-fill);color:#1e6455}
+  .prof-row.pb .chip{background:var(--b-fill);color:#204a74}
+  .prof-row.pm .chip{background:var(--med-fill);color:#54397a}
+  .prof-row.pm{background:linear-gradient(90deg,var(--med-fill) 0%,transparent 60%);border-radius:10px;padding-left:10px;margin-left:-10px}
+  .pm-note{font-size:11.5px;color:#54397a;font-weight:500;margin-top:5px}
+
+  .cmap{margin-top:6px}
+  .cmap svg{width:100%;height:auto;display:block}
+  .cmap .cap{font-size:12px;color:var(--ink-soft);margin-top:6px;text-align:center}
+
+  .meter{display:flex;align-items:center;gap:12px;margin-top:4px}
+  .meter .mlabel{font-size:13px;font-weight:500;min-width:110px}
+  .meter .track{flex:1;height:8px;border-radius:99px;background:var(--paper);overflow:hidden}
+  .meter .track i{display:block;height:100%;border-radius:99px}
+  .meter .mval{font-size:12.5px;font-weight:600;min-width:70px;text-align:right}
+  .interest-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .interest-chips .chip{font-size:12px;padding:4px 11px;border-radius:999px;background:var(--a-fill);color:#1e6455;border:1px solid var(--a-line);font-weight:500}
+
+  .statute{border:1px solid var(--law-line);background:var(--law-fill);border-radius:10px;padding:13px 15px;margin-bottom:10px}
+  .statute:last-child{margin-bottom:0}
+  .statute .shead{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+  .statute .badge{background:#fff;border:1px solid var(--law-line);border-radius:6px;padding:2px 8px;font-weight:600;font-size:12px;color:#8A6413}
+  .statute .stitle{font-weight:600;font-size:13.5px;color:#4a3c1c}
+  .statute p{margin:0;font-size:13.5px;line-height:1.55;color:#4a3c1c}
+  .statute .snote{margin-top:6px;font-size:11.5px;color:#8A6413}
+
+  .pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){.pos-grid{grid-template-columns:1fr}}
+  .pos{border-radius:10px;padding:13px 15px;border:1px solid var(--hair)}
+  .pos.pa{background:var(--a-fill);border-color:var(--a-line)}
+  .pos.pb{background:var(--b-fill);border-color:var(--b-line)}
+  .pos .phead{font-weight:600;font-size:13.5px;margin-bottom:4px}
+  .pos.pa .phead{color:#1e6455}
+  .pos.pb .phead{color:#204a74}
+  .pos p{margin:0;font-size:13px;line-height:1.55;color:var(--ink-soft)}
+  .sw-list{margin:8px 0 0;padding:0;list-style:none}
+  .sw-list li{font-size:12.5px;line-height:1.5;display:flex;gap:8px;align-items:baseline;padding:3px 0}
+  .sw-list li .pm-ic{flex:none;font-weight:600;width:12px}
+  .sw-list li.plus .pm-ic{color:var(--a)}
+  .sw-list li.minus .pm-ic{color:var(--risk)}
+  .sw-list .scite{font-size:10.5px;background:#fff;border:1px solid var(--hair);border-radius:5px;padding:1px 6px;font-weight:600;color:#8A6413;white-space:nowrap}
+
+  .opt-row{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--hair)}
+  .opt-row:last-child{border-bottom:none;padding-bottom:2px}
+  .opt-row .vid{font-family:"Newsreader",serif;font-style:italic;color:var(--law);flex:none;font-size:15px}
+  .opt-row .vname{font-weight:600;font-size:13.5px;flex:1}
+  .opt-row .vlike{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .opt-row .vlike.high{background:var(--a-fill);color:#1e6455}
+  .opt-row .vlike.med{background:var(--law-fill);color:#8A6413}
+  .card .more-note{margin-top:10px;font-size:12px;color:var(--ink-soft)}
+
+  /* ===== Screen 6 · Dialogue room ===== */
+  .s6 .room{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+  @media(max-width:860px){.s6 .room{grid-template-columns:1fr}}
+  .thread{display:flex;flex-direction:column;gap:12px}
+  .bubble{border:1px solid var(--hair);border-radius:12px;padding:13px 16px;background:var(--surface);max-width:92%}
+  .bubble .bwho{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;margin-bottom:4px}
+  .bubble .bwho .bdot{width:8px;height:8px;border-radius:50%;flex:none}
+  .bubble p{margin:0;font-size:14px;line-height:1.6;color:#26314a}
+  .bubble.ba{border-color:var(--a-line);background:var(--a-fill);align-self:flex-start}
+  .bubble.ba .bwho{color:#1e6455}
+  .bubble.ba .bdot{background:var(--a)}
+  .bubble.bb{border-color:var(--b-line);background:var(--b-fill);align-self:flex-end}
+  .bubble.bb .bwho{color:#204a74}
+  .bubble.bb .bdot{background:var(--b)}
+  .bubble.sys{border-color:var(--law-line);background:var(--law-fill);align-self:stretch;max-width:100%}
+  .bubble.sys .bwho{color:#8A6413}
+  .bubble.sys .bdot{background:var(--law)}
+  .bubble.sys p{font-family:"Newsreader",serif;font-size:15px;color:#4a3c1c}
+  .bubble .brel{margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.06);font-size:11.5px;color:var(--ink-soft);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .bubble .brel .badge{background:#fff;border:1px solid var(--law-line);border-radius:6px;padding:1px 7px;font-weight:600;color:#8A6413;font-size:11px}
+  .bubble.pending-in{animation:cardIn .5s cubic-bezier(.2,.7,.3,1)}
+
+  .queue{position:sticky;top:120px}
+  .queue .qhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .queue .reset-link{font-family:inherit;font-size:11.5px;color:var(--ink-soft);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
+  .queue .reset-link:hover{color:var(--ink)}
+  .qcard{border:1px solid var(--law-line);background:var(--law-fill);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .qcard.hiddenq{display:none}
+  .qcard .qtag{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8A6413;font-weight:600;margin-bottom:7px}
+  .qcard .qtag .qpulse{width:8px;height:8px;border-radius:50%;background:var(--law);animation:pulse 1.8s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){.qcard .qtag .qpulse{animation:none}}
+  .qcard .qto{font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .qcard .qto.toa{color:#1e6455}
+  .qcard .qto.tob{color:#204a74}
+  .qcard p.qmsg{margin:0 0 10px;font-family:"Newsreader",serif;font-size:14.5px;line-height:1.6;color:#4a3c1c}
+  .qcard textarea{width:100%;min-height:130px;font-family:"Newsreader",serif;font-size:14.5px;line-height:1.6;color:#4a3c1c;border:1px solid var(--law-line);border-radius:8px;padding:10px 12px;background:#fff;resize:vertical;display:none;margin-bottom:10px}
+  .qcard.editing textarea{display:block}
+  .qcard.editing p.qmsg{display:none}
+  .qcard .qbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-sm{font-family:inherit;font-size:12.5px;font-weight:500;border-radius:999px;padding:7px 15px;cursor:pointer;transition:background .15s,border-color .15s}
+  .btn-sm:focus-visible{outline:2px solid var(--law);outline-offset:2px}
+  .btn-sm.confirm{background:var(--ink);color:#fff;border:1px solid var(--ink)}
+  .btn-sm.confirm:hover{background:#0f1a2e}
+  .btn-sm.edit{background:#fff;color:var(--ink);border:1px solid var(--law-line)}
+  .btn-sm.edit:hover{border-color:#d9c07a}
+  .qcard .qnote{font-size:11px;color:#8A6413;margin-top:8px}
+  .qempty{display:none;border:1px dashed var(--a-line);background:var(--a-fill);border-radius:12px;padding:14px 16px;font-size:13px;color:#1e6455}
+  .qempty.show{display:block;animation:cardIn .4s cubic-bezier(.2,.7,.3,1)}
+  .hitl-note{margin-top:14px;background:#F0F2F5;border:1px solid var(--hair);border-left:3px solid var(--ink);border-radius:0 10px 10px 0;padding:12px 16px;font-size:12.5px;color:var(--ink-soft)}
+  .hitl-note b{color:var(--ink);font-weight:600}
+
+  .s6 .pv-banner{display:none}
+  .s6[data-view="partyA"] .pv-banner,.s6[data-view="partyB"] .pv-banner{display:inline-flex}
+  .s6[data-view="partyA"] .pv-banner .pdot{background:var(--a)}
+  .s6[data-view="partyB"] .pv-banner .pdot{background:var(--b)}
+  .s6[data-view="partyA"] .queue,.s6[data-view="partyB"] .queue{display:none}
+  .s6[data-view="partyA"] .room,.s6[data-view="partyB"] .room{grid-template-columns:1fr;max-width:680px;margin:0 auto}
+  .s6[data-view="partyA"] .bubble.bb,.s6[data-view="partyA"] .bubble.sys.for-b,
+  .s6[data-view="partyB"] .bubble.ba,.s6[data-view="partyB"] .bubble.sys.for-a{display:none}
+  .s6[data-view="partyA"] .bubble.sys.unreleased,.s6[data-view="partyB"] .bubble.sys.unreleased{display:none}
+
+  /* ===== Screen 7 · Recommendations ===== */
+  .s7 .vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch}
+  @media(max-width:860px){.s7 .vgrid{grid-template-columns:1fr}}
+  .vcard{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:18px;border-top:3px solid var(--law);display:flex;flex-direction:column;position:relative;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .vcard:hover{border-color:#c9ced6}
+  .vcard.selected{border-color:var(--law);box-shadow:0 0 0 2px var(--law-mark)}
+  .vcard .vk{font-family:"Newsreader",serif;font-style:italic;font-size:14px;color:var(--law);margin-bottom:2px}
+  .vcard h3{font-family:"Newsreader",serif;font-weight:500;font-size:20px;margin:0 0 8px;line-height:1.2}
+  .vcard .vterms{font-size:13.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 12px}
+  .vcard .gets{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  .vcard .get{font-size:12.5px;line-height:1.5;border-radius:8px;padding:7px 10px}
+  .vcard .get b{font-weight:600}
+  .vcard .get.ga{background:var(--a-fill);color:#1e6455}
+  .vcard .get.gb{background:var(--b-fill);color:#204a74}
+  .vcard .norms{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .vcard .norms .nlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink-soft)}
+  .vcard .norms .badge{background:var(--law-fill);border:1px solid var(--law-line);border-radius:6px;padding:2px 8px;font-weight:600;font-size:11.5px;color:#8A6413}
+  .vcard .vmeta{margin-top:auto;padding-top:10px;border-top:1px solid var(--hair);display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+  .vcard .vmeta .mrow{display:flex;gap:8px;align-items:baseline}
+  .vcard .vmeta .mk{font-weight:600;min-width:118px;color:var(--ink)}
+  .vcard .vmeta .mv{color:var(--ink-soft)}
+  .vcard .vmeta .vlike{font-weight:600;border-radius:999px;padding:1px 9px;font-size:11.5px}
+  .vcard .vmeta .vlike.high{background:var(--a-fill);color:#1e6455}
+  .vcard .vmeta .vlike.med{background:var(--law-fill);color:#8A6413}
+  .vcard .vselect{margin-top:12px}
+  .vcard .vselect .btn-sm{width:100%;text-align:center;justify-content:center;display:inline-flex}
+  .vcard .vselect .btn-sm.confirm[aria-pressed="true"]{background:var(--law);border-color:var(--law)}
+  .s7 .upl-line{margin-top:16px;text-align:center;font-size:12.5px;color:var(--ink-soft)}
+  .s7 .pv-banner{display:none}
+  .s7[data-view="partyA"] .pv-banner,.s7[data-view="partyB"] .pv-banner{display:inline-flex}
+  .s7[data-view="partyA"] .pv-banner .pdot{background:var(--a)}
+  .s7[data-view="partyB"] .pv-banner .pdot{background:var(--b)}
+  .s7[data-view="partyA"] .vselect,.s7[data-view="partyB"] .vselect{display:none}
+  .s7[data-view="partyA"] .get.gb,.s7[data-view="partyB"] .get.ga{opacity:.45}
+
+  /* ===== Screen 8 · Agreement draft ===== */
+  .s8 .doc-wrap{max-width:760px;margin:0 auto}
+  .doc{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);padding:clamp(24px,5vw,48px);box-shadow:0 1px 3px rgba(22,35,59,.05)}
+  .doc .dhead{text-align:center;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--ink)}
+  .doc .dhead .dk{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .doc .dhead h2{font-family:"Newsreader",serif;font-weight:500;font-size:clamp(22px,3vw,28px);margin:.3rem 0 .2rem;letter-spacing:-.01em}
+  .doc .dhead .dsub{font-size:12.5px;color:var(--ink-soft)}
+  .doc .dsec{margin-bottom:18px}
+  .doc .dsec .dt{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);margin-bottom:5px;display:flex;align-items:center;gap:8px}
+  .doc .dsec .dt::after{content:"";flex:1;height:1px;background:var(--hair)}
+  .doc .dsec p{margin:0;font-family:"Newsreader",serif;font-size:15px;line-height:1.65;color:#26314a}
+  .doc .dsec p + p{margin-top:6px}
+  .doc .dsec .badge{background:var(--law-fill);border:1px solid var(--law-line);border-radius:6px;padding:1px 7px;font-weight:600;font-size:11.5px;color:#8A6413;font-family:"IBM Plex Sans",sans-serif}
+  .doc .dupl{background:var(--law-fill);border:1px solid var(--law-line);border-radius:10px;padding:12px 15px;font-size:13px;line-height:1.6;color:#4a3c1c}
+  .doc .dupl b{font-weight:600}
+  .doc .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px}
+  @media(max-width:560px){.doc .sig-grid{grid-template-columns:1fr}}
+  .doc .sig .line{border-bottom:1px solid var(--ink);height:34px}
+  .doc .sig .who{font-size:12px;color:var(--ink-soft);margin-top:5px}
+  .doc .dfoot{margin-top:22px;padding-top:14px;border-top:1px solid var(--hair);font-size:12px;color:var(--ink-soft);text-align:center}
+  .s8 .actions{display:flex;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .receipt{display:none;margin:16px auto 0;max-width:760px;background:var(--a-fill);border:1px solid var(--a-line);border-radius:10px;padding:12px 16px;font-size:13px;color:#1e6455;text-align:center}
+  .receipt.show{display:block;animation:cardIn .4s cubic-bezier(.2,.7,.3,1)}
+  .receipt b{font-weight:600}
+  .s8 .variant-src{text-align:center;font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+  .s8 .variant-src .badge{background:var(--law-fill);border:1px solid var(--law-line);border-radius:6px;padding:1px 8px;font-weight:600;font-size:11.5px;color:#8A6413}
+
+  /* Party views of the dashboard */
+  .s4 .party-view{display:none;max-width:640px;margin:0 auto}
+  .s4 .party-banner{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:6px 14px;margin-bottom:16px}
+  .s4 .party-banner .pdot{width:8px;height:8px;border-radius:50%;flex:none}
+  .s4[data-view="partyA"] .mediator-view,.s4[data-view="partyB"] .mediator-view{display:none}
+  .s4[data-view="partyA"] .party-view,.s4[data-view="partyB"] .party-view{display:block}
+  .s4[data-view="partyA"] .party-banner .pdot{background:var(--a)}
+  .s4[data-view="partyB"] .party-banner .pdot{background:var(--b)}
+  .s4 .pv-note{margin-top:16px;background:#F0F2F5;border:1px solid var(--hair);border-left:3px solid var(--ink);border-radius:0 10px 10px 0;padding:12px 16px;font-size:12.5px;color:var(--ink-soft)}
+  .s4 .pv-note b{color:var(--ink);font-weight:600}
+
+  /* Party-only banner shown when presenter switches to A or B */
+  .s5 .party-banner{display:none;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hair);border-radius:999px;padding:6px 14px;margin-bottom:16px}
+  .s5 .party-banner .pdot{width:8px;height:8px;border-radius:50%;flex:none}
+
+  /* Role-driven visibility on Screen 5 */
+  .s5[data-view="partyA"] .panel.b,
+  .s5[data-view="partyB"] .panel.a,
+  .s5[data-view="partyA"] .law-card,
+  .s5[data-view="partyB"] .law-card,
+  .s5[data-view="partyA"] .controls,
+  .s5[data-view="partyB"] .controls,
+  .s5[data-view="partyA"] .caption,
+  .s5[data-view="partyB"] .caption,
+  .s5[data-view="partyA"] .hint,
+  .s5[data-view="partyB"] .hint{display:none}
+  .s5[data-view="partyA"] .grid,
+  .s5[data-view="partyB"] .grid{grid-template-columns:1fr;max-width:640px;margin:0 auto}
+  .s5[data-view="partyA"] .party-banner,
+  .s5[data-view="partyB"] .party-banner{display:inline-flex}
+  .s5[data-view="partyA"] .party-banner .pdot{background:var(--a)}
+  .s5[data-view="partyB"] .party-banner .pdot{background:var(--b)}
+</style>
+</head>
+<body>
+
+<!-- ===================== SEEDED DATA MODEL ===================== -->
+<script>
+/* All demo content is pre-authored (seeded) per the build brief.
+   Legal wording is verbatim from the brief and must not be altered. */
+const PSYLEX = {
+  meta: {
+    product: "PsyLex",
+    mode: "Mode B · mediator-facilitated",
+    demo: "HOA demo",
+    patent: "Patent Pending 64/088,425",
+    owner: "AI Innovation Management LLC · Kateryna Klymenko · 2026"
+  },
+
+  caseFile: {
+    community: "Single-family HOA, Sarasota, FL (Chapter 720)",
+    disputeType: "Covenant enforcement (mediable under §720.311; not a pure fine-collection dispute)",
+    shortLabel: "Unapproved front-door color · escalating HOA fine · Sarasota, FL",
+    partyA: {
+      id: "partyA", role: "Homeowner", side: "Party A",
+      story: "Repainted her front door a non-approved color without prior architectural approval; received escalating fines. She believes she is being selectively targeted — a board-member neighbor has similar unapproved changes that were never fined. For her this is about dignity and respect, not money."
+    },
+    partyB: {
+      id: "partyB", role: "HOA Board / CAM", side: "Party B",
+      story: "The CC&Rs require prior architectural approval; the owner didn't get it; fines are authorized. The board fears setting a precedent."
+    },
+    mediator: {
+      id: "mediator", role: "Mediator", side: "Facilitator",
+      story: "Primary user and demo driver. Confirms legal relevance before parties see it (human-in-the-loop)."
+    }
+  },
+
+  profiles: {
+    partyA:   { leadingNeed: "Fairness, respect, recognition", trigger: "Being singled out; disrespect from a board-member neighbor", style: "Defensive, personalized" },
+    partyB:   { leadingNeed: "Order, control, consistency",    trigger: "Precedent, loss of control, \u201cchaos\u201d",              style: "Procedural, distanced" },
+    mediator: { leadingNeed: "Order, control (seeded high, near Board)", trigger: "Seeded deliberately close to the Board so the Rapport Risk signal fires for the demo", style: "Structured, procedural" }
+  },
+
+  /* File-based legal layer — verbatim, read-only. */
+  statutes: [
+    {
+      cite: "§720.305 F.S.",
+      title: "Fine procedure",
+      text: "Fine procedure: 14-day written notice, hearing within 90 days before an independent committee of ≥3 members (not board/employees/relatives), written committee decision within 7 days; fine ≤ $100 per violation unless governing docs allow more; a fine issued without this process may be challenged. (HB 1203, eff. 07/01/2024.)"
+    },
+    {
+      cite: "§720.3035 F.S.",
+      title: "Architectural control",
+      text: "Architectural control: association must apply standards reasonably and consistently; a denial must state the specific covenant and the specific nonconformity; it cannot rely on a policy inconsistent with the declaration — basis for the selective-enforcement argument."
+    },
+    {
+      cite: "§720.311 F.S.",
+      title: "Pre-suit mediation",
+      text: "Pre-suit mediation for many covenant-enforcement disputes; purely monetary collection disputes are exempt (county court). Characterization of the dispute governs — confirm per case."
+    }
+  ],
+  legalNotes: {
+    asOf: "Information as of 2024–2025",
+    upl: "Legal information, not legal advice",
+    noSource: "No relevant provision found"
+  },
+
+  /* Adaptation "wow" — verbatim seeded copy (Section 9). */
+  adaptation: {
+    label: "Identical legal content (§720.305). Delivery adapted to each party's psychodynamic profile.",
+    shared: "Under §720.305, before an HOA may impose a fine, the owner must receive 14 days' written notice and a hearing before an independent committee of at least three members who are not board members, employees, or their relatives; the committee (not the board) approves the fine. A fine issued without this process may be open to challenge. Fines are generally capped at $100 per violation unless the governing documents allow more.",
+    toPartyA: "You're entitled to a fair process here. Before this fine could stand, the association had to give you 14 days' written notice and a hearing before an independent committee — not the board itself. If those steps weren't followed, the fine may be open to challenge. Whatever happens, your side will be heard. (General legal information, not legal advice — a licensed attorney can advise on your specific situation.)",
+    toPartyB: "Before this fine can be enforced, §720.305 requires 14 days' written notice and approval by an independent committee of three non-board members, with a written decision. If that procedure wasn't documented, proceeding risks the fine being set aside and possible fee exposure. Confirming the committee process protects the association and the consistency you're upholding. (General legal information, not legal advice.)"
+  },
+
+  /* Rapport Risk — verbatim (Section 11), mediator-only. */
+  rapportRisk: {
+    level: "ELEVATED",
+    text: "Rapport risk: ELEVATED. Mediator↔Party B (Board) correlation is high on the order/control dimension. This is a signal for your attention and self-reflection (impartiality, Rule 10.330) — not a determination of bias. Suggested compensatory measures: (1) give Party A additional reflective listening; (2) equalize airtime; (3) keep framing neutral; (4) check that you are not defaulting to the Board's procedural frame."
+  },
+
+  recommendations: [
+    {
+      id: "V1", name: "Reset and re-apply",
+      terms: "Board places the fine on hold; owner submits a retroactive architectural application for the door color; board reviews under §720.3035 with a specific written decision.",
+      likelihood: "High",
+      riskOfDeclining: "Continued escalation and a possible procedural challenge."
+    },
+    {
+      id: "V2", name: "Approved-palette repaint",
+      terms: "Owner repaints to a pre-approved color within 30 days; board waives the accrued fine.",
+      likelihood: "High",
+      riskOfDeclining: "Litigation over a small aesthetic issue."
+    },
+    {
+      id: "V3", name: "Policy clarification going forward",
+      terms: "Parties agree in writing on the architectural-approval process and consistent enforcement (addressing the selective-enforcement concern); current fine reduced or waived.",
+      likelihood: "Medium-high",
+      riskOfDeclining: "An unresolved fairness grievance and community friction."
+    }
+  ],
+
+  agreementSkeleton: {
+    upl: "PsyLex provides legal information only, not legal services; consult a licensed attorney to give the document legal effect.",
+    closing: ["Acknowledgment / signature lines", "Consider notarization", "Filing receipt saved"]
+  },
+
+  ethics: {
+    rule10330: "Rapport Risk is a signal for attention and self-reflection (impartiality, Rule 10.330) — never a determination of bias.",
+    rule10370: "In Mode B a professional confirms relevance before parties see it and refers them to a licensed attorney for advice; the mediator surfaces information without deciding the dispute or predicting an outcome (Fla. mediator conduct, Rule 10.370)."
+  }
+};
+</script>
+
+<!-- ===================== APP SHELL ===================== -->
+<header class="appbar" role="banner">
+  <div class="brand">
+    <span class="dot" aria-hidden="true"></span>
+    <span class="wordmark">PsyLex</span>
+    <span>Режим B · за участю медіатора · демо HOA · UA-версія для розробників</span>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn-script" id="scriptBtn" aria-haspopup="dialog" aria-expanded="false"><span class="sdot" aria-hidden="true"></span>Сценарій демо · 3 хв</button>
+  <div class="viewswitch" id="viewswitch">
+    <span class="vlabel">Режим доповідача</span>
+    <div class="seg" role="group" aria-label="Switch presenter view">
+      <button data-role="mediator" aria-pressed="true">Медіатор</button>
+      <button data-role="partyA" aria-pressed="false">Сторона А</button>
+      <button data-role="partyB" aria-pressed="false">Сторона Б</button>
+    </div>
+  </div>
+</header>
+
+<div class="upl-banner" role="note" style="background:var(--med-fill);border-bottom:1px solid var(--med-line);color:#54397a">
+  <b>Довідкова UA-версія для розробників.</b>&nbsp;Закладені правові блоки (статути, адаптовані повідомлення, Rapport Risk, умови V1–V3, меморандум і дисклеймери) лишено англійською дослівно — це єдине джерело істини з брифу та об'єкта даних PSYLEX. Інвестор-демо: psylex_prototype.html (лише EN).
+</div>
+
+<div class="upl-banner" role="note">
+  <b>Правова інформація, а не юридична порада.</b>&nbsp;Кожне правове твердження в цьому демо цитує своє джерело; якщо джерело не завантажене, система відповідає “no relevant provision found”.
+</div>
+
+<nav class="steprail" id="steprail" aria-label="Demo screens">
+  <div class="inner" id="steprail-inner"></div>
+</nav>
+
+<main>
+  <div class="wrap">
+
+    <!-- ============ SCREEN 0 · LANDING ============ -->
+    <section class="screen active" id="screen-0" aria-label="Landing">
+      <div class="landing">
+        <div class="eyebrow reveal r1"><span class="dot"></span><span>Підтримка медіації · Режим B · демо HOA</span></div>
+        <h1 class="reveal r1"><span class="wordmark">PsyLex</span></h1>
+        <p class="sub reveal r2" style="font-family:'Newsreader',serif;font-size:clamp(19px,2.6vw,24px);font-style:italic;line-height:1.35;color:var(--ink)">
+          Один закон для всіх.<br>Донесений по-різному до <em style="color:var(--a)">кожної</em> <em style="color:var(--b)">людини</em>.
+        </p>
+        <p class="sub reveal r2">Сесія за участю медіатора навколо одного закладеного спору — показує, як PsyLex адаптує ідентичну правову інформацію під психодинамічний профіль кожної сторони та стежить за упередженістю медіатора.</p>
+
+        <div class="case-chip reveal r3"><span>Спір:&nbsp;<b>несхвалений колір вхідних дверей</b> · зростаючий штраф HOA · Сарасота, Флорида</span></div>
+
+        <div class="cta-row reveal r3">
+          <button class="cta" id="startBtn">Почати демо <span class="arrow">→</span></button>
+        </div>
+
+        <div class="beats">
+          <div class="beat b1 reveal r4">
+            <div class="k">Біт перший</div>
+            <h3>Профілювання трьох сторін</h3>
+            <p>Обидві сторони <b>і медіатор</b> проходять психодинамічне профілювання. Жоден конкурентний інструмент не профілює медіатора.</p>
+          </div>
+          <div class="beat b2 reveal r4">
+            <div class="k">Біт другий</div>
+            <h3>Adaptation Engine</h3>
+            <p>Ідентичний правовий зміст §720.305, дві різні подачі — емпатійна для власниці будинку, ризик і прецедент для правління.</p>
+          </div>
+          <div class="beat b3 reveal r4">
+            <div class="k">Біт третій</div>
+            <h3>Rapport Risk Engine</h3>
+            <p>Медіатор отримує сигнал ризику упередженості з компенсаторними рекомендаціями. Існує лише в Режимі B.</p>
+          </div>
+        </div>
+
+        <div class="upl-card reveal r5">
+          <b>Правова інформація, а не юридична порада.</b> PsyLex надає лише правову інформацію, а не юридичні послуги. Кожне правове твердження цитує джерело з приміткою “information as of 2024–2025”; медіатор підтверджує релевантність до того, як її побачать сторони, а для отримання поради сторони скеровуються до ліцензованого адвоката.
+        </div>
+
+        <div class="foot reveal r5">
+          <span>AI Innovation Management LLC</span><span class="sep">·</span>
+          <span>Kateryna Klymenko</span><span class="sep">·</span>
+          <span>Patent Pending 64/088,425</span><span class="sep">·</span>
+          <span>2026 · Демо на закладених даних — без живих викликів моделі</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREENS 1–8 · STUBS (built in M2–M5) ============ -->
+    <section class="screen s1 shead-block" id="screen-1" data-view="mediator" aria-label="Session setup">
+      <header class="reveal r1">
+        <div class="eyebrow"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · створення сесії · Екран 1 · медіатор</span></div>
+        <h1>Нова сесія. <em>Троє учасників.</em></h1>
+        <p class="sub">Медіатор відкриває матеріали справи й додає обидві сторони вручну — без акаунтів, без адміністрування. Зверніть увагу, хто вже у списку: сама медіатор.</p>
+      </header>
+
+      <!-- ======= MEDIATOR VIEW ======= -->
+      <div class="mediator-view">
+        <div class="setup-grid">
+          <div class="card reveal r2">
+            <span class="ctag">Матеріали справи</span>
+            <div class="kv">
+              <div class="row">
+                <span class="k">Тип справи</span>
+                <span class="v">HOA / виконання ковенантів · Флорида</span>
+              </div>
+              <div class="row">
+                <span class="k">Спільнота</span>
+                <span class="v">HOA односімейних будинків, Сарасота, Флорида <span class="badge">Chapter 720</span></span>
+              </div>
+              <div class="row">
+                <span class="k">Спір</span>
+                <span class="v">Несхвалений колір вхідних дверей · зростаючий штраф</span>
+              </div>
+              <div class="row">
+                <span class="k">Медіабельність</span>
+                <span class="v">Виконання ковенантів <span class="badge">§720.311</span>
+                  <small>Mediable under §720.311; not a pure fine-collection dispute. Characterization of the dispute governs — confirm per case. Information as of 2024–2025 · legal information, not legal advice.</small>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card reveal r3">
+            <span class="ctag">Учасники</span>
+            <div class="ppl">
+              <div class="pcard pm">
+                <div class="avatar">M</div>
+                <div>
+                  <div class="pname">Медіатор<span class="side">· фасилітатор · власниця сесії</span></div>
+                  <div class="pstory">Основний користувач і ведуча демо. Підтверджує правову релевантність до того, як її побачать сторони (human-in-the-loop).</div>
+                  <span class="ptag">Також буде профільована</span>
+                </div>
+              </div>
+
+              <div class="pslot" id="slot-a">
+                <span class="slbl"><b>Сторона А · Власниця будинку</b> — ще не додана</span>
+                <button class="btn-add" data-add="a">+ Додати Сторону А</button>
+              </div>
+              <div class="pcard pa" id="pcard-a" hidden>
+                <div class="avatar">A</div>
+                <div>
+                  <div class="pname">Власниця будинку<span class="side">· Сторона А</span></div>
+                  <div class="pstory">Перефарбувала вхідні двері в несхвалений колір без попереднього архітектурного погодження; отримала зростаючі штрафи. Вважає, що до неї застосовують вибірковий підхід — сусід, член правління, має подібні непогоджені зміни, за які його не штрафували. Для неї це питання гідності й поваги, а не грошей.</div>
+                </div>
+              </div>
+
+              <div class="pslot" id="slot-b">
+                <span class="slbl"><b>Сторона Б · Правління HOA / CAM</b> — ще не додана</span>
+                <button class="btn-add" data-add="b">+ Додати Сторону Б</button>
+              </div>
+              <div class="pcard pb" id="pcard-b" hidden>
+                <div class="avatar">B</div>
+                <div>
+                  <div class="pname">Правління HOA / CAM<span class="side">· Сторона Б</span></div>
+                  <div class="pstory">CC&amp;Rs вимагають попереднього архітектурного погодження; власниця його не отримала; штрафи передбачені. Правління боїться створити прецедент.</div>
+                </div>
+              </div>
+            </div>
+            <div class="ready" id="s1-ready">Сесія готова — троє учасників на борту. Далі: усі проходять опитування PersonaMatrix, <b>включно з медіатором</b>.</div>
+            <p class="hint-line">Ролі в демо симульовані; сторони додаються вручну. Без логіна та адміністрування.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======= PARTY VIEW ======= -->
+      <div class="party-view">
+        <div class="pv-banner" role="note">
+          <span class="pdot" aria-hidden="true"></span>
+          <span id="s1-party-note"></span>
+        </div>
+        <div class="card">
+          <span class="ctag">Запрошення до сесії</span>
+          <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-soft)" id="s1-pv-text"></p>
+        </div>
+        <div class="pv-note" style="margin-top:16px;background:#F0F2F5;border:1px solid var(--hair);border-left:3px solid var(--ink);border-radius:0 10px 10px 0;padding:12px 16px;font-size:12.5px;color:var(--ink-soft)">
+          <b style="color:var(--ink);font-weight:600">Правова інформація, а не юридична порада.</b> Цю сесію веде медіатор і підтверджує правову релевантність до того, як ви її побачите.
+        </div>
+      </div>
+    </section>
+
+    <section class="screen s2 shead-block" id="screen-2" data-view="mediator" aria-label="Three-party profiling">
+      <header class="reveal r1">
+        <div class="eyebrow"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · профілювання PersonaMatrix · Екран 2</span></div>
+        <h1>Опитування проходять усі. <em>Усі.</em></h1>
+        <p class="sub">Опитування у стилі PersonaMatrix для обох сторін — і для медіатора. Для демо попередньо заповнене й анімоване до завершення.</p>
+      </header>
+
+      <div class="preview-row reveal r2">
+        <div class="banner-med" style="margin-bottom:0"><span class="mdot" aria-hidden="true"></span>Медіатор також профілюється — жоден конкурентний інструмент цього не робить.</div>
+        <button class="btn-preview" id="s2-preview" aria-haspopup="dialog">Переглянути опитник</button>
+      </div>
+
+      <div class="pv-banner" role="note">
+        <span class="pdot" aria-hidden="true"></span>
+        <span id="s2-party-note"></span>
+      </div>
+
+      <div class="prof-grid" id="prof-assess" aria-live="polite">
+        <article class="assess pa reveal r3" data-p="partyA" aria-label="Party A assessment">
+          <div class="who">
+            <div class="avatar">A</div>
+            <div><div class="aname">Власниця будинку</div><div class="aside">Сторона А</div></div>
+          </div>
+          <div class="astate">
+            <span class="count"><span class="cn">0</span>/24</span>
+            <span class="abar"><i></i></span>
+            <span class="st">Виконується…</span>
+          </div>
+          <div class="result">
+            <div class="rneed">Провідна потреба: <b>справедливість, повага, визнання</b></div>
+            <div class="dims">
+              <div class="dim"><span class="dl">Справедливість</span><span class="dt"><i data-w="92"></i></span><span class="dv">92</span></div>
+              <div class="dim"><span class="dl">Визнання</span><span class="dt"><i data-w="88"></i></span><span class="dv">88</span></div>
+              <div class="dim"><span class="dl">Порядок / контроль</span><span class="dt"><i data-w="34"></i></span><span class="dv">34</span></div>
+            </div>
+            <div class="chips">
+              <span class="chip">тригер: відчуття вибіркового ставлення</span>
+              <span class="chip">стиль: захисний, персоналізований</span>
+            </div>
+            <div class="dlv"><span class="ok">✓</span>Заповнено за захищеним приватним посиланням — відповіді з власного пристрою, приватно.</div>
+          </div>
+        </article>
+
+        <article class="assess pb reveal r4" data-p="partyB" aria-label="Party B assessment">
+          <div class="who">
+            <div class="avatar">B</div>
+            <div><div class="aname">Правління HOA / CAM</div><div class="aside">Сторона Б</div></div>
+          </div>
+          <div class="astate">
+            <span class="count"><span class="cn">0</span>/24</span>
+            <span class="abar"><i></i></span>
+            <span class="st">Виконується…</span>
+          </div>
+          <div class="result">
+            <div class="rneed">Провідна потреба: <b>порядок, контроль, послідовність</b></div>
+            <div class="dims">
+              <div class="dim"><span class="dl">Порядок</span><span class="dt"><i data-w="90"></i></span><span class="dv">90</span></div>
+              <div class="dim"><span class="dl">Контроль</span><span class="dt"><i data-w="86"></i></span><span class="dv">86</span></div>
+              <div class="dim"><span class="dl">Справедливість</span><span class="dt"><i data-w="45"></i></span><span class="dv">45</span></div>
+            </div>
+            <div class="chips">
+              <span class="chip">тригер: прецедент, втрата контролю</span>
+              <span class="chip">стиль: процедурний, дистанційований</span>
+            </div>
+            <div class="dlv"><span class="ok">✓</span>Заповнено за захищеним приватним посиланням — відповіді з власного пристрою, приватно.</div>
+          </div>
+        </article>
+
+        <article class="assess pm reveal r5" data-p="mediator" aria-label="Mediator assessment">
+          <div class="who">
+            <div class="avatar">M</div>
+            <div><div class="aname">Медіатор</div><div class="aside">теж профілюється</div></div>
+          </div>
+          <div class="astate">
+            <span class="count"><span class="cn">0</span>/24</span>
+            <span class="abar"><i></i></span>
+            <span class="st">Виконується…</span>
+          </div>
+          <div class="result">
+            <div class="rneed">Провідна потреба: <b>порядок, контроль</b> (закладено високо, близько до Правління)</div>
+            <div class="dims">
+              <div class="dim"><span class="dl">Порядок</span><span class="dt"><i data-w="84"></i></span><span class="dv">84</span></div>
+              <div class="dim"><span class="dl">Контроль</span><span class="dt"><i data-w="80"></i></span><span class="dv">80</span></div>
+              <div class="dim"><span class="dl">Справедливість</span><span class="dt"><i data-w="52"></i></span><span class="dv">52</span></div>
+            </div>
+            <div class="chips">
+              <span class="chip">стиль: структурований, процедурний</span>
+            </div>
+            <div class="dlv"><span class="ok">✓</span>Заповнено в кабінеті медіатора — одноразовий профіль під час онбордингу.</div>
+            <div class="pm-flag">Профіль лягає близько до Сторони Б — дивіться, що з цим зробить Rapport Risk Engine.</div>
+          </div>
+        </article>
+      </div>
+
+      <p class="echo" id="s2-echo"><b>Зверніть увагу на шкали медіатора.</b> Порядок і контроль майже там само, де в Правління — саме цей збіг перевіряє наступний двигун.</p>
+    </section>
+
+    <section class="screen" id="screen-3" aria-label="AI analysis">
+      <div class="s3-stage">
+        <div class="eyebrow reveal r1"><span class="dot"></span><span>Екран 3 · прихована робота</span></div>
+        <h1 class="reveal r1">Система читає справу. <em>Усі три двигуни.</em></h1>
+        <div class="s3-tasks reveal r2" id="s3-tasks" aria-live="polite">
+          <div class="s3-task" data-task="0">
+            <span class="ic" aria-hidden="true">✓</span>
+            <span style="min-width:170px">
+              <span class="lbl">Conflict Mapping</span><br>
+              <span class="sub-lbl">Позиції, тригери, спільні інтереси</span>
+            </span>
+            <span class="bar"><i></i></span>
+          </div>
+          <div class="s3-task" data-task="1">
+            <span class="ic" aria-hidden="true">✓</span>
+            <span style="min-width:170px">
+              <span class="lbl">Legal Analysis</span><br>
+              <span class="sub-lbl">Гл. 720 F.S. · лише цитовані джерела</span>
+            </span>
+            <span class="bar"><i></i></span>
+          </div>
+          <div class="s3-task" data-task="2">
+            <span class="ic" aria-hidden="true">✓</span>
+            <span style="min-width:170px">
+              <span class="lbl">Rapport Risk</span><br>
+              <span class="sub-lbl">Перевірка кореляції медіатор ↔ сторона</span>
+            </span>
+            <span class="bar"><i></i></span>
+          </div>
+        </div>
+        <p class="s3-note reveal r3">Демо на закладених даних — детермінований результат, без живих викликів моделі.</p>
+        <div class="s3-done-cta" id="s3-cta">
+          <button class="btn btn-primary" id="s3-openDash">Відкрити дашборд медіатора →</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen s4" id="screen-4" data-view="mediator" aria-label="Mediator dashboard">
+      <h2 class="sr-only">Mediator dashboard: psychodynamic and conflict panel on the left, legal and negotiation panel on the right, with a prominent Rapport Risk alert visible to the mediator only.</h2>
+
+      <header class="reveal r1">
+        <div class="eyebrow"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · дашборд медіатора · Екран 4</span></div>
+        <h1>Усе, що бачить медіатор. <em>Включно із собою.</em></h1>
+        <p class="sub">Психодинамічна картина ліворуч, цитована правова — праворуч, і сигнал ризику упередженості, якого не дає жоден інший інструмент.</p>
+      </header>
+
+      <!-- ======= MEDIATOR VIEW ======= -->
+      <div class="mediator-view">
+        <div class="risk-alert reveal r2" role="alert" aria-label="Rapport risk signal, visible to the mediator only">
+          <div class="rtag"><span class="pulse" aria-hidden="true"></span>Rapport Risk Engine · лише для медіатора · Режим B</div>
+          <p class="rlead" id="risk-lead"></p>
+          <p class="rmeasures-title" id="risk-measures-title"></p>
+          <ol id="risk-measures"></ol>
+          <div class="rfoot"><span class="badge">Rule 10.330</span><span>Сигнал для уваги та саморефлексії — ніколи не констатація упередженості.</span></div>
+        </div>
+
+        <div class="dash">
+          <!-- LEFT · psychodynamic / conflict -->
+          <div class="col">
+            <div class="card psy reveal r3">
+              <span class="ctag">Профілі трьох сторін · PersonaMatrix</span>
+              <div id="prof-rows"></div>
+            </div>
+
+            <div class="card psy reveal r4">
+              <span class="ctag">Мапа конфлікту</span>
+              <div class="cmap">
+                <svg viewBox="0 0 560 240" role="img" aria-label="Conflict map: Party A and Party B in tension; the mediator's profile sits close to Party B on the order and control dimension.">
+                  <defs>
+                    <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                      <path d="M0,0 L8,4 L0,8 z" fill="#B24A3B"/>
+                    </marker>
+                  </defs>
+                  <!-- tension edge A–B -->
+                  <line x1="118" y1="150" x2="442" y2="150" stroke="#B24A3B" stroke-width="2.5" marker-start="url(#arr)" marker-end="url(#arr)"/>
+                  <rect x="205" y="136" width="150" height="27" rx="13.5" fill="#FAECE9" stroke="#EAC7BF"/>
+                  <text x="280" y="154" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="#B24A3B">виконання ковенантів</text>
+                  <!-- proximity arc M–B -->
+                  <path d="M 352 68 Q 400 78 428 118" fill="none" stroke="#6B4E8E" stroke-width="2" stroke-dasharray="5 5"/>
+                  <rect x="330" y="20" width="212" height="26" rx="13" fill="#F0EBF7" stroke="#D7C9E8"/>
+                  <text x="436" y="37" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" font-weight="600" fill="#54397a">висока кореляція · порядок / контроль</text>
+                  <!-- node A -->
+                  <circle cx="90" cy="150" r="30" fill="#E9F4F0" stroke="#2E8B7A" stroke-width="2"/>
+                  <text x="90" y="156" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="15" font-weight="600" fill="#2E8B7A">A</text>
+                  <text x="90" y="203" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="#495468">Власниця</text>
+                  <text x="90" y="219" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" font-style="italic" fill="#2E8B7A">справедливість · гідність</text>
+                  <!-- node B -->
+                  <circle cx="470" cy="150" r="30" fill="#E9F0F8" stroke="#2A5A8C" stroke-width="2"/>
+                  <text x="470" y="156" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="15" font-weight="600" fill="#2A5A8C">B</text>
+                  <text x="470" y="203" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="#495468">Правління HOA</text>
+                  <text x="470" y="219" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" font-style="italic" fill="#2A5A8C">порядок · прецедент</text>
+                  <!-- node M, deliberately near B -->
+                  <circle cx="330" cy="62" r="26" fill="#F0EBF7" stroke="#6B4E8E" stroke-width="2"/>
+                  <text x="330" y="68" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="14" font-weight="600" fill="#6B4E8E">M</text>
+                  <text x="330" y="106" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="#54397a">Медіатор · теж профільована</text>
+                </svg>
+                <p class="cap">Вузол медіатора лежить близько до Правління за виміром порядок/контроль — саме ця близькість запускає сигнал вище.</p>
+              </div>
+            </div>
+
+            <div class="card psy reveal r5">
+              <span class="ctag">Напруження та спільна основа</span>
+              <div class="meter">
+                <span class="mlabel">Рівень напруження</span>
+                <span class="track"><i style="width:78%;background:var(--risk)"></i></span>
+                <span class="mval" style="color:var(--risk)">Високий</span>
+              </div>
+              <div class="meter">
+                <span class="mlabel">Rapport Risk</span>
+                <span class="track"><i style="width:66%;background:var(--med)"></i></span>
+                <span class="mval" style="color:var(--med)">Підвищений</span>
+              </div>
+              <div style="margin-top:12px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--ink-soft)">Спільні інтереси</div>
+              <div class="interest-chips">
+                <span class="chip">Вирішити без суду</span>
+                <span class="chip">Чіткий, послідовний процес погоджень</span>
+                <span class="chip">Збереження сусідських відносин</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT · legal / negotiation -->
+          <div class="col">
+            <div class="card reveal r3">
+              <span class="ctag">Цитований правовий шар · Гл. 720 F.S.</span>
+              <div id="statute-list"></div>
+            </div>
+
+            <div class="card reveal r4">
+              <span class="ctag">Позиції · сильні та слабкі сторони</span>
+              <div class="pos-grid">
+                <div class="pos pa">
+                  <div class="phead">Сторона А · Власниця будинку</div>
+                  <p>Перефарбувала вхідні двері без попереднього архітектурного погодження; сприймає зростаючі штрафи як вибіркове ставлення — сусід із правління має подібні непогоджені зміни без штрафів. Для неї це про гідність і повагу, а не гроші.</p>
+                  <ul class="sw-list">
+                    <li class="plus"><span class="pm-ic">+</span><span>Штраф може бути оскаржений, якщо не дотримано 14-денного повідомлення та слухання незалежним комітетом <span class="scite">§720.305</span></span></li>
+                    <li class="plus"><span class="pm-ic">+</span><span>Стандарти мають застосовуватися розумно й послідовно — аргумент вибіркового застосування <span class="scite">§720.3035</span></span></li>
+                    <li class="minus"><span class="pm-ic">−</span><span>Перефарбувала без попереднього погодження, якого вимагають CC&amp;Rs</span></li>
+                  </ul>
+                </div>
+                <div class="pos pb">
+                  <div class="phead">Сторона Б · Правління HOA / CAM</div>
+                  <p>CC&amp;Rs вимагають попереднього архітектурного погодження; власниця його не отримала; штрафи передбачені. Правління боїться створити прецедент.</p>
+                  <ul class="sw-list">
+                    <li class="plus"><span class="pm-ic">+</span><span>Вимога попереднього погодження та повноваження штрафувати за установчими документами</span></li>
+                    <li class="minus"><span class="pm-ic">−</span><span>Якщо процедура комітету не задокументована, штраф ризикує бути скасованим <span class="scite">§720.305</span></span></li>
+                    <li class="minus"><span class="pm-ic">−</span><span>Непослідовне застосування підриває позицію асоціації <span class="scite">§720.3035</span></span></li>
+                  </ul>
+                </div>
+              </div>
+              <p class="more-note">Правова інформація, а не юридична порада · кожне твердження вище цитує завантажене джерело.</p>
+            </div>
+
+            <div class="card reveal r5">
+              <span class="ctag">Варіанти вирішення · прев'ю</span>
+              <div id="opt-list"></div>
+              <p class="more-note">Повні умови, ймовірність і ризик відмови — Екран 7.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======= PARTY VIEWS ======= -->
+      <div class="party-view">
+        <div class="party-banner" role="note">
+          <span class="pdot" aria-hidden="true"></span>
+          <span id="s4-party-note"></span>
+        </div>
+        <div class="card">
+          <span class="ctag" id="s4-pv-tag"></span>
+          <p style="margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-soft)" id="s4-pv-story"></p>
+        </div>
+        <div class="pv-note">
+          <b>Чого сторони не бачать.</b> Сигнал Rapport Risk, перехресні профілі та аналітика медіатора видимі лише медіатору. Правова інформація доходить до сторони після підтвердження релевантності медіатором (human-in-the-loop) — Екрани 5–6.
+        </div>
+      </div>
+    </section>
+
+    <section class="screen s5" id="screen-5" data-view="mediator" aria-label="Adaptation split view">
+      <h2 class="sr-only">PsyLex Adaptation Engine: the same Florida statute §720.305, delivered two ways — with empathy to the homeowner and in risk-and-consistency terms to the HOA board. A toggle highlights the identical legal facts shared by both deliveries.</h2>
+
+      <header class="reveal r1">
+        <div class="eyebrow"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · Adaptation Engine · Екран 5</span></div>
+        <h1>Один статут. Двоє людей. <em>Дві подачі.</em></h1>
+        <p class="sub">Adaptation Engine зберігає правовий зміст ідентичним і змінює лише подачу — під психодинамічний профіль кожної сторони.</p>
+        <div class="context">Спір:&nbsp;<b>несхвалений колір вхідних дверей</b> · зростаючий штраф HOA · Сарасота, Флорида</div>
+      </header>
+
+      <div class="party-banner reveal r1" role="note">
+        <span class="pdot" aria-hidden="true"></span>
+        <span id="s5-party-note"></span>
+      </div>
+
+      <div class="law-card reveal r2" aria-label="The shared legal source">
+        <span class="tag">Закон — спільне джерело (EN, дослівно)</span>
+        <p>Before an HOA may impose a fine, the owner must receive <mark>14 days' written notice</mark> and a hearing before an <mark>independent committee</mark> of at least three members who are not board members, employees, or their relatives. The committee — not the board — approves the fine. A fine issued without this process <mark>may be open to challenge</mark>. Fines are generally capped at $100 per violation unless the governing documents allow more.</p>
+        <div class="cite"><span class="badge">Fla. Stat. §720.305</span><span>Information as of 2024–2025 · legal information, not legal advice</span></div>
+      </div>
+
+      <div class="controls reveal r3">
+        <button class="toggle" id="factsBtn" aria-pressed="false">
+          <span class="sw" aria-hidden="true"></span>
+          Підсвітити спільні правові факти
+        </button>
+      </div>
+
+      <div class="grid">
+        <article class="panel a reveal r4" aria-label="Delivery to Party A, the homeowner">
+          <div class="who">
+            <div class="avatar">A</div>
+            <div><div class="role">Власниця будинку</div><div class="side">Сторона А · її подання</div></div>
+          </div>
+          <div class="profile">
+            <span class="chip">провідне: справедливість</span><span class="chip">повага · гідність</span><span class="chip">тригер: відчуття вибіркового ставлення</span>
+          </div>
+          <p class="msg">You're entitled to a fair process here. Before this fine could stand, the association had to give you <mark>14 days' written notice</mark> and a hearing before an <mark>independent committee</mark> — not the board itself. If those steps weren't followed, the fine <mark>may be open to challenge</mark>. Whatever happens, your side will be heard.</p>
+          <div class="foot-note"><span class="badge">§720.305</span><span>General legal information, not legal advice — a licensed attorney can advise on your situation.</span></div>
+        </article>
+
+        <article class="panel b reveal r5" aria-label="Delivery to Party B, the board">
+          <div class="who">
+            <div class="avatar">B</div>
+            <div><div class="role">Правління HOA</div><div class="side">Сторона Б · її подання</div></div>
+          </div>
+          <div class="profile">
+            <span class="chip">провідне: порядок</span><span class="chip">контроль · послідовність</span><span class="chip">страх: прецедент</span>
+          </div>
+          <p class="msg">Before this fine can be enforced, §720.305 requires <mark>14 days' written notice</mark> and approval by an <mark>independent committee</mark> of three non-board members, with a written decision. If that procedure wasn't documented, proceeding risks the fine <mark>being set aside</mark> and possible fee exposure. Confirming the committee process protects the association and the consistency you're upholding.</p>
+          <div class="foot-note"><span class="badge">§720.305</span><span>General legal information, not legal advice.</span></div>
+        </article>
+      </div>
+
+      <p class="caption reveal r5"><b>Identical legal content.</b> Delivery adapted to each party's profile — dignity for the homeowner, risk and consistency for the board.</p>
+      <p class="hint reveal r5" id="s5-hint">Порада: перемкніть вище — однакові цитовані факти підсвітяться в обох повідомленнях.</p>
+
+      <div class="upl reveal r5">
+        <b>Legal information, not legal advice.</b> In Mode B a professional confirms relevance before parties see it and refers them to a licensed attorney for advice; the mediator surfaces information without deciding the dispute or predicting an outcome (Fla. mediator conduct, Rule 10.370).
+      </div>
+    </section>
+
+    <section class="screen s6 shead-block" id="screen-6" data-view="mediator" aria-label="Structured dialogue room">
+      <header class="reveal r1">
+        <div class="eyebrow"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · структурований діалог · Екран 6 · human-in-the-loop</span></div>
+        <h1>AI пропонує. <em>Медіатор вирішує.</em></h1>
+        <p class="sub">Адаптовані правові повідомлення ніколи не доходять до сторони самі — спершу медіатор підтверджує або редагує кожне.</p>
+      </header>
+
+      <div class="pv-banner reveal r1" role="note">
+        <span class="pdot" aria-hidden="true"></span>
+        <span id="s6-party-note"></span>
+      </div>
+
+      <div class="room">
+        <div class="thread reveal r2" id="s6-thread" aria-live="polite">
+          <div class="bubble ba">
+            <div class="bwho"><span class="bdot" aria-hidden="true"></span>Власниця будинку · Сторона А</div>
+            <p>Я не воюю за фарбу. Мій сусід — член правління — перефарбував без погодження, і його не штрафували. Чому вибрали саме мене?</p>
+          </div>
+          <div class="bubble bb">
+            <div class="bwho"><span class="bdot" aria-hidden="true"></span>Правління HOA / CAM · Сторона Б</div>
+            <p>CC&amp;Rs вимагають попереднього архітектурного погодження, а власниця його не отримала. Якщо ми це відкладемо, кожен власник очікуватиме винятку.</p>
+          </div>
+          <div class="bubble sys for-a unreleased" id="s6-msg-a" hidden>
+            <div class="bwho"><span class="bdot" aria-hidden="true"></span>PsyLex → Сторона А · адаптована подача (EN, дослівно)</div>
+            <p id="s6-msg-a-text"></p>
+            <div class="brel"><span class="badge">§720.305</span><span>Випущено медіатором · загальна правова інформація, не юридична порада.</span></div>
+          </div>
+          <div class="bubble sys for-b unreleased" id="s6-msg-b" hidden>
+            <div class="bwho"><span class="bdot" aria-hidden="true"></span>PsyLex → Сторона Б · адаптована подача (EN, дослівно)</div>
+            <p id="s6-msg-b-text"></p>
+            <div class="brel"><span class="badge">§720.305</span><span>Випущено медіатором · загальна правова інформація, не юридична порада.</span></div>
+          </div>
+        </div>
+
+        <aside class="queue reveal r3" aria-label="Mediator review queue">
+          <div class="card">
+            <div class="qhead">
+              <span class="ctag" style="margin-bottom:0">Очікує перевірки медіатором</span>
+              <button class="reset-link" id="s6-reset" type="button">Скинути діалог</button>
+            </div>
+
+            <div class="qcard" id="s6-q-a">
+              <div class="qtag"><span class="qpulse" aria-hidden="true"></span>Пропозиція AI · сторони ще не бачать</div>
+              <div class="qto toa">→ Сторона А · Власниця · подача «емпатія / гідність»</div>
+              <p class="qmsg" id="s6-q-a-text"></p>
+              <textarea id="s6-q-a-edit" aria-label="Редагувати повідомлення Стороні А"></textarea>
+              <div class="qbtns">
+                <button class="btn-sm confirm" data-q="a">Підтвердити й випустити Стороні А</button>
+                <button class="btn-sm edit" data-qe="a">Редагувати</button>
+              </div>
+              <div class="qnote">Цитує §720.305 · медіатор підтверджує правову релевантність перед випуском (Rule 10.370).</div>
+            </div>
+
+            <div class="qcard hiddenq" id="s6-q-b">
+              <div class="qtag"><span class="qpulse" aria-hidden="true"></span>Пропозиція AI · сторони ще не бачать</div>
+              <div class="qto tob">→ Сторона Б · Правління · подача «ризик / послідовність»</div>
+              <p class="qmsg" id="s6-q-b-text"></p>
+              <textarea id="s6-q-b-edit" aria-label="Редагувати повідомлення Стороні Б"></textarea>
+              <div class="qbtns">
+                <button class="btn-sm confirm" data-q="b">Підтвердити й випустити Стороні Б</button>
+                <button class="btn-sm edit" data-qe="b">Редагувати</button>
+              </div>
+              <div class="qnote">Цитує §720.305 · медіатор підтверджує правову релевантність перед випуском (Rule 10.370).</div>
+            </div>
+
+            <div class="qempty" id="s6-qempty">Чергу очищено — обидві адаптовані подачі перевірені та випущені медіатором.</div>
+          </div>
+          <div class="hitl-note">
+            <b>Human-in-the-loop.</b> The mediator may surface information and discuss strengths and weaknesses, but must not coerce, decide the dispute, or predict the court's ruling, and refers parties to independent counsel for advice (Fla. mediator conduct, Rule 10.370).
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen s7 shead-block" id="screen-7" data-view="mediator" aria-label="Recommendations">
+      <header class="reveal r1">
+        <div class="eyebrow"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · варіанти вирішення · Екран 7</span></div>
+        <h1>Три виходи. <em>Їхній вибір.</em></h1>
+        <p class="sub">Кожен варіант показує, що отримує кожна сторона, застосовні норми (інформація, не порада), ймовірність і ризик відмови.</p>
+      </header>
+
+      <div class="pv-banner reveal r1" role="note">
+        <span class="pdot" aria-hidden="true"></span>
+        <span id="s7-party-note"></span>
+      </div>
+
+      <div class="vgrid reveal r2" id="s7-vgrid"></div>
+
+      <p class="upl-line reveal r3">Застосовні норми цитуються як загальна правова інформація, не юридична порада · вибір сторін добровільний.</p>
+    </section>
+
+    <section class="screen s8 shead-block" id="screen-8" data-view="mediator" aria-label="Agreement draft">
+      <header class="reveal r1" style="text-align:center">
+        <div class="eyebrow" style="justify-content:center"><span class="dot"></span><span><span class="wordmark">PsyLex</span> · проєкт угоди · Екран 8</span></div>
+        <h1>Від спору до проєкту. <em>За одну сесію.</em></h1>
+        <p class="sub" style="max-width:620px;margin-left:auto;margin-right:auto">Згенерований меморандум на основі обраного сторонами варіанта — правова інформація, людина в контурі. Текст документа — EN, дослівно.</p>
+      </header>
+
+      <p class="variant-src reveal r1">Побудовано на <span class="badge" id="s8-variant-badge">V2</span> <span id="s8-variant-name"></span> · обрано на Екрані 7</p>
+
+      <div class="doc-wrap reveal r2">
+        <div class="doc" aria-label="Draft memorandum of agreement">
+          <div class="dhead">
+            <div class="dk">Draft · for review</div>
+            <h2>Memorandum of Agreement</h2>
+            <div class="dsub">HOA covenant-enforcement mediation · Sarasota, Florida · PsyLex Mode B session</div>
+          </div>
+
+          <div class="dsec">
+            <div class="dt">Parties &amp; community</div>
+            <p>This memorandum is entered into between the <b>Homeowner (Party A)</b> and the <b>Homeowners' Association / CAM (Party B)</b> of a single-family HOA community in Sarasota, Florida, governed by Chapter 720, Florida Statutes.</p>
+          </div>
+
+          <div class="dsec">
+            <div class="dt">Recital of the dispute</div>
+            <p>The dispute concerns the repainting of the Homeowner's front door in a color not approved in advance under the community's architectural-review provisions, and the fines subsequently imposed. The matter was submitted to mediation as a covenant-enforcement dispute <span class="badge">§720.311</span>.</p>
+          </div>
+
+          <div class="dsec">
+            <div class="dt">Agreed terms · <span id="s8-terms-vid">V2</span></div>
+            <p id="s8-terms"></p>
+            <p id="s8-norms" style="font-size:13px;color:var(--ink-soft);font-family:'IBM Plex Sans',sans-serif"></p>
+          </div>
+
+          <div class="dsec">
+            <div class="dt">Voluntary resolution</div>
+            <p>The terms above reflect the parties' voluntary choice, reached with the assistance of a mediator. The mediator did not decide the dispute or predict any court outcome.</p>
+          </div>
+
+          <div class="dsec">
+            <div class="dt">Disclaimer</div>
+            <div class="dupl"><b>Legal information, not legal services.</b> PsyLex provides legal information only, not legal services; consult a licensed attorney to give the document legal effect.</div>
+          </div>
+
+          <div class="sig-grid">
+            <div class="sig"><div class="line"></div><div class="who">Homeowner · Party A · date</div></div>
+            <div class="sig"><div class="line"></div><div class="who">Authorized representative, HOA Board / CAM · Party B · date</div></div>
+          </div>
+
+          <div class="dfoot">Acknowledgment of the parties · consider notarization · prepared with PsyLex, Mode B (mediator-facilitated)</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="s8-save">Зберегти проєкт і зареєструвати</button>
+        </div>
+        <div class="receipt" id="s8-receipt" role="status"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="flownav" id="flownav">
+    <button class="btn btn-ghost" id="prevBtn">← Назад</button>
+    <button class="btn btn-primary" id="nextBtn">Далі →</button>
+  </div>
+</main>
+
+<!-- ===== M6 · assessment preview modal ===== -->
+<div class="modal-veil" id="assessVeil" role="dialog" aria-modal="true" aria-labelledby="assessTitle">
+  <div class="modal">
+    <div class="mhead">
+      <h3 id="assessTitle">Опитник PersonaMatrix — приклади питань</h3>
+      <button class="x" id="assessClose" aria-label="Закрити прев'ю">✕</button>
+    </div>
+    <p class="msub">Прев'ю лише для перегляду · у живій сесії повний опитник надсилається кожному учаснику приватним посиланням; медіатор проходить його один раз у своєму кабінеті.</p>
+
+    <div class="q-item" style="border-top:none">
+      <div class="qn">Питання 1 · справедливість</div>
+      <p class="qt">Коли правило застосовують до мене, але не до інших, мені важко це відпустити.</p>
+      <div class="likert" aria-hidden="true">
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком не згоден(-на)</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Нейтрально</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком згоден(-на)</span></span>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="qn">Питання 2 · порядок</div>
+      <p class="qt">Я віддаю перевагу чітким процедурам, а не винаткам у кожному випадку.</p>
+      <div class="likert" aria-hidden="true">
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком не згоден(-на)</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Нейтрально</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком згоден(-на)</span></span>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="qn">Питання 3 · визнання</div>
+      <p class="qt">У суперечці мені потрібно відчути, що мене почули, перш ніж обговорювати рішення.</p>
+      <div class="likert" aria-hidden="true">
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком не згоден(-на)</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Нейтрально</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком згоден(-на)</span></span>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="qn">Питання 4 · контроль</div>
+      <p class="qt">Мені комфортно, коли процесом керує хтось інший.</p>
+      <div class="likert" aria-hidden="true">
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком не згоден(-на)</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Нейтрально</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">&nbsp;</span></span>
+        <span class="lp"><span class="dot"></span><span class="ll">Цілком згоден(-на)</span></span>
+      </div>
+    </div>
+
+    <div class="mfoot"><b>Приватність за задумом.</b> Кожен учасник відповідає з власного пристрою. Сирі відповіді ніколи не показуються медіатору — лише обчислений профіль. Відповіді тут закладені для демо.</div>
+  </div>
+</div>
+
+<!-- ===== M6 · presenter script drawer ===== -->
+<div class="drawer-veil" id="drawerVeil"></div>
+<aside class="drawer" id="scriptDrawer" role="dialog" aria-modal="false" aria-labelledby="drawerTitle">
+  <div class="dr-head">
+    <div>
+      <h3 id="drawerTitle">Трихвилинний сценарій демо</h3>
+      <div class="dsub">Шість бітів · репліки — EN дослівно · клік — перехід на екран</div>
+    </div>
+    <button class="x" id="drawerClose" aria-label="Закрити сценарій" style="font-family:inherit;font-size:13px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--hair);border-radius:999px;width:30px;height:30px;cursor:pointer;display:grid;place-items:center">✕</button>
+  </div>
+  <div class="dr-body">
+    <div class="beat-item">
+      <div class="bnum">Beat 1</div>
+      <p class="bq">“Two neighbors, a repainted door, and an HOA fine — a small dispute that usually costs thousands in attorney time.”</p>
+      <div class="bdir">Екран 1 · створення сесії</div>
+      <button class="bgo" data-go="1">До Екрана 1 →</button>
+    </div>
+    <div class="beat-item">
+      <div class="bnum">Beat 2</div>
+      <p class="bq">“PsyLex profiles both parties — and the mediator.”</p>
+      <div class="bdir">Екран 2 · пауза на профілюванні медіатора</div>
+      <button class="bgo" data-go="2">До Екрана 2 →</button>
+    </div>
+    <div class="beat-item">
+      <div class="bnum">Beat 3</div>
+      <p class="bq">“It reads the same law for everyone.”</p>
+      <div class="bdir">Екран 4 · правова панель, цитовано §720.305</div>
+      <button class="bgo" data-go="4">Go to Screen 4 →</button>
+    </div>
+    <div class="beat-item">
+      <div class="bnum">Beat 4</div>
+      <p class="bq">“But it delivers that same law differently to each person.”</p>
+      <div class="bdir">Екран 5 · split-screen «вау» — дайте йому подіяти</div>
+      <button class="bgo" data-go="5">До Екрана 5 →</button>
+    </div>
+    <div class="beat-item">
+      <div class="bnum">Beat 5</div>
+      <p class="bq">“And it watches the mediator for bias.”</p>
+      <div class="bdir">Екран 4 · сповіщення Rapport Risk</div>
+      <button class="bgo" data-go="4">Go to Screen 4 →</button>
+    </div>
+    <div class="beat-item">
+      <div class="bnum">Beat 6</div>
+      <p class="bq">“Then it proposes options and drafts the agreement — legal information, human in the loop.”</p>
+      <div class="bdir">Екрани 7–8 · варіанти, потім проєкт</div>
+      <button class="bgo" data-go="7">До Екрана 7 →</button>
+    </div>
+  </div>
+  <div class="dr-foot">Інструменти доповідача: ця панель сценарію + перемикач Медіатор / Сторона А / Сторона Б у верхній панелі · клавіші ← → перемикають екрани.</div>
+</aside>
+
+<script>
+(function(){
+  /* ---------- Screen registry ---------- */
+  const SCREENS = [
+    { id: 0, label: "Головна" },
+    { id: 1, label: "Сесія" },
+    { id: 2, label: "Профілювання" },
+    { id: 3, label: "AI-аналіз" },
+    { id: 4, label: "Дашборд" },
+    { id: 5, label: "Адаптація" },
+    { id: 6, label: "Діалог" },
+    { id: 7, label: "Варіанти" },
+    { id: 8, label: "Угода" }
+  ];
+
+  const state = {
+    screen: 0,
+    role: "mediator"   // presenter view: mediator | partyA | partyB
+  };
+
+  const steprail = document.getElementById('steprail');
+  const railInner = document.getElementById('steprail-inner');
+  const flownav = document.getElementById('flownav');
+  const viewswitch = document.getElementById('viewswitch');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  /* ---------- Build step rail ---------- */
+  SCREENS.forEach(s => {
+    const b = document.createElement('button');
+    b.innerHTML = '<span class="n">' + s.id + '</span>' + s.label;
+    b.addEventListener('click', () => go(s.id));
+    b.dataset.screen = s.id;
+    railInner.appendChild(b);
+  });
+
+  /* ---------- Navigation ---------- */
+  function go(n){
+    if(n < 0 || n >= SCREENS.length) return;
+    state.screen = n;
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById('screen-' + n).classList.add('active');
+
+    const inFlow = n > 0;
+    steprail.classList.toggle('active', inFlow);
+    flownav.classList.toggle('active', inFlow);
+    viewswitch.classList.toggle('active', inFlow);
+    document.getElementById('scriptBtn').classList.toggle('active', inFlow);
+
+    railInner.querySelectorAll('button').forEach(b => {
+      if(+b.dataset.screen === n) b.setAttribute('aria-current','step');
+      else b.removeAttribute('aria-current');
+    });
+
+    prevBtn.disabled = n <= 1;
+    nextBtn.disabled = n >= SCREENS.length - 1;
+    nextBtn.textContent = n >= SCREENS.length - 1 ? 'Кінець потоку' : 'Далі →';
+
+    window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
+    document.dispatchEvent(new CustomEvent('psylex:screen', { detail: { screen: n, role: state.role }}));
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => go(1));
+  prevBtn.addEventListener('click', () => go(state.screen - 1));
+  nextBtn.addEventListener('click', () => go(state.screen + 1));
+
+  document.addEventListener('keydown', e => {
+    if(e.target.matches('input,textarea,select')) return;
+    if(state.screen === 0) return;
+    if(e.key === 'ArrowRight') go(state.screen + 1);
+    if(e.key === 'ArrowLeft')  go(state.screen - 1);
+  });
+
+  /* ---------- Presenter view-switcher ---------- */
+  viewswitch.querySelectorAll('.seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.role = b.dataset.role;
+      viewswitch.querySelectorAll('.seg button').forEach(x =>
+        x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+      document.dispatchEvent(new CustomEvent('psylex:role', { detail: { role: state.role }}));
+    });
+  });
+
+  /* Expose for later milestones */
+  window.PsyLexApp = { go, state, SCREENS };
+
+  /* ---------- Screen 1 · session setup ---------- */
+  (function(){
+    const s1 = document.getElementById('screen-1');
+    const added = { a:false, b:false };
+
+    function add(which){
+      added[which] = true;
+      document.getElementById('slot-' + which).hidden = true;
+      const card = document.getElementById('pcard-' + which);
+      card.hidden = false;
+      card.classList.add('added');
+      if(added.a && added.b) document.getElementById('s1-ready').classList.add('show');
+    }
+    s1.querySelectorAll('.btn-add').forEach(b =>
+      b.addEventListener('click', () => add(b.dataset.add)));
+
+    const C = PSYLEX.caseFile;
+    const NOTES = {
+      partyA: { note:'<b>Подання Сторони А.</b>&nbsp;Екран запрошення власниці будинку.',
+                text:'Медіатор додала вас до сесії медіації PsyLex. Справа: несхвалений колір вхідних дверей \u00b7 зростаючий штраф HOA \u00b7 Сарасота, Флорида. Наступний крок: короткий опитник PersonaMatrix \u2014 він допомагає сесії підлаштуватися під те, як ви спілкуєтесь.' },
+      partyB: { note:'<b>Подання Сторони Б.</b>&nbsp;Екран запрошення правління.',
+                text:'Медіатор додала вашу асоціацію до сесії медіації PsyLex. Справа: несхвалений колір вхідних дверей \u00b7 зростаючий штраф HOA \u00b7 Сарасота, Флорида. Наступний крок: короткий опитник PersonaMatrix \u2014 він допомагає сесії підлаштуватися під те, як ви спілкуєтесь.' }
+    };
+    function applyRole(role){
+      s1.dataset.view = role;
+      if(NOTES[role]){
+        document.getElementById('s1-party-note').innerHTML = NOTES[role].note;
+        document.getElementById('s1-pv-text').textContent = NOTES[role].text;
+      }
+    }
+    document.addEventListener('psylex:role', e => applyRole(e.detail.role));
+    document.addEventListener('psylex:screen', e => { if(e.detail.screen === 1) applyRole(state.role); });
+  })();
+
+  /* ---------- Screen 2 · profiling animation ---------- */
+  (function(){
+    const s2 = document.getElementById('screen-2');
+    const cards = Array.from(s2.querySelectorAll('.assess'));
+    const echo = document.getElementById('s2-echo');
+    let timers = [];
+
+    function reset(){
+      timers.forEach(t => clearInterval(t.i) || clearTimeout(t.t));
+      timers = [];
+      cards.forEach(c => {
+        c.classList.remove('done');
+        c.querySelector('.cn').textContent = '0';
+        c.querySelector('.abar i').style.width = '0';
+        c.querySelector('.st').textContent = 'Виконується…';
+        c.querySelectorAll('.dim .dt i').forEach(i => i.style.width = '0');
+      });
+      echo.classList.remove('show');
+    }
+    function finish(card){
+      card.querySelector('.cn').textContent = '24';
+      card.querySelector('.abar i').style.width = '100%';
+      card.querySelector('.st').textContent = 'Завершено';
+      card.classList.add('done');
+      requestAnimationFrame(() =>
+        card.querySelectorAll('.dim .dt i').forEach(i => i.style.width = i.dataset.w + '%'));
+    }
+    function play(){
+      reset();
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduced){ cards.forEach(finish); echo.classList.add('show'); return; }
+      cards.forEach((card, idx) => {
+        const start = idx * 420;
+        const dur = 1400;
+        const t = setTimeout(() => {
+          const bar = card.querySelector('.abar i');
+          const cn = card.querySelector('.cn');
+          const t0 = performance.now();
+          const iv = setInterval(() => {
+            const p = Math.min(1, (performance.now() - t0) / dur);
+            cn.textContent = Math.round(p * 24);
+            bar.style.width = (p * 100) + '%';
+            if(p >= 1){ clearInterval(iv); finish(card); }
+          }, 40);
+          timers.push({ i: iv });
+        }, start);
+        timers.push({ t });
+      });
+      timers.push({ t: setTimeout(() => echo.classList.add('show'), 2 * 420 + 1400 + 250) });
+    }
+
+    const NOTES = {
+      partyA: '<b>Подання Сторони А.</b>&nbsp;Власниця бачить лише власний опитник і профіль.',
+      partyB: '<b>Подання Сторони Б.</b>&nbsp;Правління бачить лише власний опитник і профіль.'
+    };
+    function applyRole(role){
+      s2.dataset.view = role;
+      if(NOTES[role]) document.getElementById('s2-party-note').innerHTML = NOTES[role];
+    }
+    document.addEventListener('psylex:role', e => applyRole(e.detail.role));
+    document.addEventListener('psylex:screen', e => {
+      if(e.detail.screen === 2){ applyRole(state.role); play(); } else reset();
+    });
+  })();
+
+  /* ---------- Screen 3 · analysis animation ---------- */
+  (function(){
+    const tasks = Array.from(document.querySelectorAll('#s3-tasks .s3-task'));
+    const cta = document.getElementById('s3-cta');
+    let timers = [];
+
+    function reset(){
+      timers.forEach(clearTimeout); timers = [];
+      tasks.forEach(t => t.classList.remove('run','done'));
+      cta.classList.remove('show');
+    }
+    function play(){
+      reset();
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(reduced){
+        tasks.forEach(t => t.classList.add('done'));
+        cta.classList.add('show');
+        return;
+      }
+      const step = 750; // ~2.2s total for three engines
+      tasks.forEach((t, i) => {
+        timers.push(setTimeout(() => t.classList.add('run'),  i * step));
+        timers.push(setTimeout(() => { t.classList.remove('run'); t.classList.add('done'); }, i * step + step - 120));
+      });
+      timers.push(setTimeout(() => cta.classList.add('show'), tasks.length * step + 150));
+    }
+    document.getElementById('s3-openDash').addEventListener('click', () => go(4));
+    document.addEventListener('psylex:screen', e => {
+      if(e.detail.screen === 3) play(); else reset();
+    });
+  })();
+
+  /* ---------- Screen 4 · dashboard rendering ---------- */
+  (function(){
+    const s4 = document.getElementById('screen-4');
+
+    /* Rapport Risk — verbatim seeded text, split only typographically */
+    const rr = PSYLEX.rapportRisk.text;
+    const MARKER = 'Suggested compensatory measures:';
+    const cut = rr.indexOf(MARKER);
+    const lead = rr.slice(0, cut).trim();
+    const measuresStr = rr.slice(cut + MARKER.length).trim().replace(/\.$/, '');
+    document.getElementById('risk-lead').innerHTML =
+      lead.replace('Rapport risk: ELEVATED.', '<b>Rapport risk: ELEVATED.</b>');
+    document.getElementById('risk-measures-title').textContent = MARKER.replace(':','');
+    const ol = document.getElementById('risk-measures');
+    measuresStr.split(/;\s*/).forEach(m => {
+      const mm = m.match(/^\((\d)\)\s*(.*)$/);
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="n">' + (mm ? mm[1] : '·') + '</span><span>' + (mm ? mm[2] : m) + '</span>';
+      ol.appendChild(li);
+    });
+
+    /* Three-party profiles */
+    const P = PSYLEX.profiles, C = PSYLEX.caseFile;
+    const rows = [
+      { cls:'pa', av:'A', name:C.partyA.role, side:C.partyA.side, p:P.partyA },
+      { cls:'pb', av:'B', name:C.partyB.role, side:C.partyB.side, p:P.partyB },
+      { cls:'pm', av:'M', name:C.mediator.role, side:'теж профілюється', p:P.mediator }
+    ];
+    document.getElementById('prof-rows').innerHTML = rows.map(r => `
+      <div class="prof-row ${r.cls}">
+        <div class="avatar">${r.av}</div>
+        <div>
+          <div class="pr-name">${r.name}<span class="side">· ${r.side}</span></div>
+          <div class="pr-need">Провідна потреба (EN): <b>${r.p.leadingNeed}</b></div>
+          <div class="chips">
+            <span class="chip">тригер (EN): ${r.p.trigger.split(';')[0].toLowerCase()}</span>
+            <span class="chip">стиль (EN): ${r.p.style.toLowerCase()}</span>
+          </div>
+          ${r.cls === 'pm' ? '<div class="pm-note">Медіатор також профілюється — це живить Rapport Risk Engine.</div>' : ''}
+        </div>
+      </div>`).join('');
+
+    /* Cited statutes — verbatim from the file-based legal layer */
+    document.getElementById('statute-list').innerHTML = PSYLEX.statutes.map(s => `
+      <div class="statute">
+        <div class="shead"><span class="badge">${s.cite}</span><span class="stitle">${s.title}</span></div>
+        <p>${s.text}</p>
+        <div class="snote">${PSYLEX.legalNotes.asOf} · ${PSYLEX.legalNotes.upl.toLowerCase()}</div>
+      </div>`).join('');
+
+    /* Options preview */
+    document.getElementById('opt-list').innerHTML = PSYLEX.recommendations.map(v => `
+      <div class="opt-row">
+        <span class="vid">${v.id}</span>
+        <span class="vname">${v.name}</span>
+        <span class="vlike ${v.likelihood === 'High' ? 'high' : 'med'}">${v.likelihood}</span>
+      </div>`).join('');
+
+    /* Presenter role reactions */
+    const NOTES = {
+      partyA: { note:'<b>Подання Сторони А.</b>&nbsp;Що бачить власниця на цьому етапі сесії.', tag:'Ваша справа · Сторона А · Власниця', story:C.partyA.story },
+      partyB: { note:'<b>Подання Сторони Б.</b>&nbsp;Що бачить правління на цьому етапі сесії.', tag:'Ваша справа · Сторона Б · Правління HOA / CAM', story:C.partyB.story }
+    };
+    function applyRole(role){
+      s4.dataset.view = role;
+      if(NOTES[role]){
+        document.getElementById('s4-party-note').innerHTML = NOTES[role].note;
+        document.getElementById('s4-pv-tag').textContent = NOTES[role].tag;
+        document.getElementById('s4-pv-story').textContent = NOTES[role].story;
+      }
+    }
+    document.addEventListener('psylex:role', e => applyRole(e.detail.role));
+    document.addEventListener('psylex:screen', e => { if(e.detail.screen === 4) applyRole(state.role); });
+  })();
+
+  /* ---------- Screen 5 · Adaptation ---------- */
+  (function(){
+    const s5 = document.getElementById('screen-5');
+    const factsBtn = document.getElementById('factsBtn');
+    const hint = document.getElementById('s5-hint');
+    const partyNote = document.getElementById('s5-party-note');
+
+    factsBtn.addEventListener('click', () => {
+      const on = s5.classList.toggle('show-facts');
+      factsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if(on) hint.classList.add('hidden');
+    });
+
+    const NOTES = {
+      partyA: '<b>Подання Сторони А.</b>&nbsp;Що бачить власниця у своїй сесії — лише її адаптовану подачу.',
+      partyB: '<b>Подання Сторони Б.</b>&nbsp;Що бачить правління у своїй сесії — лише його адаптовану подачу.'
+    };
+    function applyRole(role){
+      s5.dataset.view = role;
+      if(NOTES[role]) partyNote.innerHTML = NOTES[role];
+    }
+    document.addEventListener('psylex:role', e => applyRole(e.detail.role));
+    document.addEventListener('psylex:screen', e => { if(e.detail.screen === 5) applyRole(state.role); });
+  })();
+
+  /* ---------- Screen 6 · dialogue room (human-in-the-loop) ---------- */
+  (function(){
+    const s6 = document.getElementById('screen-6');
+    const A = PSYLEX.adaptation;
+    /* Seed queue + thread texts from the verbatim adapted deliveries */
+    const seed = { a: A.toPartyA, b: A.toPartyB };
+    document.getElementById('s6-q-a-text').textContent = seed.a;
+    document.getElementById('s6-q-b-text').textContent = seed.b;
+
+    function releasedCount(){
+      return ['a','b'].filter(k => !document.getElementById('s6-msg-' + k).hidden).length;
+    }
+    function release(k){
+      const q = document.getElementById('s6-q-' + k);
+      const text = q.classList.contains('editing')
+        ? document.getElementById('s6-q-' + k + '-edit').value
+        : document.getElementById('s6-q-' + k + '-text').textContent;
+      const msg = document.getElementById('s6-msg-' + k);
+      document.getElementById('s6-msg-' + k + '-text').textContent = text;
+      msg.hidden = false;
+      msg.classList.remove('unreleased');
+      msg.classList.add('pending-in');
+      q.classList.add('hiddenq');
+      if(k === 'a') document.getElementById('s6-q-b').classList.remove('hiddenq');
+      if(releasedCount() === 2) document.getElementById('s6-qempty').classList.add('show');
+    }
+    function toggleEdit(k){
+      const q = document.getElementById('s6-q-' + k);
+      const ta = document.getElementById('s6-q-' + k + '-edit');
+      if(!q.classList.contains('editing')){
+        ta.value = document.getElementById('s6-q-' + k + '-text').textContent;
+        q.classList.add('editing');
+        ta.focus();
+      } else {
+        document.getElementById('s6-q-' + k + '-text').textContent = ta.value;
+        q.classList.remove('editing');
+      }
+    }
+    function reset(){
+      ['a','b'].forEach(k => {
+        const msg = document.getElementById('s6-msg-' + k);
+        msg.hidden = true;
+        msg.classList.add('unreleased');
+        msg.classList.remove('pending-in');
+        const q = document.getElementById('s6-q-' + k);
+        q.classList.remove('editing');
+        document.getElementById('s6-q-' + k + '-text').textContent = seed[k];
+      });
+      document.getElementById('s6-q-a').classList.remove('hiddenq');
+      document.getElementById('s6-q-b').classList.add('hiddenq');
+      document.getElementById('s6-qempty').classList.remove('show');
+    }
+    s6.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => release(b.dataset.q)));
+    s6.querySelectorAll('[data-qe]').forEach(b => b.addEventListener('click', () => toggleEdit(b.dataset.qe)));
+    document.getElementById('s6-reset').addEventListener('click', reset);
+
+    const NOTES = {
+      partyA: '<b>Подання Сторони А.</b>&nbsp;Вона бачить власні повідомлення — адаптовані подачі з\u2019являються лише після випуску медіатором.',
+      partyB: '<b>Подання Сторони Б.</b>&nbsp;Воно бачить власні повідомлення — адаптовані подачі з\u2019являються лише після випуску медіатором.'
+    };
+    function applyRole(role){
+      s6.dataset.view = role;
+      if(NOTES[role]) document.getElementById('s6-party-note').innerHTML = NOTES[role];
+    }
+    document.addEventListener('psylex:role', e => applyRole(e.detail.role));
+    document.addEventListener('psylex:screen', e => { if(e.detail.screen === 6) applyRole(state.role); });
+  })();
+
+  /* ---------- Screen 7 · recommendations ---------- */
+  (function(){
+    const s7 = document.getElementById('screen-7');
+    state.selectedVariant = 'V2';
+
+    const GETS = {
+      V1: { a: '<b>Сторона А отримує:</b> штраф на паузі та справедливий, конкретний письмовий розгляд її заявки.',
+            b: '<b>Сторона Б отримує:</b> дотриманий процес погодження та збережені повноваження — без тихого винятку.' },
+      V2: { a: '<b>Сторона А отримує:</b> списаний нарахований штраф і чисте завершення ескалації.',
+            b: '<b>Сторона Б отримує:</b> двері у відповідності протягом 30 днів і жодного прецеденту непогоджених змін.' },
+      V3: { a: '<b>Сторона А отримує:</b> її занепокоєння вибірковим застосуванням закріплено письмово; штраф зменшено або списано.',
+            b: '<b>Сторона Б отримує:</b> чіткий, послідовно застосовуваний процес погоджень надалі.' }
+    };
+    const NORMS = { V1: ['§720.3035', '§720.305'], V2: ['§720.305'], V3: ['§720.3035'] };
+
+    const grid = document.getElementById('s7-vgrid');
+    grid.innerHTML = PSYLEX.recommendations.map(v => `
+      <article class="vcard" data-v="${v.id}" aria-label="Variant ${v.id}: ${v.name}">
+        <div class="vk">Варіант ${v.id.slice(1)}</div>
+        <h3>${v.name}</h3>
+        <p class="vterms">${v.terms.replace('§720.3035', '<span class="badge" style="background:var(--law-fill);border:1px solid var(--law-line);border-radius:6px;padding:1px 7px;font-weight:600;font-size:11.5px;color:#8A6413;font-family:\'IBM Plex Sans\',sans-serif">§720.3035</span>')}</p>
+        <div class="gets">
+          <div class="get ga">${GETS[v.id].a}</div>
+          <div class="get gb">${GETS[v.id].b}</div>
+        </div>
+        <div class="norms">
+          <span class="nlabel">Застосовні норми</span>
+          ${NORMS[v.id].map(n => '<span class="badge">' + n + '</span>').join('')}
+          <span style="font-size:11px;color:var(--ink-soft)">· інформація, не порада</span>
+        </div>
+        <div class="vmeta">
+          <div class="mrow"><span class="mk">Ймовірність</span><span class="vlike ${v.likelihood === 'High' ? 'high' : 'med'}">${v.likelihood}</span></div>
+          <div class="mrow"><span class="mk">Ризик відмови (EN)</span><span class="mv">${v.riskOfDeclining}</span></div>
+        </div>
+        <div class="vselect">
+          <button class="btn-sm confirm" data-select="${v.id}" aria-pressed="false">Використати в проєкті угоди</button>
+        </div>
+      </article>`).join('');
+
+    function select(id){
+      state.selectedVariant = id;
+      grid.querySelectorAll('.vcard').forEach(c => c.classList.toggle('selected', c.dataset.v === id));
+      grid.querySelectorAll('[data-select]').forEach(b => {
+        const on = b.dataset.select === id;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.textContent = on ? 'Обрано для проєкту ✓' : 'Використати в проєкті угоди';
+      });
+      document.dispatchEvent(new CustomEvent('psylex:variant', { detail: { id } }));
+    }
+    grid.querySelectorAll('[data-select]').forEach(b => b.addEventListener('click', () => select(b.dataset.select)));
+    select('V2');
+
+    const NOTES = {
+      partyA: '<b>Подання Сторони А.</b>&nbsp;Кожен варіант підкреслює, що отримує вона; вибір між ними добровільний.',
+      partyB: '<b>Подання Сторони Б.</b>&nbsp;Кожен варіант підкреслює, що отримує асоціація; вибір між ними добровільний.'
+    };
+    function applyRole(role){
+      s7.dataset.view = role;
+      if(NOTES[role]) document.getElementById('s7-party-note').innerHTML = NOTES[role];
+    }
+    document.addEventListener('psylex:role', e => applyRole(e.detail.role));
+    document.addEventListener('psylex:screen', e => { if(e.detail.screen === 7) applyRole(state.role); });
+  })();
+
+  /* ---------- Screen 8 · agreement draft ---------- */
+  (function(){
+    const NORMS = { V1: ['§720.3035', '§720.305'], V2: ['§720.305'], V3: ['§720.3035'] };
+    function render(id){
+      const v = PSYLEX.recommendations.find(r => r.id === id);
+      if(!v) return;
+      document.getElementById('s8-variant-badge').textContent = v.id;
+      document.getElementById('s8-variant-name').textContent = '· ' + v.name;
+      document.getElementById('s8-terms-vid').textContent = v.id + ' · ' + v.name;
+      document.getElementById('s8-terms').textContent = v.terms;
+      document.getElementById('s8-norms').innerHTML = 'Застосовні норми (загальна правова інформація, не юридична порада): ' +
+        NORMS[v.id].map(n => '<span class="badge">' + n + '</span>').join(' ') +
+        ' · Information as of 2024–2025.';
+    }
+    document.addEventListener('psylex:variant', e => render(e.detail.id));
+    document.addEventListener('psylex:screen', e => { if(e.detail.screen === 8) render(state.selectedVariant || 'V2'); });
+    render('V2');
+
+    const saveBtn = document.getElementById('s8-save');
+    const receipt = document.getElementById('s8-receipt');
+    saveBtn.addEventListener('click', () => {
+      const now = new Date();
+      const stamp = now.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) +
+        ', ' + now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+      receipt.innerHTML = '<b>Filing receipt saved — квитанцію збережено.</b> Проєкт меморандуму (' + (state.selectedVariant || 'V2') +
+        ') записано до файлу сесії · ' + stamp + ' · Consult a licensed attorney to give the document legal effect.';
+      receipt.classList.add('show');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Проєкт збережено ✓';
+    });
+    document.addEventListener('psylex:screen', e => {
+      if(e.detail.screen === 8){
+        receipt.classList.remove('show');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Зберегти проєкт і зареєструвати';
+      }
+    });
+  })();
+
+  /* ---------- M6 · presenter script drawer ---------- */
+  (function(){
+    const btn = document.getElementById('scriptBtn');
+    const drawer = document.getElementById('scriptDrawer');
+    const veil = document.getElementById('drawerVeil');
+    function open(){ drawer.classList.add('open'); veil.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+    function close(){ drawer.classList.remove('open'); veil.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+    btn.addEventListener('click', () => drawer.classList.contains('open') ? close() : open());
+    veil.addEventListener('click', close);
+    document.getElementById('drawerClose').addEventListener('click', close);
+    drawer.querySelectorAll('[data-go]').forEach(b =>
+      b.addEventListener('click', () => { go(+b.dataset.go); close(); }));
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+  })();
+
+  /* ---------- M6 · assessment preview modal ---------- */
+  (function(){
+    const veil = document.getElementById('assessVeil');
+    const openBtn = document.getElementById('s2-preview');
+    const closeBtn = document.getElementById('assessClose');
+    function open(){ veil.classList.add('open'); closeBtn.focus(); }
+    function close(){ veil.classList.remove('open'); openBtn.focus(); }
+    openBtn.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+    veil.addEventListener('click', e => { if(e.target === veil) close(); });
+    document.addEventListener('keydown', e => { if(e.key === 'Escape' && veil.classList.contains('open')) close(); });
+  })();
+})();
+</script>
+</body>
+</html>

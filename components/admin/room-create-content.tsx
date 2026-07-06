@@ -7,7 +7,7 @@ import { useLocale } from "@/components/locale-provider";
 import { ROOM_JURISDICTIONS, jurisdictionLabels } from "@/lib/room/jurisdiction";
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: string }) {
   const { admin, locale } = useLocale();
@@ -58,7 +58,7 @@ export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: st
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {ROOM_JURISDICTIONS.map((value) => (
                 <label
-                  className="flex cursor-pointer flex-col items-start gap-1 rounded-xl border border-outline-variant/20 bg-surface-container-low p-4 transition-colors has-[:checked]:border-tertiary has-[:checked]:bg-tertiary/10"
+                  className="flex cursor-pointer flex-col items-start gap-1 rounded border border-hair bg-paper p-4 transition-colors has-[:checked]:border-law has-[:checked]:bg-law-fill"
                   key={value}
                 >
                   <span className="flex w-full items-center gap-2">
@@ -83,17 +83,17 @@ export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: st
 
         <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-2">
           <fieldset className="glass-panel space-y-4 rounded-xl p-6">
-            <legend className="mb-1 font-display text-headline-md text-primary">{admin.roles.side1}</legend>
+            <legend className="mb-1 font-display text-headline-md text-primary">{admin.roles.party_a}</legend>
             <div>
-              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.side1TitleLabel}</label>
-              <input className={inputClass} name="side1Title" placeholder={admin.side1TitleLabel} required />
+              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.partyATitleLabel}</label>
+              <input className={inputClass} name="partyATitle" placeholder={admin.partyATitleLabel} required />
             </div>
             <div>
-              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.side1DescriptionLabel}</label>
+              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.partyADescriptionLabel}</label>
               <textarea
                 className={inputClass}
-                name="side1Description"
-                placeholder={admin.side1DescriptionLabel}
+                name="partyADescription"
+                placeholder={admin.partyADescriptionLabel}
                 required
                 rows={3}
               />
@@ -101,17 +101,17 @@ export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: st
           </fieldset>
 
           <fieldset className="glass-panel space-y-4 rounded-xl p-6">
-            <legend className="mb-1 font-display text-headline-md text-tertiary">{admin.roles.side2}</legend>
+            <legend className="mb-1 font-display text-headline-md text-tertiary">{admin.roles.party_b}</legend>
             <div>
-              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.side2TitleLabel}</label>
-              <input className={inputClass} name="side2Title" placeholder={admin.side2TitleLabel} required />
+              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.partyBTitleLabel}</label>
+              <input className={inputClass} name="partyBTitle" placeholder={admin.partyBTitleLabel} required />
             </div>
             <div>
-              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.side2DescriptionLabel}</label>
+              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.partyBDescriptionLabel}</label>
               <textarea
                 className={inputClass}
-                name="side2Description"
-                placeholder={admin.side2DescriptionLabel}
+                name="partyBDescription"
+                placeholder={admin.partyBDescriptionLabel}
                 required
                 rows={3}
               />

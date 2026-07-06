@@ -18,7 +18,8 @@ export function useHeaderScrolled(threshold = 10) {
   return scrolled;
 }
 
-const headerSurfaceClass = "bg-surface/90 backdrop-blur-md transition-shadow";
+const headerSurfaceClass =
+  "border-b border-hair bg-surface-container transition-shadow";
 
 type SiteHeaderProps = {
   brandHref?: string;
@@ -41,23 +42,25 @@ export function SiteHeader({
         "top-0 z-50 w-full",
         headerSurfaceClass,
         fixed ? "fixed" : "sticky",
-        scrolled && "shadow-md",
-        "border-b border-outline-variant/10",
+        scrolled && "shadow-sm",
         className,
       )}
       id="topAppBar"
     >
-      <div className="mx-auto flex h-20 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
-        <Link className="flex items-center gap-3 transition-opacity hover:opacity-90" href={brandHref}>
-          <Image alt="PsyLex" className="h-8 w-auto" height={32} src="/logo.webp" unoptimized width={32} />
-          <span className="font-display text-headline-md font-bold text-primary">PsyLex</span>
+      <div className="mx-auto flex h-14 max-w-container-max items-center justify-between gap-4 px-margin-mobile md:px-margin-desktop">
+        <Link className="flex items-center gap-2.5 transition-opacity hover:opacity-90" href={brandHref}>
+          <Image alt="PsyLex" className="h-7 w-auto" height={28} src="/logo.webp" unoptimized width={28} />
+          <span className="flex items-center gap-2.5 text-[13px] font-medium uppercase tracking-[0.12em] text-ink-soft">
+            <span className="h-[7px] w-[7px] rounded-full bg-law" />
+            <span className="wordmark text-[17px] normal-case tracking-[0.02em] text-ink">PsyLex</span>
+          </span>
         </Link>
-        {trailing ? <div className="flex items-center gap-6">{trailing}</div> : null}
+        {trailing ? <div className="flex items-center gap-4">{trailing}</div> : null}
       </div>
     </header>
   );
 }
 
 export function siteHeaderSurfaceClassName(scrolled: boolean, className?: string) {
-  return cn(headerSurfaceClass, scrolled && "shadow-md", className);
+  return cn(headerSurfaceClass, scrolled && "shadow-sm", className);
 }

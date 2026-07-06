@@ -18,7 +18,7 @@ export type RoomUserRow = {
   id: string;
   login: string;
   password: string;
-  role: "admin" | "mediator" | "side1" | "side2";
+  role: "admin" | "mediator" | "party_a" | "party_b";
   title: string;
   description: string;
   roomId: string | null;
@@ -33,11 +33,11 @@ export type RoomDetailRow = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 function roleIcon(role: string) {
-  if (role === "side1") return "person";
-  if (role === "side2") return "balance";
+  if (role === "party_a") return "person";
+  if (role === "party_b") return "balance";
   return "group";
 }
 
@@ -75,16 +75,16 @@ function ParticipantSection({
       <div className="mb-4 flex items-center gap-3">
         <div
           className={
-            participant.role === "side1"
-              ? "flex h-10 w-10 items-center justify-center rounded bg-primary-container"
-              : participant.role === "side2"
-                ? "flex h-10 w-10 items-center justify-center rounded bg-on-tertiary-container/20"
-                : "flex h-10 w-10 items-center justify-center rounded bg-tertiary/20"
+            participant.role === "party_a"
+              ? "flex h-10 w-10 items-center justify-center rounded-md bg-party-a-fill text-party-a"
+              : participant.role === "party_b"
+                ? "flex h-10 w-10 items-center justify-center rounded-md bg-party-b-fill text-party-b"
+                : "flex h-10 w-10 items-center justify-center rounded-md bg-law-fill text-law"
           }
         >
           <span
             className={
-              participant.role === "side1"
+              participant.role === "party_a"
                 ? "material-symbols-outlined text-primary"
                 : "material-symbols-outlined text-tertiary"
             }
@@ -131,7 +131,7 @@ function ParticipantSection({
         </div>
         {!readOnly ? (
           <button
-            className="rounded border border-tertiary px-4 py-1.5 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-secondary px-4 py-1.5 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={pending || !isDirty}
             type="submit"
           >
@@ -188,10 +188,10 @@ export function RoomDetailContent({
 
   const isRoomDirty = title !== room.title || description !== room.description;
 
-  const side1 = participants.find((p) => p.role === "side1");
-  const side2 = participants.find((p) => p.role === "side2");
+  const partyA = participants.find((p) => p.role === "party_a");
+  const partyB = participants.find((p) => p.role === "party_b");
   const mediator = participants.find((p) => p.role === "mediator");
-  const orderedParticipants = [side1, side2, mediator].filter(Boolean) as RoomUserRow[];
+  const orderedParticipants = [partyA, partyB, mediator].filter(Boolean) as RoomUserRow[];
 
   const onSaveRoom = (formData: FormData) => {
     startRoomTransition(async () => {
@@ -283,7 +283,7 @@ export function RoomDetailContent({
             <p className="text-body-md text-on-surface">{jurisdictionDisplay}</p>
           </div>
           <button
-            className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-primary px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={roomPending || !isRoomDirty}
             type="submit"
           >

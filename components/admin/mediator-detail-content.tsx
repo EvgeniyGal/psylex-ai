@@ -18,7 +18,7 @@ export type MediatorRow = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 export function MediatorDetailContent({ mediator }: { mediator: MediatorRow }) {
   const { admin } = useLocale();
@@ -86,7 +86,7 @@ export function MediatorDetailContent({ mediator }: { mediator: MediatorRow }) {
           />
         </div>
         <button
-          className="rounded-lg border border-tertiary px-5 py-2 text-body-sm font-semibold text-tertiary transition-colors hover:bg-tertiary hover:text-on-tertiary disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-primary px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
           disabled={pending || !isDirty}
           type="submit"
         >

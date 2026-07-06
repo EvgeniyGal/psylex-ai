@@ -21,7 +21,7 @@ export type PlatformSettingsRow = {
 };
 
 const inputClass =
-  "w-full rounded-lg border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-on-surface focus:border-tertiary focus:outline-none focus:ring-1 focus:ring-tertiary";
+  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
 
 const tabs = ["credentials", "tests", "prompts", "rag"] as const;
 type SettingsTab = (typeof tabs)[number];
@@ -83,7 +83,7 @@ export function SettingsContent({ settings, documents, prompts }: SettingsConten
             <button
               className={
                 activeTab === tab
-                  ? "border-b-2 border-tertiary px-4 py-3 font-display text-body-md font-semibold text-tertiary"
+                  ? "border-b-2 border-law px-4 py-3 font-display text-body-md font-semibold text-ink"
                   : "px-4 py-3 font-display text-body-md text-on-surface-variant transition-colors hover:text-on-surface"
               }
               key={tab}

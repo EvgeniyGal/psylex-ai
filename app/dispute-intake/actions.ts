@@ -13,6 +13,7 @@ import {
   isPostIntakePipelineComplete,
 } from "@/lib/pipeline/gate";
 import { tryRunPostIntakePipeline, ensurePostIntakePipeline } from "@/lib/pipeline/trigger";
+import { isPartyRole } from "@/lib/participant-roles";
 import { disputeIntakeSchema } from "@/lib/dispute-intake-schema";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import {
@@ -35,7 +36,7 @@ async function requireSideParticipant() {
     userId = byLogin?.id;
   }
 
-  if (!userId || !role || (role !== "side1" && role !== "side2")) {
+  if (!userId || !role || !isPartyRole(role)) {
     redirect("/login");
   }
 
@@ -102,7 +103,7 @@ export async function clickStartMediation(): Promise<HandshakeStatusResponse> {
 
   const result = await recordStartClick(
     user.roomId,
-    user.role === "side1" || user.role === "side2" ? user.role : (role as "side1" | "side2"),
+    isPartyRole(user.role) ? user.role : (role as "party_a" | "party_b"),
   );
 
   revalidatePath("/mediation");

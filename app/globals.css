@@ -2,10 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --paper: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #16233b;
+  --ink-soft: #495468;
+  --hair: #e3e6eb;
+  --law: #b7842b;
+  --law-fill: #fbf3e2;
+  --law-line: #ecd9a6;
+  --law-mark: #f6dfa6;
+  --radius: 14px;
+}
+
 html,
 body {
-  background-color: #001234;
-  color: #d9e2ff;
+  background-color: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -14,90 +27,116 @@ a {
   text-decoration: none;
 }
 
+.wordmark {
+  font-family: var(--font-display), "Newsreader", serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
 .material-symbols-outlined {
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
   vertical-align: middle;
 }
 
-.card-glow {
-  background:
-    linear-gradient(180deg, rgba(201, 168, 76, 0.05) 0%, rgba(42, 61, 102, 0) 100%),
-    #2a3d66;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 40px -10px rgba(0, 18, 52, 0.5);
+.card-glow,
+.glass-panel,
+.glass-card {
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
 }
 
 .btn-primary {
-  background-color: #c9a84c;
-  color: #1a2f5e;
-  border-radius: 8px;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  background-color: var(--ink);
+  color: #fff;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background-color: #0f1a2e;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--law);
+  outline-offset: 2px;
 }
 
 .btn-secondary {
-  background-color: transparent;
-  border: 1px solid #c9a84c;
-  color: #c9a84c;
-  border-radius: 8px;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  background-color: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  transition: border-color 0.15s, transform 0.1s;
 }
 
-.glass-panel {
-  background: rgba(42, 61, 102, 0.4);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.btn-secondary:hover {
+  border-color: #c9ced6;
 }
 
-.glass-card {
-  background: rgba(42, 61, 102, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
+.btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--law);
+  outline-offset: 2px;
 }
 
 .session-card-glow {
-  transition: all 0.3s ease;
+  transition: border-color 0.15s;
 }
 
 .session-card-glow:hover {
-  box-shadow: 0 0 40px rgba(230, 195, 100, 0.05);
-  border-color: rgba(230, 195, 100, 0.3);
+  border-color: #c9ced6;
 }
 
 .mediation-highlight {
-  background: linear-gradient(180deg, rgba(230, 195, 100, 0.05) 0%, rgba(230, 195, 100, 0) 100%);
+  background: var(--surface);
 }
 
 .status-chip-active {
-  border: 1px solid #e6c364;
-  color: #e6c364;
+  border: 1px solid var(--law-line);
+  color: var(--on-tertiary, #8a6413);
+  background: var(--law-fill);
 }
 
 .ai-insight-border {
-  border-left: 2px solid #e6c364;
-  background: rgba(230, 195, 100, 0.03);
-  backdrop-filter: blur(8px);
+  border-left: 3px solid var(--ink);
+  background: #f0f2f5;
 }
 
 .test-card {
-  transition: all 0.3s ease;
+  transition: border-color 0.15s, transform 0.15s;
 }
 
 .test-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+  border-color: #c9ced6;
 }
 
 .test-card-active {
-  background-image: linear-gradient(180deg, rgba(230, 195, 100, 0.05) 0%, transparent 100%);
+  border-top: 3px solid var(--law);
 }
 
 .consent-checkbox {
   appearance: none;
-  background-color: transparent;
+  background-color: var(--surface);
   margin: 0;
   width: 1.5em;
   height: 1.5em;
-  border: 1px solid #44464f;
+  border: 1px solid var(--hair);
   border-radius: 0.25rem;
   display: grid;
   place-content: center;
@@ -110,14 +149,14 @@ a {
   height: 0.85em;
   transform: scale(0);
   transition: 120ms transform ease-in-out;
-  background-color: #001234;
+  background-color: #fff;
   transform-origin: center;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 
 .consent-checkbox:checked {
-  background-color: #e6c364;
-  border-color: #e6c364;
+  background-color: var(--ink);
+  border-color: var(--ink);
 }
 
 .consent-checkbox:checked::before {
@@ -125,13 +164,13 @@ a {
 }
 
 .consent-checkbox:focus {
-  outline: max(2px, 0.15em) solid #e6c364;
-  outline-offset: max(2px, 0.15em);
+  outline: 2px solid var(--law);
+  outline-offset: 2px;
 }
 
 html {
   scrollbar-width: thin;
-  scrollbar-color: rgba(230, 195, 100, 0.45) #142951;
+  scrollbar-color: #c9ced6 var(--paper);
 }
 
 html::-webkit-scrollbar {
@@ -140,27 +179,27 @@ html::-webkit-scrollbar {
 }
 
 html::-webkit-scrollbar-track {
-  background: #0a1f47;
+  background: var(--paper);
 }
 
 html::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(230, 195, 100, 0.5) 0%, rgba(201, 168, 76, 0.35) 100%);
-  border: 2px solid #0a1f47;
+  background: #c9ced6;
+  border: 2px solid var(--paper);
   border-radius: 999px;
 }
 
 html::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #e6c364 0%, #c9a84c 100%);
+  background: #a8adb6;
 }
 
 html::-webkit-scrollbar-corner {
-  background: #0a1f47;
+  background: var(--paper);
 }
 
 @layer utilities {
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(230, 195, 100, 0.45) #142951;
+    scrollbar-color: #c9ced6 transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -175,18 +214,23 @@ html::-webkit-scrollbar-corner {
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(230, 195, 100, 0.45) 0%, rgba(201, 168, 76, 0.3) 100%);
+    background: #c9ced6;
     border: 2px solid transparent;
     background-clip: padding-box;
     border-radius: 999px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(230, 195, 100, 0.85) 0%, #c9a84c 100%);
+    background: #a8adb6;
     background-clip: padding-box;
   }
 
   .custom-scrollbar::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  .focus-law:focus-visible {
+    outline: 2px solid var(--law);
+    outline-offset: 2px;
   }
 }

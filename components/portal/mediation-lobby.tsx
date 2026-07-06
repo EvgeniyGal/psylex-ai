@@ -11,18 +11,18 @@ import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
 import type { SideReadiness } from "@/lib/dispute-intake";
-import type { ParticipantRole } from "@/lib/participant-roles";
+import type { PartyRole } from "@/lib/participant-roles";
 
 type MediationLobbyProps = {
   roomId: string;
   roomTitle: string;
   self: SideReadiness;
   opposite: SideReadiness | null;
-  oppositeRole: "side1" | "side2";
+  oppositeRole: PartyRole;
   bothReady: boolean;
   pipelineRunning: boolean;
   canStartMediation: boolean;
-  viewerRole: ParticipantRole;
+  viewerRole: PartyRole;
 };
 
 function StatusBadge({ ready, readyLabel, notReadyLabel }: { ready: boolean; readyLabel: string; notReadyLabel: string }) {
@@ -170,8 +170,8 @@ export function MediationLobby({
         </div>
 
         <div className="flex flex-col gap-stack-sm">
-          <div className="rounded-xl border border-white/10 bg-card p-6">
-            <h2 className="mb-4 font-display text-headline-md text-on-surface">{t.mediationYourStatus}</h2>
+          <div className="rounded border border-hair border-t-[3px] border-t-party-a bg-surface-container p-6">
+            <h2 className="mb-4 font-display text-headline-md text-ink">{t.mediationYourStatus}</h2>
             <p className="mb-3 font-sans text-body-sm text-on-surface-variant">{t.roles[viewerRole]}</p>
             <StatusBadge
               notReadyLabel={t.mediationStatusNotReady}
@@ -180,8 +180,8 @@ export function MediationLobby({
             />
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-card p-6">
-            <h2 className="mb-4 font-display text-headline-md text-on-surface">{t.mediationOppositeSide}</h2>
+          <div className="rounded border border-hair border-t-[3px] border-t-party-b bg-surface-container p-6">
+            <h2 className="mb-4 font-display text-headline-md text-ink">{t.mediationOppositeSide}</h2>
             <p className="mb-3 font-sans text-body-sm text-on-surface-variant">{t.roles[oppositeRole]}</p>
             {opposite ? (
               <StatusBadge
@@ -204,14 +204,14 @@ export function MediationLobby({
           ) : null}
 
           {pipelineRunning ? (
-            <div className="flex w-full items-start gap-3 rounded-lg border border-tertiary/30 bg-tertiary/10 p-4">
+            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
               <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
             </div>
           ) : null}
 
           {waitingForOpposite ? (
-            <div className="flex w-full items-start gap-3 rounded-lg border border-tertiary/30 bg-tertiary/10 p-4">
+            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
               <span className="material-symbols-outlined mt-1 animate-pulse text-tertiary">hourglass_top</span>
               <div className="font-sans text-body-sm text-on-surface-variant">
                 <p>{t.mediationHandshakeWaiting}</p>

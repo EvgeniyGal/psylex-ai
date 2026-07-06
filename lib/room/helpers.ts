@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { SIDE_ROLES, users } from "@/drizzle/schema";
+import { PARTY_ROLES, users } from "@/drizzle/schema";
 import type { Locale } from "@/lib/i18n";
 import { isParticipantRole } from "@/lib/participant-roles";
 
@@ -8,7 +8,7 @@ export async function getRoomSides(roomId: string) {
   return db
     .select()
     .from(users)
-    .where(and(eq(users.roomId, roomId), inArray(users.role, [...SIDE_ROLES])));
+    .where(and(eq(users.roomId, roomId), inArray(users.role, [...PARTY_ROLES])));
 }
 
 export async function getSideLocales(roomId: string): Promise<Record<string, Locale>> {

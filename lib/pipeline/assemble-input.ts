@@ -1,4 +1,7 @@
 import type { users as usersTable, rooms as roomsTable } from "@/drizzle/schema";
+import type { Locale } from "@/lib/i18n";
+import { partyRoleLabel } from "@/lib/party-labels";
+import type { PartyRole } from "@/lib/participant-roles";
 import type { PsychodynamicProfile } from "@/lib/pipeline/schemas";
 
 type UserRow = typeof usersTable.$inferSelect;
@@ -19,35 +22,52 @@ export function formatDisputeIntakeAnswers(user: UserRow, roleLabel: string) {
   ].join("\n");
 }
 
+function labelForUser(user: UserRow, locale: Locale) {
+  if (user.role === "party_a" || user.role === "party_b") {
+    return partyRoleLabel(user.role, locale);
+  }
+  return user.role;
+}
+
 export function assemblePsychodynamicInput(user: UserRow) {
   return `Personal bot prompt:\n${user.personalBotPrompt ?? ""}`;
 }
 
-export function assembleEmotionalTriggersInput(user: UserRow) {
+export function assembleEmotionalTriggersInput(user: UserRow, locale: Locale = "en") {
   return [
     `Personal bot prompt:\n${user.personalBotPrompt ?? ""}`,
     "",
-    formatDisputeIntakeAnswers(user, user.role),
+    formatDisputeIntakeAnswers(user, labelForUser(user, locale)),
   ].join("\n");
 }
 
 export function assembleInterestsInput(params: {
-  side1: UserRow;
-  side2: UserRow;
-  side1Profile?: PsychodynamicProfile | null;
-  side2Profile?: PsychodynamicProfile | null;
+  partyA: UserRow;
+  partyB: UserRow;
+  partyAProfile?: PsychodynamicProfile | null;
+  partyBProfile?: PsychodynamicProfile | null;
+  locale?: Locale;
 }) {
+  const locale = params.locale ?? "en";
   const sections = [
-    formatDisputeIntakeAnswers(params.side1, "Side 1"),
+    formatDisputeIntakeAnswers(params.partyA, partyRoleLabel("party_a", locale)),
     "",
-    formatDisputeIntakeAnswers(params.side2, "Side 2"),
+    formatDisputeIntakeAnswers(params.partyB, partyRoleLabel("party_b", locale)),
   ];
 
-  if (params.side1Profile) {
-    sections.push("", "Side 1 psychodynamic profile (supplementary):", JSON.stringify(params.side1Profile, null, 2));
+  if (params.partyAProfile) {
+    sections.push(
+      "",
+      `${partyRoleLabel("party_a", locale)} psychodynamic profile (supplementary):`,
+      JSON.stringify(params.partyAProfile, null, 2),
+    );
   }
-  if (params.side2Profile) {
-    sections.push("", "Side 2 psychodynamic profile (supplementary):", JSON.stringify(params.side2Profile, null, 2));
+  if (params.partyBProfile) {
+    sections.push(
+      "",
+      `${partyRoleLabel("party_b", locale)} psychodynamic profile (supplementary):`,
+      JSON.stringify(params.partyBProfile, null, 2),
+    );
   }
 
   return sections.join("\n");
@@ -55,24 +75,26 @@ export function assembleInterestsInput(params: {
 
 export function assembleLegalAnalysisDisputeInput(params: {
   room: RoomRow;
-  side1: UserRow;
-  side2: UserRow;
+  partyA: UserRow;
+  partyB: UserRow;
+  locale?: Locale;
 }) {
+  const locale = params.locale ?? "en";
   return [
     `Jurisdiction: ${params.room.jurisdiction}`,
     "",
-    formatDisputeIntakeAnswers(params.side1, "Side 1"),
+    formatDisputeIntakeAnswers(params.partyA, partyRoleLabel("party_a", locale)),
     "",
-    formatDisputeIntakeAnswers(params.side2, "Side 2"),
+    formatDisputeIntakeAnswers(params.partyB, partyRoleLabel("party_b", locale)),
   ].join("\n");
 }
 
-export function buildLegalSearchQueries(side1: UserRow, side2: UserRow) {
+export function buildLegalSearchQueries(partyA: UserRow, partyB: UserRow) {
   const combined = [
-    side1.disputeDescription,
-    side1.disputePriority,
-    side2.disputeDescription,
-    side2.disputePriority,
+    partyA.disputeDescription,
+    partyA.disputePriority,
+    partyB.disputeDescription,
+    partyB.disputePriority,
   ]
     .filter(Boolean)
     .join(" ");
@@ -83,3 +105,5 @@ export function buildLegalSearchQueries(side1: UserRow, side2: UserRow) {
   if (trimmed.length <= 200) return [trimmed];
   return [trimmed.slice(0, 200), trimmed.slice(200, 400)].filter(Boolean);
 }
+
+export type { PartyRole };

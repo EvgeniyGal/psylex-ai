@@ -64,17 +64,16 @@ export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) 
             </p>
           </div>
 
-          <div className="card-glow relative overflow-hidden rounded-xl p-8 mediation-highlight">
-            <div className="absolute left-0 top-0 h-full w-1 bg-tertiary" />
+          <div className="ai-insight-border relative overflow-hidden rounded-r-md p-8">
             <div className="flex items-start gap-4">
-              <span className="material-symbols-outlined mt-1 shrink-0 text-tertiary">info</span>
+              <span className="material-symbols-outlined mt-1 shrink-0 text-law">info</span>
               <div className="space-y-4">
-                <h2 className="font-display text-headline-md text-on-surface">{t.importantInfo}</h2>
-                <div className="space-y-4 font-sans text-body-md leading-relaxed text-on-surface-variant">
+                <h2 className="font-display text-headline-md text-ink">{t.importantInfo}</h2>
+                <div className="space-y-4 text-body-md leading-relaxed text-ink-soft">
                   {roleCopy.disclaimerParagraphs.map((paragraph) => (
                     <p
                       key={paragraph}
-                      className={paragraph.includes("confidential") ? "flex items-center gap-2 text-primary" : undefined}
+                      className={paragraph.includes("confidential") ? "flex items-center gap-2 text-ink" : undefined}
                     >
                       {paragraph.includes("confidential") ? (
                         <>
@@ -93,9 +92,9 @@ export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) 
 
           <form
             action={acceptDisclaimer}
-            className="flex flex-col items-center gap-stack-md rounded-xl border border-outline-variant/10 bg-surface-container-high p-6 shadow-sm"
+            className="flex flex-col items-center gap-stack-md rounded border border-hair bg-surface-container p-6"
           >
-            <label className="group flex w-full max-w-md cursor-pointer items-center gap-4 rounded-lg border border-outline-variant/20 bg-surface p-4 transition-colors hover:border-tertiary/50">
+            <label className="group flex w-full max-w-md cursor-pointer items-center gap-4 rounded-md border border-hair bg-paper p-4 transition-colors hover:border-[#c9ced6]">
               <input
                 checked={consented}
                 className="consent-checkbox shrink-0"

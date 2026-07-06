@@ -5,12 +5,13 @@ import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
+import { isPartyRole } from "@/lib/participant-roles";
 import { requireParticipantSession } from "@/lib/portal-auth";
 
 export default async function DisputeIntakePage() {
   const { userId, role } = await requireParticipantSession();
 
-  if (role !== "side1" && role !== "side2") {
+  if (!isPartyRole(role)) {
     redirect("/mediator/rooms");
   }
 
