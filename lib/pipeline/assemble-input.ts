@@ -3,6 +3,7 @@ import type { Locale } from "@/lib/i18n";
 import { partyRoleLabel } from "@/lib/party-labels";
 import type { PartyRole } from "@/lib/participant-roles";
 import type { PsychodynamicProfile } from "@/lib/pipeline/schemas";
+import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
 
 type UserRow = typeof usersTable.$inferSelect;
 type RoomRow = typeof roomsTable.$inferSelect;
@@ -81,7 +82,7 @@ export function assembleLegalAnalysisDisputeInput(params: {
 }) {
   const locale = params.locale ?? "en";
   return [
-    `Jurisdiction: ${params.room.jurisdiction}`,
+    `Jurisdiction: ${formatRoomJurisdiction(params.room, locale)}`,
     "",
     formatDisputeIntakeAnswers(params.partyA, partyRoleLabel("party_a", locale)),
     "",

@@ -12,7 +12,7 @@ import { CredentialActions, CredentialField } from "@/components/credential-acti
 import { useLocale } from "@/components/locale-provider";
 import { formatDateTime } from "@/lib/format-datetime";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
-import { jurisdictionLabels } from "@/lib/room/jurisdiction";
+import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
 
 export type RoomUserRow = {
   id: string;
@@ -29,6 +29,7 @@ export type RoomDetailRow = {
   title: string;
   description: string;
   jurisdiction: RoomJurisdiction;
+  usaSubJurisdiction: string | null;
   createdAt: Date;
 };
 
@@ -174,7 +175,7 @@ export function RoomDetailContent({
   const credentialsVisible = showCredentials ?? !readOnly;
   const { admin, locale } = useLocale();
   const router = useRouter();
-  const jurisdictionDisplay = jurisdictionLabels(locale)[room.jurisdiction];
+  const jurisdictionDisplay = formatRoomJurisdiction(room, locale);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [title, setTitle] = useState(room.title);
   const [description, setDescription] = useState(room.description);

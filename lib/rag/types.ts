@@ -50,6 +50,7 @@ export type RagCitation = {
 export type RagInquiryResult = {
   answer: string;
   citations: RagCitation[];
+  preparedQueries?: string[];
 };
 
 export type SearchLegalCorpusParams = {

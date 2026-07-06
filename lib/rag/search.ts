@@ -139,3 +139,56 @@ export async function searchLegalCorpus(params: SearchLegalCorpusParams): Promis
 
   return expandAdjacentChunks(ranked);
 }
+
+export async function searchLegalCorpusMulti(
+  queries: string[],
+  params: Omit<SearchLegalCorpusParams, "query">,
+): Promise<RagSearchResult[]> {
+  const uniqueQueries = [...new Set(queries.map((query) => query.trim()).filter(Boolean))];
+  if (uniqueQueries.length === 0) return [];
+
+  const topK = params.topK ?? 5;
+  const deduped = new Map<string, RagSearchResult>();
+
+  for (const query of uniqueQueries) {
+    const results = await searchLegalCorpus({ ...params, query, topK });
+    for (const result of results) {
+      const key = `${result.documentId}:${result.chunkIndex}`;
+      const existing = deduped.get(key);
+      if (!existing || result.score > existing.score) {
+        deduped.set(key, result);
+      }
+    }
+  }
+
+  return [...deduped.values()].sort((left, right) => right.score - left.score).slice(0, topK);
+}
+
+export async function searchLegalCorpusWithFallback(
+  queries: string[],
+  params: Omit<SearchLegalCorpusParams, "query">,
+): Promise<RagSearchResult[]> {
+  const attempts: Omit<SearchLegalCorpusParams, "query">[] = [params];
+
+  if (params.usaSubJurisdiction) {
+    attempts.push({ ...params, usaSubJurisdiction: undefined });
+  }
+  if (params.category) {
+    attempts.push({ ...params, category: undefined });
+  }
+  if (params.usaSubJurisdiction && params.category) {
+    attempts.push({ ...params, usaSubJurisdiction: undefined, category: undefined });
+  }
+
+  const seen = new Set<string>();
+  for (const attempt of attempts) {
+    const key = `${attempt.usaSubJurisdiction ?? ""}:${attempt.category ?? ""}:${attempt.documentId ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const results = await searchLegalCorpusMulti(queries, attempt);
+    if (results.length > 0) return results;
+  }
+
+  return [];
+}

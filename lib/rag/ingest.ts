@@ -4,6 +4,7 @@ import { documentChunks, legalDocuments } from "@/drizzle/schema";
 import { chunkText } from "@/lib/rag/chunk";
 import { embedTexts, formatEmbeddingForPg } from "@/lib/rag/embed";
 import { extractTextFromBuffer } from "@/lib/rag/extract";
+import { normalizeExtractedText } from "@/lib/rag/normalize-text";
 
 export async function processDocument(documentId: string) {
   const [document] = await db.select().from(legalDocuments).where(eq(legalDocuments.id, documentId)).limit(1);
@@ -19,7 +20,7 @@ export async function processDocument(documentId: string) {
       ? document.fileData
       : Buffer.from(document.fileData as unknown as ArrayBuffer);
 
-    const text = await extractTextFromBuffer(fileBuffer, document.originalFilename);
+    const text = normalizeExtractedText(await extractTextFromBuffer(fileBuffer, document.originalFilename));
     const chunks = chunkText(text);
     const embeddings = await embedTexts(chunks.map((chunk) => chunk.content));
 

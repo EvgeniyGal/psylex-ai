@@ -10,6 +10,7 @@ import { authOptions } from "@/lib/auth";
 import { requireSessionUserId } from "@/lib/auth-session";
 import { generateLogin, generatePassword } from "@/lib/generate-credentials";
 import { isRoomJurisdiction } from "@/lib/room/jurisdiction";
+import { isUsaSubJurisdiction, parseUsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 
 function required(value: FormDataEntryValue | null, field: string) {
   const text = String(value ?? "").trim();
@@ -41,12 +42,28 @@ export async function createRoom(formData: FormData) {
     throw new Error("Invalid jurisdiction");
   }
 
+  const usaSubJurisdictionRaw = String(formData.get("usaSubJurisdiction") ?? "").trim();
+  if (jurisdictionRaw === "usa") {
+    if (!usaSubJurisdictionRaw || !isUsaSubJurisdiction(usaSubJurisdictionRaw)) {
+      throw new Error("US state or territory is required for United States rooms.");
+    }
+  } else if (usaSubJurisdictionRaw) {
+    throw new Error("US state or territory is only valid for United States rooms.");
+  }
+
+  const usaSubJurisdiction =
+    jurisdictionRaw === "usa" ? parseUsaSubJurisdiction(usaSubJurisdictionRaw) : null;
+  if (jurisdictionRaw === "usa" && !usaSubJurisdiction) {
+    throw new Error("Invalid US state or territory.");
+  }
+
   const [room] = await db
     .insert(rooms)
     .values({
       title,
       description,
       jurisdiction: jurisdictionRaw,
+      usaSubJurisdiction,
       createdByUserId: role === "mediator" ? userId : null,
     })
     .returning();

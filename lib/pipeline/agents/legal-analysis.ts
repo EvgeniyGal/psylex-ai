@@ -6,11 +6,12 @@ import { RAG_DEFAULTS } from "@/lib/rag/config";
 import { ragSearchForRoom } from "@/lib/rag/agent-tool";
 import {
   assembleLegalAnalysisDisputeInput,
-  buildLegalSearchQueries,
 } from "@/lib/pipeline/assemble-input";
 import { getRoomPartiesForPipeline, isRoomLegalAnalysisComplete } from "@/lib/pipeline/gate";
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { loadAgentPrompt } from "@/lib/pipeline/load-prompt";
+import { prepareLegalSearch } from "@/lib/rag/prepare-search";
+import { parseUsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 import {
   buildNotFoundLegalAnalysis,
   LEGAL_ANALYSIS_STRICT_RULES,
@@ -127,14 +128,32 @@ export async function runLegalAnalysisAgent(params: RunLegalAnalysisParams) {
 
   try {
     const disputeInput = assembleLegalAnalysisDisputeInput({ room, partyA, partyB });
-    const queries = buildLegalSearchQueries(partyA, partyB);
-    const ragResults = filterRelevantResults(await ragSearchForRoom(params.roomId, queries));
-    const hasRelevantExcerpts = ragResults.length > 0;
-    const excerpts = formatExcerpts(ragResults);
-
     const locales = params.dryRun
       ? [params.targetLocale ?? normalizeLocale(partyA.preferredLocale)]
       : getUniqueRoomLocales([partyA, partyB]);
+    const plannerLocale = locales[0] ?? normalizeLocale(partyA.preferredLocale);
+
+    const searchPlan = await prepareLegalSearch({
+      situation: disputeInput,
+      jurisdiction: room.jurisdiction,
+      usaSubJurisdiction: parseUsaSubJurisdiction(room.usaSubJurisdiction) ?? undefined,
+      locale: plannerLocale,
+    });
+
+    const searchQueries = [
+      ...new Set([...searchPlan.searchQueries, disputeInput.trim()]),
+    ].filter(Boolean);
+
+    let ragResults = filterRelevantResults(
+      await ragSearchForRoom(params.roomId, searchQueries, searchPlan.category),
+    );
+    if (ragResults.length === 0 && searchPlan.category) {
+      ragResults = filterRelevantResults(
+        await ragSearchForRoom(params.roomId, searchQueries, undefined),
+      );
+    }
+    const hasRelevantExcerpts = ragResults.length > 0;
+    const excerpts = formatExcerpts(ragResults);
 
     const byLocale: Partial<Record<Locale, LegalAnalysis>> = {};
 

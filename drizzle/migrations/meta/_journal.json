@@ -127,6 +127,13 @@
       "when": 1782840000000,
       "tag": "0017_legal_document_usa_sub_jurisdiction",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782920000000,
+      "tag": "0018_room_usa_sub_jurisdiction",
+      "breakpoints": true
     }
   ]
 }

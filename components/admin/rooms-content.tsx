@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
 import { formatCredentials } from "@/lib/credentials";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
-import { jurisdictionLabels } from "@/lib/room/jurisdiction";
+import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
 import { compareStringsStable } from "@/lib/utils";
 
 type UserRow = {
@@ -25,6 +25,7 @@ type RoomRow = {
   title: string;
   description: string;
   jurisdiction: RoomJurisdiction;
+  usaSubJurisdiction?: string | null;
   createdAt: Date;
   createdByUserId?: string | null;
   mediatorTitle?: string | null;
@@ -120,7 +121,6 @@ export function RoomsContent({
   participantsByRoom,
   basePath = "/admin/rooms",
   showCreateButton = true,
-  showInsights = true,
   showCredentialCopy = true,
   showRoomTabs = false,
 }: {
@@ -128,7 +128,6 @@ export function RoomsContent({
   participantsByRoom: { roomId: string; users: UserRow[] }[];
   basePath?: string;
   showCreateButton?: boolean;
-  showInsights?: boolean;
   showCredentialCopy?: boolean;
   showRoomTabs?: boolean;
 }) {
@@ -138,7 +137,7 @@ export function RoomsContent({
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("title");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const jurisdictionDisplay = jurisdictionLabels(locale);
+  const formatJurisdiction = (room: RoomRow) => formatRoomJurisdiction(room, locale);
 
   const tableRows = useMemo<RoomTableRow[]>(() => {
     return roomRows.map((room) => {
@@ -178,13 +177,13 @@ export function RoomsContent({
         row.partyATitle,
         row.partyBTitle,
         row.mediatorTitle,
-        jurisdictionDisplay[row.jurisdiction],
+        formatJurisdiction(row),
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [tabRows, search, jurisdictionDisplay]);
+  }, [tabRows, search, locale]);
 
   const sortedRows = useMemo(() => {
     const rows = [...filteredRows];
@@ -193,7 +192,7 @@ export function RoomsContent({
     rows.sort((a, b) => {
       const value = (row: RoomTableRow) => {
         if (sortKey === "sides") return `${row.partyATitle} ${row.partyBTitle}`;
-        if (sortKey === "jurisdiction") return jurisdictionDisplay[row.jurisdiction];
+        if (sortKey === "jurisdiction") return formatJurisdiction(row);
         if (sortKey === "mediator") return row.mediatorTitle;
         return row[sortKey];
       };
@@ -204,7 +203,7 @@ export function RoomsContent({
     });
 
     return rows;
-  }, [filteredRows, sortKey, sortDir, jurisdictionDisplay]);
+  }, [filteredRows, sortKey, sortDir, locale]);
 
   const onSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -349,7 +348,7 @@ export function RoomsContent({
                         {room.description}
                       </td>
                       <td className="px-4 py-3 text-body-sm text-on-surface">
-                        {jurisdictionDisplay[room.jurisdiction]}
+                        {formatJurisdiction(room)}
                       </td>
                       <td className="px-4 py-3">
                         <SidesCell
@@ -381,30 +380,6 @@ export function RoomsContent({
           </div>
         </div>
       )}
-
-      {showInsights ? (
-        <div className="mt-stack-lg grid grid-cols-1 gap-6 border-t border-outline-variant/10 pt-8 md:grid-cols-3">
-          <div className="glass-panel relative overflow-hidden rounded-xl p-6">
-            <div className="absolute left-0 top-0 h-full w-1 bg-tertiary" />
-            <h5 className="mb-4 font-display text-label-md tracking-wider text-tertiary">{admin.systemHealth}</h5>
-            <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold">100%</span>
-              <span className="mb-1 flex items-center text-sm text-emerald-500">
-                <span className="material-symbols-outlined text-sm">trending_up</span> {admin.stable}
-              </span>
-            </div>
-            <p className="mt-2 text-body-sm text-on-surface-variant">{admin.systemHealthDesc}</p>
-          </div>
-          <div className="glass-panel relative overflow-hidden rounded-xl p-6 md:col-span-2">
-            <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
-            <h5 className="mb-4 font-display text-label-md tracking-wider text-primary">{admin.aiInsight}</h5>
-            <div className="flex items-center gap-4">
-              <span className="material-symbols-outlined text-4xl text-primary/50">psychology</span>
-              <p className="text-body-md font-light italic leading-relaxed text-on-surface/80">{admin.aiInsightDesc}</p>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

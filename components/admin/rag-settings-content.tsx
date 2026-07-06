@@ -114,6 +114,15 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
     }
   }, [testDocumentId, testSelectableDocuments]);
 
+  const resetTestInquiryForJurisdiction = (next: RoomJurisdiction) => {
+    setTestJurisdiction(next);
+    setTestQuestion("");
+    setTestResult(null);
+    setTestDocumentId("");
+    setTestCategory("");
+    if (next !== "usa") setTestUsaSubJurisdiction("");
+  };
+
   const runMutation = (action: () => Promise<void>, successMessage: string) => {
     startTransition(async () => {
       try {
@@ -251,6 +260,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
               {admin.ragUsaSubJurisdictionFilter}
             </label>
             {renderUsaSubJurisdictionFilter(usaSubJurisdictionFilterValue, onUsaSubJurisdictionFilterChange)}
+            <p className="mt-1 text-body-sm text-on-surface-variant">{admin.ragUsaSubJurisdictionHint}</p>
           </div>
         ) : null}
         <div className={jurisdiction === "usa" ? "" : "md:col-span-2"}>
@@ -365,7 +375,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
               key={tab}
               onClick={() => {
                 setActiveJurisdictionTab(tab);
-                setTestJurisdiction(tab);
+                resetTestInquiryForJurisdiction(tab);
               }}
               type="button"
             >
@@ -401,10 +411,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
             <select
               className={inputClass}
               onChange={(event) => {
-                const next = event.target.value as RoomJurisdiction;
-                setTestJurisdiction(next);
-                setTestDocumentId("");
-                if (next !== "usa") setTestUsaSubJurisdiction("");
+                resetTestInquiryForJurisdiction(event.target.value as RoomJurisdiction);
               }}
               value={testJurisdiction}
             >
@@ -428,6 +435,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
                 setTestUsaSubJurisdiction(value);
                 setTestDocumentId("");
               })}
+              <p className="mt-1 text-body-sm text-on-surface-variant">{admin.ragUsaSubJurisdictionHint}</p>
             </div>
           ) : null}
           <div className="md:col-span-2">
@@ -465,6 +473,16 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
 
         {testResult ? (
           <div className="space-y-4 rounded-lg border border-outline-variant/15 p-4">
+            {testResult.preparedQueries && testResult.preparedQueries.length > 0 ? (
+              <div className="rounded-lg bg-surface-container-low p-3 text-body-sm">
+                <p className="mb-2 font-semibold text-on-surface">{admin.ragTestPreparedQueries}</p>
+                <ul className="list-inside list-disc space-y-1 text-on-surface-variant">
+                  {testResult.preparedQueries.map((query) => (
+                    <li key={query}>{query}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <p className="whitespace-pre-wrap text-body-md text-on-surface">{testResult.answer}</p>
             {testResult.citations.length > 0 ? (
               <div className="space-y-3">

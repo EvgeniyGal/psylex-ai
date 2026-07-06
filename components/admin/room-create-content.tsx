@@ -1,10 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { createRoom } from "@/app/admin/rooms/actions";
 import { useLocale } from "@/components/locale-provider";
-import { ROOM_JURISDICTIONS, jurisdictionLabels } from "@/lib/room/jurisdiction";
+import {
+  USA_SUB_JURISDICTIONS_SORTED,
+  getUsaSubJurisdictionLabel,
+  type UsaSubJurisdiction,
+} from "@/lib/rag/usa-jurisdictions";
+import {
+  ROOM_JURISDICTIONS,
+  jurisdictionLabels,
+  type RoomJurisdiction,
+} from "@/lib/room/jurisdiction";
 
 const inputClass =
   "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
@@ -12,6 +21,8 @@ const inputClass =
 export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: string }) {
   const { admin, locale } = useLocale();
   const [pending, startTransition] = useTransition();
+  const [jurisdiction, setJurisdiction] = useState<RoomJurisdiction>("ukraine");
+  const [usaSubJurisdiction, setUsaSubJurisdiction] = useState<"" | UsaSubJurisdiction>("");
   const labels = jurisdictionLabels(locale);
 
   const onSubmit = (formData: FormData) => {
@@ -63,9 +74,13 @@ export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: st
                 >
                   <span className="flex w-full items-center gap-2">
                     <input
+                      checked={jurisdiction === value}
                       className="h-4 w-4 accent-tertiary"
-                      defaultChecked={value === "ukraine"}
                       name="jurisdiction"
+                      onChange={() => {
+                        setJurisdiction(value);
+                        if (value !== "usa") setUsaSubJurisdiction("");
+                      }}
                       required
                       type="radio"
                       value={value}
@@ -79,6 +94,28 @@ export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: st
               ))}
             </div>
           </div>
+          {jurisdiction === "usa" ? (
+            <div>
+              <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.roomUsaSubJurisdiction}</label>
+              <p className="mb-2 text-body-sm text-on-surface-variant">{admin.roomUsaSubJurisdictionHelp}</p>
+              <select
+                className={inputClass}
+                name="usaSubJurisdiction"
+                onChange={(event) => setUsaSubJurisdiction(event.target.value as UsaSubJurisdiction)}
+                required
+                value={usaSubJurisdiction}
+              >
+                <option disabled value="">
+                  —
+                </option>
+                {USA_SUB_JURISDICTIONS_SORTED.map((code) => (
+                  <option key={code} value={code}>
+                    {getUsaSubJurisdictionLabel(code, locale)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
         </fieldset>
 
         <div className="grid grid-cols-1 gap-stack-md lg:grid-cols-2">

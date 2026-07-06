@@ -2,8 +2,9 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rooms } from "@/drizzle/schema";
 import { mapLegalDomainToCategory } from "@/lib/rag/map-legal-domain";
-import { searchLegalCorpus } from "@/lib/rag/search";
+import { searchLegalCorpusWithFallback } from "@/lib/rag/search";
 import type { LegalDocumentCategory, RagSearchResult } from "@/lib/rag/types";
+import { parseUsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 
 export async function ragSearchForRoom(
   roomId: string,
@@ -13,12 +14,13 @@ export async function ragSearchForRoom(
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   if (!room) return [];
 
+  const usaSubJurisdiction = parseUsaSubJurisdiction(room.usaSubJurisdiction);
   const deduped = new Map<string, RagSearchResult>();
 
   for (const query of queries) {
-    const results = await searchLegalCorpus({
-      query,
+    const results = await searchLegalCorpusWithFallback([query], {
       jurisdiction: room.jurisdiction,
+      usaSubJurisdiction: usaSubJurisdiction ?? undefined,
       category,
       topK: 5,
     });
@@ -44,5 +46,5 @@ export async function ragSearchForRoomByLegalDomain(
   return ragSearchForRoom(roomId, queries, category);
 }
 
-export { searchLegalCorpus } from "@/lib/rag/search";
+export { searchLegalCorpus, searchLegalCorpusMulti, searchLegalCorpusWithFallback } from "@/lib/rag/search";
 export { mapLegalDomainToCategory } from "@/lib/rag/map-legal-domain";

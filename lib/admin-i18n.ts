@@ -19,6 +19,8 @@ export type AdminCopy = {
   jurisdictionLabel: string;
   jurisdictionUkraineDesc: string;
   jurisdictionUsaDesc: string;
+  roomUsaSubJurisdiction: string;
+  roomUsaSubJurisdictionHelp: string;
   deleteRoom: string;
   deleteRoomConfirm: string;
   returnToRooms: string;
@@ -53,11 +55,6 @@ export type AdminCopy = {
   magicLink: string;
   magicLinkCopied: string;
   magicLinkFailed: string;
-  systemHealth: string;
-  stable: string;
-  systemHealthDesc: string;
-  aiInsight: string;
-  aiInsightDesc: string;
   mediatorsTitle: string;
   mediatorsSubtitle: string;
   createMediator: string;
@@ -103,6 +100,7 @@ export type AdminCopy = {
   ragUsaSubJurisdiction: string;
   ragUsaSubJurisdictionFilter: string;
   ragAllUsaSubJurisdictions: string;
+  ragUsaSubJurisdictionHint: string;
   ragUpload: string;
   ragUploading: string;
   ragUploadingHint: string;
@@ -120,6 +118,7 @@ export type AdminCopy = {
   ragTestSubmit: string;
   ragTestSelectDocument: string;
   ragTestAllDocuments: string;
+  ragTestPreparedQueries: string;
   ragDocumentUploaded: string;
   ragDocumentUpdated: string;
   ragDocumentDeleted: string;
@@ -176,6 +175,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     jurisdictionLabel: "Jurisdiction",
     jurisdictionUkraineDesc: "Ukrainian law and legal practice",
     jurisdictionUsaDesc: "United States law and legal practice",
+    roomUsaSubJurisdiction: "State / territory",
+    roomUsaSubJurisdictionHelp: "Select the US state or territory whose law applies to this dispute.",
     deleteRoom: "Delete Room",
     deleteRoomConfirm: "Delete this room and all its participants? This cannot be undone.",
     returnToRooms: "Return to rooms",
@@ -210,12 +211,6 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     magicLink: "Magic Link",
     magicLinkCopied: "Magic link copied to clipboard",
     magicLinkFailed: "Could not generate magic link",
-    systemHealth: "SYSTEM HEALTH",
-    stable: "Stable",
-    systemHealthDesc: "All mediation nodes operational.",
-    aiInsight: "AI INSIGHT PANEL",
-    aiInsightDesc:
-      "Optimal resolution window detected for active negotiation rooms. Recommend facilitating the next room promptly.",
     mediatorsTitle: "Registry",
     mediatorsSubtitle: "Manage credentials and access for accredited legal mediators.",
     createMediator: "Create Mediator",
@@ -261,6 +256,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragUsaSubJurisdiction: "State / territory",
     ragUsaSubJurisdictionFilter: "Filter by state / territory",
     ragAllUsaSubJurisdictions: "All states & territories",
+    ragUsaSubJurisdictionHint:
+      "Documents are stored per state. Select the matching state (e.g. Florida for FL statutes) or leave as all states.",
     ragUpload: "Upload",
     ragUploading: "Uploading document…",
     ragUploadingHint: "Extracting text and building the search index. This may take a moment.",
@@ -278,6 +275,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragTestSubmit: "Run inquiry",
     ragTestSelectDocument: "Document (optional)",
     ragTestAllDocuments: "Search entire jurisdiction",
+    ragTestPreparedQueries: "Prepared search queries",
     ragDocumentUploaded: "Document uploaded",
     ragDocumentUpdated: "Document updated",
     ragDocumentDeleted: "Document deleted",
@@ -339,6 +337,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     jurisdictionLabel: "Юрисдикція",
     jurisdictionUkraineDesc: "Українське право та судова практика",
     jurisdictionUsaDesc: "Право США та судова практика",
+    roomUsaSubJurisdiction: "Штат / територія",
+    roomUsaSubJurisdictionHelp: "Оберіть штат або територію США, право яких застосовується до цього спору.",
     deleteRoom: "Видалити кімнату",
     deleteRoomConfirm: "Видалити цю кімнату та всіх учасників? Цю дію не можна скасувати.",
     returnToRooms: "Повернутися до кімнат",
@@ -373,12 +373,6 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     magicLink: "Magic Link",
     magicLinkCopied: "Посилання скопійовано",
     magicLinkFailed: "Не вдалося створити magic link",
-    systemHealth: "СТАН СИСТЕМИ",
-    stable: "Стабільно",
-    systemHealthDesc: "Усі вузли медіації працюють.",
-    aiInsight: "AI АНАЛІТИКА",
-    aiInsightDesc:
-      "Виявлено оптимальне вікно для врегулювання в активних кімнатах перемовин. Рекомендуємо провести наступну кімнату найближчим часом.",
     mediatorsTitle: "Реєстр",
     mediatorsSubtitle: "Керуйте обліковими даними та доступом акредитованих медіаторів.",
     createMediator: "Створити медіатора",
@@ -424,6 +418,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragUsaSubJurisdiction: "Штат / територія",
     ragUsaSubJurisdictionFilter: "Фільтр за штатом / територією",
     ragAllUsaSubJurisdictions: "Усі штати та території",
+    ragUsaSubJurisdictionHint:
+      "Документи прив’язані до штату. Оберіть відповідний штат (наприклад, Флорида для законів FL) або залиште «Усі штати».",
     ragUpload: "Завантажити",
     ragUploading: "Завантаження документа…",
     ragUploadingHint: "Витягуємо текст і будуємо пошуковий індекс. Це може зайняти деякий час.",
@@ -441,6 +437,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragTestSubmit: "Запустити запит",
     ragTestSelectDocument: "Документ (необов'язково)",
     ragTestAllDocuments: "Шукати в усій юрисдикції",
+    ragTestPreparedQueries: "Підготовлені пошукові запити",
     ragDocumentUploaded: "Документ завантажено",
     ragDocumentUpdated: "Документ оновлено",
     ragDocumentDeleted: "Документ видалено",

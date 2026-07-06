@@ -2,7 +2,8 @@ import OpenAI from "openai";
 import type { Locale } from "@/lib/i18n";
 import { getPlatformSettings } from "@/lib/platform-settings";
 import { RAG_DEFAULTS, RAG_INQUIRY_NOT_FOUND } from "@/lib/rag/config";
-import { searchLegalCorpus } from "@/lib/rag/search";
+import { prepareLegalSearch } from "@/lib/rag/prepare-search";
+import { searchLegalCorpusWithFallback } from "@/lib/rag/search";
 import type { LegalDocumentCategory, RagInquiryResult, RoomJurisdiction } from "@/lib/rag/types";
 import type { UsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 
@@ -44,11 +45,27 @@ export function getInquiryNothingFoundMessage(locale: Locale = "en") {
 
 export async function runRagInquiry(params: RunInquiryParams): Promise<RagInquiryResult> {
   const locale = params.locale ?? "en";
-  const results = await searchLegalCorpus({
-    query: params.question,
+  const answerLocale = params.jurisdiction === "usa" ? "en" : locale;
+
+  const plan = await prepareLegalSearch({
+    situation: params.question,
     jurisdiction: params.jurisdiction,
     usaSubJurisdiction: params.usaSubJurisdiction,
-    category: params.category,
+    locale: answerLocale,
+  });
+
+  const situation = params.question.trim();
+  const searchQueries = [
+    ...new Set([
+      ...plan.searchQueries,
+      ...(situation.length > 0 && situation.length <= 300 ? [situation] : []),
+    ]),
+  ].filter(Boolean);
+
+  const results = await searchLegalCorpusWithFallback(searchQueries, {
+    jurisdiction: params.jurisdiction,
+    usaSubJurisdiction: params.usaSubJurisdiction,
+    category: params.documentId ? undefined : params.category,
     documentId: params.documentId,
     topK: 6,
   });
@@ -57,8 +74,9 @@ export async function runRagInquiry(params: RunInquiryParams): Promise<RagInquir
 
   if (relevantResults.length === 0) {
     return {
-      answer: getInquiryNothingFoundMessage(locale),
+      answer: getInquiryNothingFoundMessage(answerLocale),
       citations: [],
+      preparedQueries: searchQueries,
     };
   }
 
@@ -89,20 +107,24 @@ export async function runRagInquiry(params: RunInquiryParams): Promise<RagInquir
 
   const rawAnswer = completion.choices[0]?.message?.content?.trim() ?? "";
 
+  const citations = relevantResults.map((result) => ({
+    documentName: result.documentName,
+    sourceUrl: result.sourceUrl,
+    excerpt: result.content.slice(0, 500),
+    chunkIndex: result.chunkIndex,
+  }));
+
   if (!rawAnswer || isNotFoundAnswer(rawAnswer)) {
     return {
-      answer: getInquiryNothingFoundMessage(locale),
-      citations: [],
+      answer: getInquiryNothingFoundMessage(answerLocale),
+      citations,
+      preparedQueries: searchQueries,
     };
   }
 
   return {
     answer: rawAnswer,
-    citations: relevantResults.map((result) => ({
-      documentName: result.documentName,
-      sourceUrl: result.sourceUrl,
-      excerpt: result.content.slice(0, 500),
-      chunkIndex: result.chunkIndex,
-    })),
+    citations,
+    preparedQueries: searchQueries,
   };
 }
