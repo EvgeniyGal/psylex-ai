@@ -1,7 +1,8 @@
 import { TestingDashboard } from "@/components/portal/testing-dashboard";
 import { getPlatformSettings } from "@/lib/platform-settings";
 import { getTestStatuses, getUserOnboardingStatus } from "@/lib/onboarding";
-import { guardOnboardingStep, requireParticipantSession } from "@/lib/portal-auth";
+import { resolveTestsFlowStep } from "@/lib/participant-flow";
+import { guardOnboardingStep, isFlowReviewMode, requireParticipantSession } from "@/lib/portal-auth";
 import type { ParticipantRole } from "@/lib/participant-roles";
 import { resolveTestUrl } from "@/lib/default-test-urls";
 import { syncUserTestStatus } from "@/lib/test-status-sync";
@@ -14,28 +15,42 @@ const TEST_URL_MAP: Record<TestKey, keyof Awaited<ReturnType<typeof getPlatformS
   personality_conflicts: "testPersonalityConflictsUrl",
 };
 
-export default async function TestsPage() {
-  await guardOnboardingStep("tests");
+type TestsPageProps = {
+  searchParams: Promise<{ review?: string }>;
+};
+
+export default async function TestsPage({ searchParams }: TestsPageProps) {
+  const review = isFlowReviewMode((await searchParams).review);
   const { userId, role, login } = await requireParticipantSession();
+
+  if (!review) {
+    await guardOnboardingStep("tests");
+  }
+
   const settings = await getPlatformSettings();
 
-  await syncUserTestStatus(userId, login);
+  if (!review) {
+    await syncUserTestStatus(userId, login);
+  }
+
   const status = await getUserOnboardingStatus(userId);
 
   const tests = getTestStatuses(status.completedTests).map((test) => ({
     key: test.key,
     url: resolveTestUrl(String(settings[TEST_URL_MAP[test.key]] ?? "")),
-    completed: test.completed,
+    completed: review ? true : test.completed,
   }));
 
   return (
     <TestingDashboard
       canProceed={status.canProceed}
+      flowStep={resolveTestsFlowStep()}
       login={login}
       personalBotReady={status.personalBotReady}
+      review={review}
       role={role as ParticipantRole}
       tests={tests}
-      testsComplete={status.testsComplete}
+      testsComplete={review ? true : status.testsComplete}
     />
   );
 }

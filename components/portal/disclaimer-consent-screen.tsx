@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { useState } from "react";
 import { acceptDisclaimer } from "@/app/onboarding/actions";
+import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
@@ -40,15 +42,16 @@ function ProceedButton({ consented, label, loadingLabel }: ProceedButtonProps) {
 
 type DisclaimerConsentScreenProps = {
   role: ParticipantRole;
+  review?: boolean;
 };
 
-export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) {
+export function DisclaimerConsentScreen({ role, review = false }: DisclaimerConsentScreenProps) {
   const { locale, portal: t } = useLocale();
   const roleCopy = getRoleCopy(role, locale);
   const [consented, setConsented] = useState(false);
 
   return (
-    <PortalPageShell className="antialiased">
+    <PortalPageShell className="antialiased" flowStep={1}>
       <main className="relative flex flex-grow flex-col items-center justify-center p-gutter md:p-margin-desktop">
         <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-stack-lg">
           <div className="space-y-stack-sm text-center">
@@ -90,29 +93,40 @@ export function DisclaimerConsentScreen({ role }: DisclaimerConsentScreenProps) 
             </div>
           </div>
 
-          <form
-            action={acceptDisclaimer}
-            className="flex flex-col items-center gap-stack-md rounded border border-hair bg-surface-container p-6"
-          >
-            <label className="group flex w-full max-w-md cursor-pointer items-center gap-4 rounded-md border border-hair bg-paper p-4 transition-colors hover:border-[#c9ced6]">
-              <input
-                checked={consented}
-                className="consent-checkbox shrink-0"
-                name="consent"
-                onChange={(event) => setConsented(event.target.checked)}
-                required
-                type="checkbox"
-              />
-              <span className="select-none font-sans text-body-md text-on-surface transition-colors group-hover:text-primary">
-                {t.consentLabel}
-              </span>
-            </label>
-            <ProceedButton consented={consented} label={t.proceed} loadingLabel={t.proceedLoading} />
-            <div className="mt-2 flex items-center gap-2 font-sans text-body-sm text-on-surface-variant">
-              <span className="material-symbols-outlined text-base">shield_lock</span>
-              {t.secureEnv}
-            </div>
-          </form>
+          {review ? (
+            <>
+              <FlowReviewNext step={1} />
+              <p className="text-center">
+                <Link className="text-body-sm text-on-surface-variant underline" href="/room">
+                  {t.flowReviewBackToCurrent}
+                </Link>
+              </p>
+            </>
+          ) : (
+            <form
+              action={acceptDisclaimer}
+              className="flex flex-col items-center gap-stack-md rounded border border-hair bg-surface-container p-6"
+            >
+              <label className="group flex w-full max-w-md cursor-pointer items-center gap-4 rounded-md border border-hair bg-paper p-4 transition-colors hover:border-[#c9ced6]">
+                <input
+                  checked={consented}
+                  className="consent-checkbox shrink-0"
+                  name="consent"
+                  onChange={(event) => setConsented(event.target.checked)}
+                  required
+                  type="checkbox"
+                />
+                <span className="select-none font-sans text-body-md text-on-surface transition-colors group-hover:text-primary">
+                  {t.consentLabel}
+                </span>
+              </label>
+              <ProceedButton consented={consented} label={t.proceed} loadingLabel={t.proceedLoading} />
+              <div className="mt-2 flex items-center gap-2 font-sans text-body-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-base">shield_lock</span>
+                {t.secureEnv}
+              </div>
+            </form>
+          )}
         </div>
       </main>
     </PortalPageShell>

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { getMediationLobbyData, hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
+import { resolveMediationLobbyFlowStep } from "@/lib/participant-flow";
 import { requireParticipantSession } from "@/lib/portal-auth";
 import { isPartyRole } from "@/lib/participant-roles";
 
@@ -38,10 +39,13 @@ export default async function MediationPage() {
     redirect("/room");
   }
 
+  const flowStep = resolveMediationLobbyFlowStep();
+
   return (
     <MediationLobby
       bothReady={lobby.bothReady}
       canStartMediation={lobby.canStartMediation}
+      flowStep={flowStep}
       opposite={lobby.opposite}
       oppositeRole={lobby.oppositeRole}
       pipelineRunning={lobby.pipelineRunning}

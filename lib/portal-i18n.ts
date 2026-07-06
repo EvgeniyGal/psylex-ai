@@ -116,6 +116,10 @@ type PortalCopy = {
   mediationNoAgreementOutcome: string;
   mediationRefresh: string;
   mediationPhases: Record<string, string>;
+  participantFlowNavLabel: string;
+  flowReviewNext: string;
+  flowReviewBackToCurrent: string;
+  participantFlowSteps: [string, string, string, string, string, string];
 };
 
 export const portalCopy: Record<Locale, PortalCopy> = {
@@ -273,7 +277,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationIAccept: "I accept",
     mediationAccepted: "You have accepted",
     mediationWaitingOtherAccept: "Waiting for the other party to accept.",
-    mediationSessionCompleted: "Session completed · Filing receipt saved",
+    mediationSessionCompleted: "Session completed",
     mediationDownloadResults: "Download results",
     mediationPdfPsychodynamicProfile: "Psychodynamic profile",
     mediationPdfLegislation: "Legislation",
@@ -293,6 +297,17 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       agreement: "Agreement",
       completed: "Completed",
     },
+    participantFlowNavLabel: "Participant journey",
+    flowReviewNext: "Next",
+    flowReviewBackToCurrent: "Back to current step",
+    participantFlowSteps: [
+      "Landing",
+      "Disclaimer",
+      "Test results",
+      "Dispute description",
+      "Mediation",
+      "Treaty",
+    ],
   },
   uk: {
     brand: "PsyLex",
@@ -449,7 +464,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationIAccept: "Я приймаю",
     mediationAccepted: "Ви прийняли угоду",
     mediationWaitingOtherAccept: "Очікуємо прийняття від іншої сторони.",
-    mediationSessionCompleted: "Сесію завершено · Квитанцію збережено",
+    mediationSessionCompleted: "Сесію завершено",
     mediationDownloadResults: "Завантажити результати",
     mediationPdfPsychodynamicProfile: "Психодинамічний профіль",
     mediationPdfLegislation: "Законодавство",
@@ -469,6 +484,17 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       agreement: "Угода",
       completed: "Завершено",
     },
+    participantFlowNavLabel: "Етапи для сторони",
+    flowReviewNext: "Далі",
+    flowReviewBackToCurrent: "Повернутися до поточного кроку",
+    participantFlowSteps: [
+      "Вступ",
+      "Згода",
+      "Тести",
+      "Опис спору",
+      "Медіація",
+      "Угода",
+    ],
   },
 };
 

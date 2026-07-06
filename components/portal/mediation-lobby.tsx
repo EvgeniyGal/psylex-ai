@@ -12,6 +12,7 @@ import { useLocale } from "@/components/locale-provider";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
 import type { SideReadiness } from "@/lib/dispute-intake";
 import type { PartyRole } from "@/lib/participant-roles";
+import type { ParticipantFlowStepId } from "@/lib/participant-flow";
 
 type MediationLobbyProps = {
   roomId: string;
@@ -23,6 +24,7 @@ type MediationLobbyProps = {
   pipelineRunning: boolean;
   canStartMediation: boolean;
   viewerRole: PartyRole;
+  flowStep: ParticipantFlowStepId;
 };
 
 function StatusBadge({ ready, readyLabel, notReadyLabel }: { ready: boolean; readyLabel: string; notReadyLabel: string }) {
@@ -72,6 +74,7 @@ export function MediationLobby({
   pipelineRunning,
   canStartMediation,
   viewerRole,
+  flowStep,
 }: MediationLobbyProps) {
   const { portal: t } = useLocale();
   const router = useRouter();
@@ -161,7 +164,7 @@ export function MediationLobby({
     !canStartMediation || isPending || waitingForOpposite || handshake?.status === "started";
 
   return (
-    <PortalPageShell>
+    <PortalPageShell flowStep={flowStep}>
       <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col px-margin-mobile py-stack-lg md:px-margin-desktop">
         <div className="mb-8 text-center">
           <h1 className="mb-2 font-display text-display-lg text-on-surface">{t.mediationLobbyTitle}</h1>

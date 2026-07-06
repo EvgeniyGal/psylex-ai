@@ -17,6 +17,7 @@ import {
 } from "@/lib/mediation/messages";
 import { runMediationAgent } from "@/lib/mediation/run-agent";
 import type { Locale } from "@/lib/i18n";
+import { buildMediationResultsSummary } from "@/lib/mediation/results-summary";
 import { portalCopy } from "@/lib/portal-i18n";
 import {
   mediationAgreementDraftSchema,
@@ -664,7 +665,7 @@ export async function getMediationRoomState(userId: string) {
     room!.mediationPhase === "agreement" ||
     room!.mediationPhase === "completed";
 
-  return {
+  const statePayload = {
     room: {
       id: room!.id,
       title: room!.title,
@@ -695,6 +696,18 @@ export async function getMediationRoomState(userId: string) {
     messages: viewerMessages,
     options: options.map(mapOption),
     compromise: compromise ? mapOption(compromise) : null,
+  };
+
+  if (room!.mediationPhase !== "completed") {
+    return statePayload;
+  }
+
+  const locale = (participant.user.preferredLocale as Locale) ?? "en";
+  const resultsSummary = await buildMediationResultsSummary(statePayload, locale);
+
+  return {
+    ...statePayload,
+    resultsSummary,
   };
 }
 

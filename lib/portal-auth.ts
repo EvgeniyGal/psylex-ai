@@ -6,6 +6,9 @@ import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { getParticipantNextPath, getUserOnboardingStatus } from "@/lib/onboarding";
 import { isParticipantRole, type ParticipantRole } from "@/lib/participant-roles";
+import { isFlowReviewMode } from "@/lib/participant-flow";
+
+export { isFlowReviewMode };
 
 export async function requireParticipantSession() {
   const session = await getServerSession(authOptions);

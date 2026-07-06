@@ -1,5 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 import { partyRoleLabel } from "@/lib/party-labels";
+import type { PartyRole } from "@/lib/participant-roles";
 import type { PsychodynamicProfile, LegalAnalysis } from "@/lib/pipeline/schemas";
 import type { users as usersTable } from "@/drizzle/schema";
 
@@ -55,6 +56,20 @@ export function formatPsychodynamicProfile(
     lines.push(`${labels.relational}: ${profile.relationalPatterns.join(", ")}`);
   }
   return lines.join("\n");
+}
+
+export function formatViewerPsychodynamicProfile(
+  viewerRole: PartyRole,
+  partyA: UserRow,
+  partyB: UserRow,
+  locale: Locale,
+): string {
+  const viewer = viewerRole === "party_a" ? partyA : partyB;
+  return formatPsychodynamicProfile(
+    viewer.psychodynamicProfile as PsychodynamicProfile | null,
+    partyRoleLabel(viewerRole, locale),
+    locale,
+  );
 }
 
 export function formatPartyPsychodynamicProfiles(

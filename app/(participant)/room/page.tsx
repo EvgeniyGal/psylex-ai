@@ -6,11 +6,16 @@ import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { getMediationLobbyData, hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
-import { requireParticipantSession } from "@/lib/portal-auth";
+import { isFlowReviewMode, requireParticipantSession } from "@/lib/portal-auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function RoomPage() {
+type RoomPageProps = {
+  searchParams: Promise<{ review?: string }>;
+};
+
+export default async function RoomPage({ searchParams }: RoomPageProps) {
+  const review = isFlowReviewMode((await searchParams).review);
   const { userId, role } = await requireParticipantSession();
 
   if (role === "mediator") {
@@ -40,5 +45,5 @@ export default async function RoomPage() {
     redirect("/mediation");
   }
 
-  return <RoomExperience mediationState={mediationState} />;
+  return <RoomExperience mediationState={mediationState} review={review} />;
 }

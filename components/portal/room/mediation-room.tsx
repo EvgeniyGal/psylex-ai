@@ -13,13 +13,18 @@ import {
   submitVote,
 } from "@/app/(participant)/room/actions";
 import { MediationCountdown } from "@/components/portal/mediation-countdown";
+import { FlowReviewNext } from "@/components/portal/flow-review-next";
+import { MediationResultsPanel } from "@/components/portal/room/mediation-results-panel";
 import { useLocale } from "@/components/locale-provider";
+import type { MediationPhase } from "@/lib/mediation/types";
 
 type MediationRoomState = NonNullable<Awaited<ReturnType<typeof fetchMediationRoomState>>>;
 
 type MediationRoomProps = {
   initialState: MediationRoomState;
   viewerRole: "party_a" | "party_b";
+  onPhaseChange?: (phase: MediationPhase | null) => void;
+  review?: boolean;
 };
 
 const POLL_MS = 3000;
@@ -34,7 +39,7 @@ function formatReplyRemaining(deadlineIso: string | null) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) {
+export function MediationRoom({ initialState, viewerRole, onPhaseChange, review = false }: MediationRoomProps) {
   const router = useRouter();
   const { portal: t } = useLocale();
   const [state, setState] = useState(initialState);
@@ -43,6 +48,11 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
   const [pending, startTransition] = useTransition();
 
   const isSessionComplete = state.room.phase === "completed";
+
+  useEffect(() => {
+    if (review) return;
+    onPhaseChange?.(state.room.phase);
+  }, [onPhaseChange, review, state.room.phase]);
 
   const refresh = useCallback(async () => {
     try {
@@ -54,13 +64,13 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
   }, []);
 
   useEffect(() => {
-    if (isSessionComplete) return;
+    if (review || isSessionComplete) return;
 
     const id = window.setInterval(() => {
       void refresh();
     }, POLL_MS);
     return () => window.clearInterval(id);
-  }, [refresh, isSessionComplete]);
+  }, [refresh, isSessionComplete, review]);
 
   const isMyTurn =
     state.room.phase === "dialogue" && state.room.activeParty === viewerRole;
@@ -170,205 +180,265 @@ export function MediationRoom({ initialState, viewerRole }: MediationRoomProps) 
     toast.message(t.mediationEmailComingSoon);
   };
 
-  return (
-    <div className="space-y-6">
-      {!isSessionComplete ? (
-        <MediationCountdown
-          durationMinutes={state.room.mediationDurationMinutes}
-          onEnded={refresh}
-          sessionComplete={isSessionComplete}
-          startedAt={state.room.mediationStartedAt}
-        />
-      ) : null}
+  const resultsSummary = "resultsSummary" in state ? state.resultsSummary : undefined;
 
-      <div className="glass-panel rounded-xl p-4 text-body-sm text-on-surface-variant">
-        <p>
-          {t.mediationPhaseLabel}: <strong className="text-on-surface">{t.mediationPhases[state.room.phase ?? "opening"]}</strong>
-        </p>
-        {state.room.phase === "dialogue" ? (
-          <p>
-            {t.mediationRoundLabel}: {state.room.round}
-            {isMyTurn ? ` · ${t.mediationYourTurn}` : ""}
-            {replyRemaining ? ` · ${t.mediationReplyTimer}: ${replyRemaining}` : isMyTurn ? ` · ${t.mediationReplyTimer}: --:--` : ""}
-          </p>
-        ) : null}
-      </div>
-
-      {showReadyButton ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            className="btn-secondary px-4 py-2 text-body-sm disabled:opacity-60"
-            disabled={pending || state.room.selfReady}
-            onClick={onReady}
-            type="button"
-          >
-            {state.room.selfReady ? t.mediationReadyConfirmed : t.mediationReadyForOptions}
-          </button>
-          {state.room.otherReady ? (
-            <span className="text-body-sm text-on-surface-variant">{t.mediationOtherReady}</span>
-          ) : state.room.selfReady ? (
-            <span className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherReady}</span>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="glass-panel max-h-[420px] space-y-3 overflow-y-auto rounded-xl p-4">
-        {state.messages.map((message) => (
-          <div
-            className={
-              message.isOwn
-                ? "ml-8 rounded-lg bg-party-a-fill/40 p-3 text-body-md"
-                : message.senderType === "agent"
-                  ? "mr-8 rounded-lg border border-law/20 bg-law-fill/30 p-3 text-body-md"
-                  : "rounded-lg bg-surface-container p-3 text-body-md"
-            }
-            key={message.id}
-          >
-            <p className="mb-1 text-label-sm uppercase text-on-surface-variant">
-              {message.isOwn ? t.mediationYou : message.senderType === "agent" ? t.mediationAgent : t.mediationSystem}
-            </p>
-            <p className="whitespace-pre-wrap text-on-surface">{message.content}</p>
-          </div>
-        ))}
-        {state.messages.length === 0 ? (
-          <p className="text-center text-body-md text-on-surface-variant">{t.mediationPreparing}</p>
-        ) : null}
-      </div>
-
-      {isMyTurn ? (
-        <div className="space-y-2">
-          <textarea
-            className="w-full rounded-lg border border-hair bg-paper p-3 text-body-md text-ink"
-            onChange={(event) => setReply(event.target.value)}
-            placeholder={t.mediationReplyPlaceholder}
-            rows={3}
-            value={reply}
-          />
-          <button
-            className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
-            disabled={pending || !reply.trim()}
-            onClick={onSendReply}
-            type="button"
-          >
-            {t.mediationSendReply}
-          </button>
-        </div>
-      ) : null}
-
-      {(state.room.phase === "voting" || state.room.phase === "generating_options") &&
-      state.options.length > 0 ? (
-        <div className="space-y-4">
-          <h2 className="font-display text-headline-md text-on-surface">{t.mediationOptionsTitle}</h2>
-          {state.options.map((option) => (
-            <div className="glass-panel space-y-2 rounded-xl p-4" key={option.id}>
-              <p className="whitespace-pre-wrap text-body-md text-on-surface">{option.description}</p>
-              <p className="text-body-sm text-on-surface-variant">
-                <strong>{t.mediationLegalInfo}:</strong> {option.legalNorms}
+  if (review) {
+    return (
+      <div className="space-y-6">
+        <div className="glass-panel max-h-[540px] space-y-3 overflow-y-auto rounded-xl p-4">
+          {state.messages.map((message) => (
+            <div
+              className={
+                message.isOwn
+                  ? "ml-8 rounded-lg bg-party-a-fill/40 p-3 text-body-md"
+                  : message.senderType === "agent"
+                    ? "mr-8 rounded-lg border border-law/20 bg-law-fill/30 p-3 text-body-md"
+                    : "rounded-lg bg-surface-container p-3 text-body-md"
+              }
+              key={message.id}
+            >
+              <p className="mb-1 text-label-sm uppercase text-on-surface-variant">
+                {message.isOwn
+                  ? t.mediationYou
+                  : message.senderType === "agent"
+                    ? t.mediationAgent
+                    : t.mediationSystem}
               </p>
-              <p className="text-body-sm text-on-surface-variant">
-                <strong>{t.mediationFulfillment}:</strong> {option.fulfillmentProbability}
-              </p>
-              <p className="text-body-sm text-on-surface-variant">
-                <strong>{t.mediationRefusalRisks}:</strong> {option.refusalRisks}
-              </p>
-              {state.room.phase === "voting" && !state.room.selfVote ? (
-                <button
-                  className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
-                  disabled={pending}
-                  onClick={() => onVote(option.id)}
-                  type="button"
-                >
-                  {t.mediationSelectOption}
-                </button>
-              ) : null}
+              <p className="whitespace-pre-wrap text-on-surface">{message.content}</p>
             </div>
           ))}
-          {state.room.selfVote ? (
-            <p className="text-body-sm text-on-surface-variant">{t.mediationVoteRecorded}</p>
+          {state.messages.length === 0 ? (
+            <p className="text-center text-body-md text-on-surface-variant">{t.mediationPreparing}</p>
           ) : null}
         </div>
-      ) : null}
+        <FlowReviewNext step={4} />
+      </div>
+    );
+  }
 
-      {state.room.phase === "voting_discrepancy" && state.compromise ? (
-        <div className="space-y-4">
-          <p className="text-body-md text-on-surface">
-            {t.mediationOtherChose}: {state.room.otherVote}
-          </p>
-          <div className="glass-panel space-y-2 rounded-xl p-4">
-            <h2 className="font-display text-headline-md text-on-surface">{t.mediationCompromiseTitle}</h2>
-            <p className="whitespace-pre-wrap text-body-md">{state.compromise.description}</p>
-            {state.room.selfCompromiseVote === null ? (
-              <div className="flex gap-2">
-                <button className="btn-primary px-4 py-2 text-body-sm" disabled={pending} onClick={() => onCompromiseVote(true)} type="button">
-                  {t.mediationAcceptCompromise}
-                </button>
-                <button className="btn-secondary px-4 py-2 text-body-sm" disabled={pending} onClick={() => onCompromiseVote(false)} type="button">
-                  {t.mediationRejectCompromise}
-                </button>
-              </div>
-            ) : (
-              <p className="text-body-sm text-on-surface-variant">{t.mediationCompromiseVoteRecorded}</p>
-            )}
-          </div>
-        </div>
-      ) : null}
-
-      {state.room.phase === "agreement" && draft ? (
-        <div className="space-y-4">
-          <h2 className="font-display text-headline-md text-on-surface">{draft.title ?? t.mediationAgreementTitle}</h2>
-          <div className="glass-panel whitespace-pre-wrap rounded-xl p-4 text-body-md text-on-surface">
-            {draft.body}
-          </div>
-          {draft.terms?.length ? (
-            <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
-              {draft.terms.map((term) => (
-                <li key={term}>{term}</li>
-              ))}
-            </ul>
-          ) : null}
-          <p className="rounded-lg border border-hair bg-surface-container p-3 text-body-sm text-on-surface-variant">
-            {t.mediationUplDisclaimer}
-          </p>
-          <button
-            className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
-            disabled={pending || state.room.selfAccepted}
-            onClick={onAccept}
-            type="button"
-          >
-            {state.room.selfAccepted ? t.mediationAccepted : t.mediationIAccept}
-          </button>
-          {!state.room.selfAccepted && state.room.otherAccepted ? (
-            <p className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherAccept}</p>
-          ) : null}
-        </div>
-      ) : null}
-
-      {(state.room.phase === "completed" || state.room.phase === "agreement") && (
-        <div className="space-y-3 border-t border-hair pt-4">
-          {state.room.phase === "completed" ? (
-            <p className="font-display text-headline-md text-success">{t.mediationSessionCompleted}</p>
-          ) : null}
-          <button className="btn-secondary px-4 py-2 text-body-sm" disabled={pending} onClick={onDownload} type="button">
-            {t.mediationDownloadResults}
-          </button>
-          <div className="flex flex-wrap gap-2">
-            <input
-              className="min-w-[200px] flex-1 rounded-lg border border-hair bg-paper px-3 py-2 text-body-sm"
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder={t.mediationEmailPlaceholder}
-              type="email"
-              value={email}
-            />
-            <button className="btn-secondary px-4 py-2 text-body-sm" onClick={onEmailPlaceholder} type="button">
-              {t.mediationEmailSend}
+  return (
+    <div className="space-y-6">
+      {isSessionComplete && resultsSummary ? (
+        <>
+          <p className="font-display text-headline-md text-success">{t.mediationSessionCompleted}</p>
+          <MediationResultsPanel summary={resultsSummary} />
+          <div className="space-y-3 border-t border-hair pt-4">
+            <button className="btn-secondary px-4 py-2 text-body-sm" disabled={pending} onClick={onDownload} type="button">
+              {t.mediationDownloadResults}
             </button>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="min-w-[200px] flex-1 rounded-lg border border-hair bg-paper px-3 py-2 text-body-sm"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={t.mediationEmailPlaceholder}
+                type="email"
+                value={email}
+              />
+              <button className="btn-secondary px-4 py-2 text-body-sm" onClick={onEmailPlaceholder} type="button">
+                {t.mediationEmailSend}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        </>
+      ) : (
+        <>
+          {!isSessionComplete ? (
+            <MediationCountdown
+              durationMinutes={state.room.mediationDurationMinutes}
+              onEnded={refresh}
+              sessionComplete={isSessionComplete}
+              startedAt={state.room.mediationStartedAt}
+            />
+          ) : null}
 
-      {state.room.phase === "completed" && !state.room.draftAgreement ? (
-        <p className="text-body-md text-on-surface-variant">{t.mediationNoAgreementOutcome}</p>
-      ) : null}
+          <div className="glass-panel rounded-xl p-4 text-body-sm text-on-surface-variant">
+            <p>
+              {t.mediationPhaseLabel}:{" "}
+              <strong className="text-on-surface">{t.mediationPhases[state.room.phase ?? "opening"]}</strong>
+            </p>
+            {state.room.phase === "dialogue" ? (
+              <p>
+                {t.mediationRoundLabel}: {state.room.round}
+                {isMyTurn ? ` · ${t.mediationYourTurn}` : ""}
+                {replyRemaining
+                  ? ` · ${t.mediationReplyTimer}: ${replyRemaining}`
+                  : isMyTurn
+                    ? ` · ${t.mediationReplyTimer}: --:--`
+                    : ""}
+              </p>
+            ) : null}
+          </div>
+
+          {showReadyButton ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                className="btn-secondary px-4 py-2 text-body-sm disabled:opacity-60"
+                disabled={pending || state.room.selfReady}
+                onClick={onReady}
+                type="button"
+              >
+                {state.room.selfReady ? t.mediationReadyConfirmed : t.mediationReadyForOptions}
+              </button>
+              {state.room.otherReady ? (
+                <span className="text-body-sm text-on-surface-variant">{t.mediationOtherReady}</span>
+              ) : state.room.selfReady ? (
+                <span className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherReady}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="glass-panel max-h-[420px] space-y-3 overflow-y-auto rounded-xl p-4">
+            {state.messages.map((message) => (
+              <div
+                className={
+                  message.isOwn
+                    ? "ml-8 rounded-lg bg-party-a-fill/40 p-3 text-body-md"
+                    : message.senderType === "agent"
+                      ? "mr-8 rounded-lg border border-law/20 bg-law-fill/30 p-3 text-body-md"
+                      : "rounded-lg bg-surface-container p-3 text-body-md"
+                }
+                key={message.id}
+              >
+                <p className="mb-1 text-label-sm uppercase text-on-surface-variant">
+                  {message.isOwn
+                    ? t.mediationYou
+                    : message.senderType === "agent"
+                      ? t.mediationAgent
+                      : t.mediationSystem}
+                </p>
+                <p className="whitespace-pre-wrap text-on-surface">{message.content}</p>
+              </div>
+            ))}
+            {state.messages.length === 0 ? (
+              <p className="text-center text-body-md text-on-surface-variant">{t.mediationPreparing}</p>
+            ) : null}
+          </div>
+
+          {isMyTurn ? (
+            <div className="space-y-2">
+              <textarea
+                className="w-full rounded-lg border border-hair bg-paper p-3 text-body-md text-ink"
+                onChange={(event) => setReply(event.target.value)}
+                placeholder={t.mediationReplyPlaceholder}
+                rows={3}
+                value={reply}
+              />
+              <button
+                className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
+                disabled={pending || !reply.trim()}
+                onClick={onSendReply}
+                type="button"
+              >
+                {t.mediationSendReply}
+              </button>
+            </div>
+          ) : null}
+
+          {(state.room.phase === "voting" || state.room.phase === "generating_options") &&
+          state.options.length > 0 ? (
+            <div className="space-y-4">
+              <h2 className="font-display text-headline-md text-on-surface">{t.mediationOptionsTitle}</h2>
+              {state.options.map((option) => (
+                <div className="glass-panel space-y-2 rounded-xl p-4" key={option.id}>
+                  <p className="whitespace-pre-wrap text-body-md text-on-surface">{option.description}</p>
+                  <p className="text-body-sm text-on-surface-variant">
+                    <strong>{t.mediationLegalInfo}:</strong> {option.legalNorms}
+                  </p>
+                  <p className="text-body-sm text-on-surface-variant">
+                    <strong>{t.mediationFulfillment}:</strong> {option.fulfillmentProbability}
+                  </p>
+                  <p className="text-body-sm text-on-surface-variant">
+                    <strong>{t.mediationRefusalRisks}:</strong> {option.refusalRisks}
+                  </p>
+                  {state.room.phase === "voting" && !state.room.selfVote ? (
+                    <button
+                      className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
+                      disabled={pending}
+                      onClick={() => onVote(option.id)}
+                      type="button"
+                    >
+                      {t.mediationSelectOption}
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+              {state.room.selfVote ? (
+                <p className="text-body-sm text-on-surface-variant">{t.mediationVoteRecorded}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {state.room.phase === "voting_discrepancy" && state.compromise ? (
+            <div className="space-y-4">
+              <p className="text-body-md text-on-surface">
+                {t.mediationOtherChose}: {state.room.otherVote}
+              </p>
+              <div className="glass-panel space-y-2 rounded-xl p-4">
+                <h2 className="font-display text-headline-md text-on-surface">{t.mediationCompromiseTitle}</h2>
+                <p className="whitespace-pre-wrap text-body-md">{state.compromise.description}</p>
+                {state.room.selfCompromiseVote === null ? (
+                  <div className="flex gap-2">
+                    <button
+                      className="btn-primary px-4 py-2 text-body-sm"
+                      disabled={pending}
+                      onClick={() => onCompromiseVote(true)}
+                      type="button"
+                    >
+                      {t.mediationAcceptCompromise}
+                    </button>
+                    <button
+                      className="btn-secondary px-4 py-2 text-body-sm"
+                      disabled={pending}
+                      onClick={() => onCompromiseVote(false)}
+                      type="button"
+                    >
+                      {t.mediationRejectCompromise}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-body-sm text-on-surface-variant">{t.mediationCompromiseVoteRecorded}</p>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {state.room.phase === "agreement" && draft ? (
+            <div className="space-y-4">
+              <h2 className="font-display text-headline-md text-on-surface">
+                {draft.title ?? t.mediationAgreementTitle}
+              </h2>
+              <div className="glass-panel whitespace-pre-wrap rounded-xl p-4 text-body-md text-on-surface">
+                {draft.body}
+              </div>
+              {draft.terms?.length ? (
+                <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
+                  {draft.terms.map((term) => (
+                    <li key={term}>{term}</li>
+                  ))}
+                </ul>
+              ) : null}
+              <p className="rounded-lg border border-hair bg-surface-container p-3 text-body-sm text-on-surface-variant">
+                {t.mediationUplDisclaimer}
+              </p>
+              <button
+                className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
+                disabled={pending || state.room.selfAccepted}
+                onClick={onAccept}
+                type="button"
+              >
+                {state.room.selfAccepted ? t.mediationAccepted : t.mediationIAccept}
+              </button>
+              {!state.room.selfAccepted && state.room.otherAccepted ? (
+                <p className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherAccept}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isSessionComplete && !resultsSummary ? (
+            <p className="text-body-md text-on-surface-variant">{t.mediationNoAgreementOutcome}</p>
+          ) : null}
+        </>
+      )}
 
       <button
         className="text-body-sm text-on-surface-variant underline"

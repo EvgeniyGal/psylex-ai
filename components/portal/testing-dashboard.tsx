@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useTransition } from "react";
 import { completeOnboarding, updateTestStatus } from "@/app/onboarding/actions";
+import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
@@ -38,6 +40,8 @@ type TestingDashboardProps = {
   testsComplete: boolean;
   personalBotReady: boolean;
   canProceed: boolean;
+  flowStep: 2;
+  review?: boolean;
 };
 
 export function TestingDashboard({
@@ -47,6 +51,8 @@ export function TestingDashboard({
   testsComplete,
   personalBotReady,
   canProceed,
+  flowStep,
+  review = false,
 }: TestingDashboardProps) {
   const router = useRouter();
   const { locale, portal: t } = useLocale();
@@ -73,7 +79,7 @@ export function TestingDashboard({
   };
 
   useEffect(() => {
-    if (canProceed) return;
+    if (review || canProceed) return;
 
     const intervalId = window.setInterval(async () => {
       await updateTestStatus();
@@ -81,13 +87,13 @@ export function TestingDashboard({
     }, STATUS_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [canProceed, router]);
+  }, [canProceed, review, router]);
 
-  const showUpdateTestButton = !testsComplete;
-  const showUpdateBotButton = testsComplete && !personalBotReady;
+  const showUpdateTestButton = !review && !testsComplete;
+  const showUpdateBotButton = !review && testsComplete && !personalBotReady;
 
   return (
-    <PortalPageShell>
+    <PortalPageShell flowStep={flowStep}>
       <main className="mx-auto flex w-full max-w-container-max flex-grow flex-col items-center justify-center px-margin-mobile py-stack-lg md:px-margin-desktop">
         <div className="flex w-full max-w-4xl flex-col gap-stack-md">
           <div className="mb-4 text-center">
@@ -99,7 +105,7 @@ export function TestingDashboard({
             {tests.map((test) => {
               const meta = t.testMeta[test.key];
               const testUrl = buildTestUrl(test.url, login);
-              const showOpenTest = !test.completed && !!testUrl;
+              const showOpenTest = !review && !test.completed && !!testUrl;
 
               return (
                 <div key={test.key} className={testCardClass}>
@@ -216,12 +222,14 @@ export function TestingDashboard({
           </div>
 
           <div className="mt-stack-md flex w-full flex-col items-center gap-stack-sm">
-            <div className="flex w-full items-start gap-3 rounded-lg border border-outline-variant/20 bg-surface-container p-4">
-              <span className="material-symbols-outlined mt-1 text-tertiary">info</span>
-              <p className="font-sans text-body-sm text-on-surface-variant">
-                <span className="font-semibold text-on-surface">Hint:</span> {t.testsHint}
-              </p>
-            </div>
+            {!review ? (
+              <div className="flex w-full items-start gap-3 rounded-lg border border-outline-variant/20 bg-surface-container p-4">
+                <span className="material-symbols-outlined mt-1 text-tertiary">info</span>
+                <p className="font-sans text-body-sm text-on-surface-variant">
+                  <span className="font-semibold text-on-surface">Hint:</span> {t.testsHint}
+                </p>
+              </div>
+            ) : null}
             {showUpdateTestButton ? (
               <button
                 className="btn-secondary flex w-full items-center justify-center gap-2 px-6 py-3 text-body-md disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
@@ -252,21 +260,32 @@ export function TestingDashboard({
                 {isUpdatePending ? t.proceedLoading : t.updateBotStatus}
               </button>
             ) : null}
-            <button
-              className="btn-primary mt-4 flex w-full items-center justify-center gap-2 px-8 py-4 font-sans text-body-lg font-bold disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
-              disabled={!canProceed || isNextStepPending}
-              onClick={handleNextStep}
-              type="button"
-            >
-              {isNextStepPending ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
-                  {t.proceedLoading}
-                </>
-              ) : (
-                t.nextStep
-              )}
-            </button>
+            {review ? (
+              <>
+                <FlowReviewNext step={2} />
+                <p className="text-center">
+                  <Link className="text-body-sm text-on-surface-variant underline" href="/room">
+                    {t.flowReviewBackToCurrent}
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <button
+                className="btn-primary mt-4 flex w-full items-center justify-center gap-2 px-8 py-4 font-sans text-body-lg font-bold disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
+                disabled={!canProceed || isNextStepPending}
+                onClick={handleNextStep}
+                type="button"
+              >
+                {isNextStepPending ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                    {t.proceedLoading}
+                  </>
+                ) : (
+                  t.nextStep
+                )}
+              </button>
+            )}
           </div>
         </div>
       </main>
