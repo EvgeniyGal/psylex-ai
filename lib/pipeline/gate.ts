@@ -121,3 +121,16 @@ export async function listRoomsWithBothSidesIntakeComplete() {
 
   return eligible;
 }
+
+export async function listEligibleMediationTestRooms() {
+  const allRooms = await db.select().from(rooms);
+  const eligible = [];
+
+  for (const room of allRooms) {
+    if (await isPostIntakePipelineComplete(room.id)) {
+      eligible.push(room);
+    }
+  }
+
+  return eligible;
+}

@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { rooms, users } from "@/drizzle/schema";
+import { pipelineEventLogs, rooms, users } from "@/drizzle/schema";
 import { RoomDetailContent } from "@/components/admin/room-detail-content";
 
 export default async function AdminRoomDetailPage({
@@ -14,7 +14,21 @@ export default async function AdminRoomDetailPage({
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   if (!room) notFound();
 
-  const participants = await db.select().from(users).where(eq(users.roomId, roomId));
+  const [participants, pipelineEvents] = await Promise.all([
+    db.select().from(users).where(eq(users.roomId, roomId)),
+    db
+      .select()
+      .from(pipelineEventLogs)
+      .where(eq(pipelineEventLogs.roomId, roomId))
+      .orderBy(desc(pipelineEventLogs.createdAt))
+      .limit(50),
+  ]);
 
-  return <RoomDetailContent participants={participants} room={room} />;
+  return (
+    <RoomDetailContent
+      participants={participants}
+      pipelineEvents={pipelineEvents}
+      room={room}
+    />
+  );
 }

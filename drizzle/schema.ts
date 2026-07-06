@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   customType,
   integer,
   jsonb,
@@ -63,6 +64,24 @@ export const legalDocumentCategory = pgEnum("legal_document_category", [
   "odr_international",
 ]);
 
+export const mediationPhase = pgEnum("mediation_phase", [
+  "opening",
+  "dialogue",
+  "generating_options",
+  "voting",
+  "voting_discrepancy",
+  "agreement",
+  "completed",
+]);
+
+export const messageChannel = pgEnum("message_channel", ["shared", "private"]);
+
+export const messageSenderType = pgEnum("message_sender_type", [
+  "participant",
+  "agent",
+  "system",
+]);
+
 export const rooms = pgTable("rooms", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
@@ -80,6 +99,25 @@ export const rooms = pgTable("rooms", {
   partyBMediationStartClickedAt: timestamp("party_b_mediation_start_clicked_at", { withTimezone: true }),
   mediationStartedAt: timestamp("mediation_started_at", { withTimezone: true }),
   mediationDurationMinutes: integer("mediation_duration_minutes").notNull().default(20),
+  mediationPhase: mediationPhase("mediation_phase"),
+  mediationRound: integer("mediation_round").notNull().default(0),
+  mediationActiveParty: text("mediation_active_party"),
+  mediationTurnDeadlineAt: timestamp("mediation_turn_deadline_at", { withTimezone: true }),
+  mediationTurnNudged: boolean("mediation_turn_nudged").notNull().default(false),
+  partyAReadyForOptionsAt: timestamp("party_a_ready_for_options_at", { withTimezone: true }),
+  partyBReadyForOptionsAt: timestamp("party_b_ready_for_options_at", { withTimezone: true }),
+  mediationOptions: jsonb("mediation_options"),
+  compromiseOption: jsonb("compromise_option"),
+  partyAVoteOptionId: text("party_a_vote_option_id"),
+  partyBVoteOptionId: text("party_b_vote_option_id"),
+  partyACompromiseVote: boolean("party_a_compromise_vote"),
+  partyBCompromiseVote: boolean("party_b_compromise_vote"),
+  selectedOptionId: text("selected_option_id"),
+  draftAgreement: jsonb("draft_agreement"),
+  partyAAgreementAcceptedAt: timestamp("party_a_agreement_accepted_at", { withTimezone: true }),
+  partyBAgreementAcceptedAt: timestamp("party_b_agreement_accepted_at", { withTimezone: true }),
+  agreementFinalizedAt: timestamp("agreement_finalized_at", { withTimezone: true }),
+  mediationCompletedAt: timestamp("mediation_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -133,6 +171,8 @@ export const magicTokens = pgTable("magic_tokens", {
 
 export const roomsRelations = relations(rooms, ({ many }) => ({
   participants: many(users),
+  messages: many(roomMessages),
+  filingReceipts: many(mediationFilingReceipts),
 }));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -245,5 +285,58 @@ export const pipelineEventLogsRelations = relations(pipelineEventLogs, ({ one })
   user: one(users, {
     fields: [pipelineEventLogs.userId],
     references: [users.id],
+  }),
+}));
+
+export const roomMessages = pgTable("room_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => rooms.id, { onDelete: "cascade" }),
+  channel: messageChannel("channel").notNull().default("shared"),
+  participantUserId: uuid("participant_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  senderType: messageSenderType("sender_type").notNull(),
+  senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
+  content: text("content").notNull(),
+  canonicalContent: text("canonical_content"),
+  adaptations: jsonb("adaptations"),
+  messageKind: text("message_kind"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const roomMessagesRelations = relations(roomMessages, ({ one }) => ({
+  room: one(rooms, {
+    fields: [roomMessages.roomId],
+    references: [rooms.id],
+  }),
+  participant: one(users, {
+    fields: [roomMessages.participantUserId],
+    references: [users.id],
+  }),
+  sender: one(users, {
+    fields: [roomMessages.senderUserId],
+    references: [users.id],
+  }),
+}));
+
+export const mediationFilingReceipts = pgTable("mediation_filing_receipts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => rooms.id, { onDelete: "cascade" }),
+  selectedOptionId: text("selected_option_id").notNull(),
+  documentVersion: text("document_version").notNull(),
+  contentHash: text("content_hash").notNull(),
+  partyAAcceptedAt: timestamp("party_a_accepted_at", { withTimezone: true }).notNull(),
+  partyBAcceptedAt: timestamp("party_b_accepted_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const mediationFilingReceiptsRelations = relations(mediationFilingReceipts, ({ one }) => ({
+  room: one(rooms, {
+    fields: [mediationFilingReceipts.roomId],
+    references: [rooms.id],
   }),
 }));

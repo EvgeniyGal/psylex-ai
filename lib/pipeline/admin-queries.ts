@@ -7,6 +7,7 @@ import { formatDisputeIntakeAnswers } from "@/lib/pipeline/assemble-input";
 import {
   canTriggerPostIntakePipeline,
   getRoomPartiesForPipeline,
+  listEligibleMediationTestRooms,
   listRoomsWithBothSidesIntakeComplete,
   listUsersForEmotionalTriggersTest,
   listUsersWithPersonalBot,
@@ -27,6 +28,15 @@ export async function getEligibleTestUsers(agentKey: "psychodynamic" | "emotiona
 
 export async function getEligibleTestRooms() {
   const roomsList = await listRoomsWithBothSidesIntakeComplete();
+  return roomsList.map((room) => ({
+    id: room.id,
+    label: room.title,
+    jurisdiction: room.jurisdiction,
+  }));
+}
+
+export async function getMediationTestRooms() {
+  const roomsList = await listEligibleMediationTestRooms();
   return roomsList.map((room) => ({
     id: room.id,
     label: room.title,

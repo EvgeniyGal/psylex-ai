@@ -6,6 +6,7 @@ import { useLocale } from "@/components/locale-provider";
 type MediationCountdownProps = {
   startedAt: string;
   durationMinutes: number;
+  onEnded?: () => void;
 };
 
 function formatRemaining(ms: number) {
@@ -15,7 +16,7 @@ function formatRemaining(ms: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function MediationCountdown({ startedAt, durationMinutes }: MediationCountdownProps) {
+export function MediationCountdown({ startedAt, durationMinutes, onEnded }: MediationCountdownProps) {
   const { portal: t } = useLocale();
   const endsAt = useMemo(
     () => new Date(startedAt).getTime() + durationMinutes * 60_000,
@@ -31,6 +32,10 @@ export function MediationCountdown({ startedAt, durationMinutes }: MediationCoun
   }, [endsAt]);
 
   const ended = remainingMs <= 0;
+
+  useEffect(() => {
+    if (ended) onEnded?.();
+  }, [ended, onEnded]);
 
   return (
     <div className="glass-panel rounded-xl p-6 text-center">

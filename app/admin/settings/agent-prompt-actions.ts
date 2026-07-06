@@ -14,6 +14,7 @@ import { runPsychodynamicAgent } from "@/lib/pipeline/agents/psychodynamic";
 import {
   getEligibleTestRooms,
   getEligibleTestUsers,
+  getMediationTestRooms,
   getRoomTestInputPreview,
   getUserTestInputPreview,
 } from "@/lib/pipeline/admin-queries";
@@ -53,6 +54,13 @@ export async function loadAgentTestOptions(agentKey: AgentKey) {
     return {
       type: "user" as const,
       options: await getEligibleTestUsers(agentKey),
+    };
+  }
+
+  if (agentKey === "mediation") {
+    return {
+      type: "room" as const,
+      options: await getMediationTestRooms(),
     };
   }
 
@@ -123,6 +131,14 @@ export async function testAgentPromptAction(formData: FormData) {
   if (agentKey === "interests") {
     if (!roomId) throw new Error("Select a room.");
     return runInterestsAgent({ roomId, draftPrompt, dryRun: true, targetLocale });
+  }
+
+  if (agentKey === "mediation") {
+    if (!roomId) throw new Error("Select a room.");
+    const { buildMediationTestContext } = await import("@/lib/mediation/orchestrator");
+    const { runMediationSimulation } = await import("@/lib/mediation/run-agent");
+    const { context } = await buildMediationTestContext(roomId);
+    return runMediationSimulation({ context, draftPrompt });
   }
 
   if (!roomId) throw new Error("Select a room.");

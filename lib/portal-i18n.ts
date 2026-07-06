@@ -71,6 +71,46 @@ type PortalCopy = {
   roomTitle: string;
   roomComingSoon: string;
   roomComingSoonDesc: string;
+  mediationPhaseLabel: string;
+  mediationRoundLabel: string;
+  mediationYourTurn: string;
+  mediationReplyTimer: string;
+  mediationReadyForOptions: string;
+  mediationReadyConfirmed: string;
+  mediationOtherReady: string;
+  mediationWaitingOtherReady: string;
+  mediationPreparing: string;
+  mediationYou: string;
+  mediationAgent: string;
+  mediationSystem: string;
+  mediationReplyPlaceholder: string;
+  mediationSendReply: string;
+  mediationAttackRedirected: string;
+  mediationActionFailed: string;
+  mediationOptionsTitle: string;
+  mediationLegalInfo: string;
+  mediationFulfillment: string;
+  mediationRefusalRisks: string;
+  mediationSelectOption: string;
+  mediationVoteRecorded: string;
+  mediationOtherChose: string;
+  mediationCompromiseTitle: string;
+  mediationAcceptCompromise: string;
+  mediationRejectCompromise: string;
+  mediationCompromiseVoteRecorded: string;
+  mediationAgreementTitle: string;
+  mediationUplDisclaimer: string;
+  mediationIAccept: string;
+  mediationAccepted: string;
+  mediationWaitingOtherAccept: string;
+  mediationSessionCompleted: string;
+  mediationDownloadResults: string;
+  mediationEmailPlaceholder: string;
+  mediationEmailSend: string;
+  mediationEmailComingSoon: string;
+  mediationNoAgreementOutcome: string;
+  mediationRefresh: string;
+  mediationPhases: Record<string, string>;
 };
 
 export const portalCopy: Record<Locale, PortalCopy> = {
@@ -193,6 +233,55 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     roomTitle: "Mediation room",
     roomComingSoon: "COMING SOON",
     roomComingSoonDesc: "Mediation room features are being rebuilt and will be available in a future release.",
+    mediationPhaseLabel: "Phase",
+    mediationRoundLabel: "Round",
+    mediationYourTurn: "Your turn to reply",
+    mediationReplyTimer: "Reply time",
+    mediationReadyForOptions: "I am ready for solution options",
+    mediationReadyConfirmed: "You are ready for solution options",
+    mediationOtherReady: "The other party is also ready.",
+    mediationWaitingOtherReady: "Waiting for the other party to click ready.",
+    mediationPreparing: "The mediation agent is preparing your session…",
+    mediationYou: "You",
+    mediationAgent: "Mediation agent",
+    mediationSystem: "System",
+    mediationReplyPlaceholder: "Type your substantive reply…",
+    mediationSendReply: "Send reply",
+    mediationAttackRedirected: "Please focus on the substance of the dispute.",
+    mediationActionFailed: "Action failed. Please try again.",
+    mediationOptionsTitle: "Solution options",
+    mediationLegalInfo: "Legal information (not advice)",
+    mediationFulfillment: "Fulfillment likelihood",
+    mediationRefusalRisks: "Risks if refused",
+    mediationSelectOption: "Select this option",
+    mediationVoteRecorded: "Your vote has been recorded. Waiting for the other party.",
+    mediationOtherChose: "The other party selected option",
+    mediationCompromiseTitle: "Compromise option",
+    mediationAcceptCompromise: "Accept compromise",
+    mediationRejectCompromise: "Reject compromise",
+    mediationCompromiseVoteRecorded: "Your compromise vote has been recorded.",
+    mediationAgreementTitle: "Draft agreement",
+    mediationUplDisclaimer:
+      "This agreement is the result of a voluntary choice made by the parties. PsyLex provides legal information exclusively and does not render legal services. To give the document legal force, it is recommended to consult a licensed attorney.",
+    mediationIAccept: "I accept",
+    mediationAccepted: "You have accepted",
+    mediationWaitingOtherAccept: "Waiting for the other party to accept.",
+    mediationSessionCompleted: "Session completed · Filing receipt saved",
+    mediationDownloadResults: "Download results",
+    mediationEmailPlaceholder: "Email for agreement (optional)",
+    mediationEmailSend: "Send",
+    mediationEmailComingSoon: "Email delivery is coming soon. Use download for now.",
+    mediationNoAgreementOutcome: "No mutual agreement was reached in this session.",
+    mediationRefresh: "Refresh",
+    mediationPhases: {
+      opening: "Opening",
+      dialogue: "Dialogue",
+      generating_options: "Generating options",
+      voting: "Voting",
+      voting_discrepancy: "Second vote",
+      agreement: "Agreement",
+      completed: "Completed",
+    },
   },
   uk: {
     brand: "PsyLex",
@@ -314,6 +403,55 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     roomTitle: "Кімната медіації",
     roomComingSoon: "НЕЗАБАРОМ",
     roomComingSoonDesc: "Функції кімнати медіації перебудовуються та будуть доступні в майбутньому релізі.",
+    mediationPhaseLabel: "Фаза",
+    mediationRoundLabel: "Раунд",
+    mediationYourTurn: "Ваша черга відповісти",
+    mediationReplyTimer: "Час відповіді",
+    mediationReadyForOptions: "Я готовий до варіантів рішення",
+    mediationReadyConfirmed: "Ви позначили готовність до варіантів",
+    mediationOtherReady: "Інша сторона теж готова.",
+    mediationWaitingOtherReady: "Очікуємо, поки інша сторона натисне «готово».",
+    mediationPreparing: "Агент медіації готує сесію…",
+    mediationYou: "Ви",
+    mediationAgent: "Агент медіації",
+    mediationSystem: "Система",
+    mediationReplyPlaceholder: "Введіть змістовну відповідь…",
+    mediationSendReply: "Надіслати відповідь",
+    mediationAttackRedirected: "Будь ласка, зосередьтеся на суті спору.",
+    mediationActionFailed: "Не вдалося виконати дію. Спробуйте ще раз.",
+    mediationOptionsTitle: "Варіанти рішення",
+    mediationLegalInfo: "Правова інформація (не порада)",
+    mediationFulfillment: "Ймовірність виконання",
+    mediationRefusalRisks: "Ризики відмови",
+    mediationSelectOption: "Обрати цей варіант",
+    mediationVoteRecorded: "Ваш голос зафіксовано. Очікуємо іншу сторону.",
+    mediationOtherChose: "Інша сторона обрала варіант",
+    mediationCompromiseTitle: "Компромісний варіант",
+    mediationAcceptCompromise: "Прийняти компроміс",
+    mediationRejectCompromise: "Відхилити компроміс",
+    mediationCompromiseVoteRecorded: "Ваш голос щодо компромісу зафіксовано.",
+    mediationAgreementTitle: "Проєкт угоди",
+    mediationUplDisclaimer:
+      "Ця угода є результатом добровільного вибору сторін. PsyLex надає виключно правову інформацію і не надає юридичних послуг. Щоб надати документу юридичну силу, рекомендується звернутися до ліцензованого адвоката.",
+    mediationIAccept: "Я приймаю",
+    mediationAccepted: "Ви прийняли угоду",
+    mediationWaitingOtherAccept: "Очікуємо прийняття від іншої сторони.",
+    mediationSessionCompleted: "Сесію завершено · Квитанцію збережено",
+    mediationDownloadResults: "Завантажити результати",
+    mediationEmailPlaceholder: "Email для угоди (необовʼязково)",
+    mediationEmailSend: "Надіслати",
+    mediationEmailComingSoon: "Надсилання email незабаром. Поки що скористайтеся завантаженням.",
+    mediationNoAgreementOutcome: "У цій сесії взаємну згоду не досягнуто.",
+    mediationRefresh: "Оновити",
+    mediationPhases: {
+      opening: "Відкриття",
+      dialogue: "Діалог",
+      generating_options: "Генерація варіантів",
+      voting: "Голосування",
+      voting_discrepancy: "Друге голосування",
+      agreement: "Угода",
+      completed: "Завершено",
+    },
   },
 };
 

@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { RoomExperience } from "@/components/portal/room/room-experience";
+import { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { getMediationLobbyData, hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { requireParticipantSession } from "@/lib/portal-auth";
-import { getRoomPageData } from "@/lib/room/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +35,10 @@ export default async function RoomPage() {
     redirect("/mediation");
   }
 
-  const data = await getRoomPageData(userId);
-  if (!data) {
+  const mediationState = await fetchMediationRoomState();
+  if (!mediationState) {
     redirect("/mediation");
   }
 
-  return <RoomExperience data={data} />;
+  return <RoomExperience mediationState={mediationState} />;
 }

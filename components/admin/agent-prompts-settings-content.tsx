@@ -40,6 +40,7 @@ function tabLabel(agentKey: AgentKey, admin: ReturnType<typeof useLocale>["admin
   if (agentKey === "psychodynamic") return admin.agentTabPsychodynamic;
   if (agentKey === "interests") return admin.agentTabInterests;
   if (agentKey === "emotional_triggers") return admin.agentTabEmotionalTriggers;
+  if (agentKey === "mediation") return admin.agentTabMediation;
   return admin.agentTabLegalAnalysis;
 }
 

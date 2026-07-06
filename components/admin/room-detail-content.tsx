@@ -31,6 +31,11 @@ export type RoomDetailRow = {
   jurisdiction: RoomJurisdiction;
   usaSubJurisdiction: string | null;
   createdAt: Date;
+  mediationStartedAt: Date | null;
+  mediationPhase: string | null;
+  mediationRound: number;
+  mediationCompletedAt: Date | null;
+  selectedOptionId: string | null;
 };
 
 const inputClass =
@@ -162,12 +167,19 @@ function ParticipantSection({
 export function RoomDetailContent({
   room,
   participants,
+  pipelineEvents = [],
   basePath = "/admin/rooms",
   readOnly = false,
   showCredentials,
 }: {
   room: RoomDetailRow;
   participants: RoomUserRow[];
+  pipelineEvents?: Array<{
+    id: string;
+    agentKey: string | null;
+    eventType: string;
+    createdAt: Date;
+  }>;
   basePath?: string;
   readOnly?: boolean;
   showCredentials?: boolean;
@@ -234,6 +246,45 @@ export function RoomDetailContent({
           </p>
         </div>
       </div>
+
+      {room.mediationStartedAt ? (
+        <div className="glass-panel space-y-3 rounded-xl p-6">
+          <h4 className="font-display text-headline-md text-on-surface">{admin.mediationStatusTitle}</h4>
+          <p className="text-body-sm text-on-surface-variant">
+            {admin.mediationPhaseLabel}:{" "}
+            <span className="text-on-surface">{room.mediationPhase ?? admin.mediationNotStarted}</span>
+          </p>
+          <p className="text-body-sm text-on-surface-variant">
+            {admin.mediationRoundLabel}: {room.mediationRound}
+          </p>
+          {room.selectedOptionId ? (
+            <p className="text-body-sm text-on-surface-variant">
+              {admin.mediationSelectedOption}: {room.selectedOptionId}
+            </p>
+          ) : null}
+          {room.mediationCompletedAt ? (
+            <p className="text-body-sm text-on-surface-variant">
+              {admin.mediationCompletedAt}: {formatDateTime(room.mediationCompletedAt, locale)}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {pipelineEvents.length > 0 ? (
+        <div className="glass-panel space-y-3 rounded-xl p-6">
+          <h4 className="font-display text-headline-md text-on-surface">{admin.pipelineLogTitle}</h4>
+          <ul className="max-h-64 space-y-2 overflow-y-auto text-body-sm text-on-surface-variant">
+            {pipelineEvents.map((event) => (
+              <li className="border-b border-hair pb-2" key={event.id}>
+                <span className="text-on-surface">{event.eventType}</span>
+                {event.agentKey ? ` · ${event.agentKey}` : ""}
+                {" · "}
+                {formatDateTime(event.createdAt, locale)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {readOnly ? (
         <div className="glass-panel space-y-4 rounded-xl p-6">

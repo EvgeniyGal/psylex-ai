@@ -1,19 +1,19 @@
 import type { z } from "zod";
 import type { Locale } from "@/lib/i18n";
-import type { AgentKey } from "@/lib/pipeline/agent-keys";
+import type { PostIntakeAgentKey } from "@/lib/pipeline/agent-keys";
 import { localeInstruction } from "@/lib/pipeline/locale";
 import { loadAgentPrompt } from "@/lib/pipeline/load-prompt";
 import { getOpenAIClient, parseJsonFromModelResponse } from "@/lib/pipeline/openai-client";
 import { agentOutputSchemas } from "@/lib/pipeline/schemas";
 
-type RunAgentParams<T extends AgentKey> = {
+type RunAgentParams<T extends PostIntakeAgentKey> = {
   agentKey: T;
   userMessage: string;
   draftPrompt?: string;
   targetLocale: Locale;
 };
 
-export async function runAgent<T extends AgentKey>(params: RunAgentParams<T>) {
+export async function runAgent<T extends PostIntakeAgentKey>(params: RunAgentParams<T>) {
   type Output = z.infer<(typeof agentOutputSchemas)[T]>;
   const schema = agentOutputSchemas[params.agentKey];
   const systemPrompt = await loadAgentPrompt(params.agentKey, params.draftPrompt);

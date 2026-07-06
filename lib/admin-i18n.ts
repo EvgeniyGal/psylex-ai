@@ -130,6 +130,7 @@ export type AdminCopy = {
   agentTabInterests: string;
   agentTabEmotionalTriggers: string;
   agentTabLegalAnalysis: string;
+  agentTabMediation: string;
   agentSystemPrompt: string;
   agentTestPanel: string;
   agentTestSelectUser: string;
@@ -143,6 +144,13 @@ export type AdminCopy = {
   agentTestResponseLocale: string;
   agentLegalNotFoundTitle: string;
   agentPromptSaved: string;
+  mediationStatusTitle: string;
+  mediationPhaseLabel: string;
+  mediationRoundLabel: string;
+  mediationNotStarted: string;
+  mediationSelectedOption: string;
+  mediationCompletedAt: string;
+  pipelineLogTitle: string;
   comingSoon: string;
   comingSoonDesc: string;
   general: string;
@@ -283,11 +291,12 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragFileLabel: "File (TXT, PDF, DOCX)",
     promptsComingSoonDesc:
       "AI prompt configuration will be available here in a future release.",
-    agentPromptsSubtitle: "Edit system prompts and test each post-intake analysis agent in isolation.",
+    agentPromptsSubtitle: "Edit system prompts and test each analysis agent in isolation.",
     agentTabPsychodynamic: "Psychodynamic",
     agentTabInterests: "Interests",
     agentTabEmotionalTriggers: "Emotional Triggers",
     agentTabLegalAnalysis: "Legal Analysis",
+    agentTabMediation: "Mediation Agent",
     agentSystemPrompt: "System prompt",
     agentTestPanel: "Test agent",
     agentTestSelectUser: "Select participant",
@@ -301,6 +310,13 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     agentTestResponseLocale: "Response language",
     agentLegalNotFoundTitle: "No relevant legal information found",
     agentPromptSaved: "Agent prompt saved",
+    mediationStatusTitle: "Mediation session",
+    mediationPhaseLabel: "Phase",
+    mediationRoundLabel: "Round",
+    mediationNotStarted: "Not started",
+    mediationSelectedOption: "Selected option",
+    mediationCompletedAt: "Completed at",
+    pipelineLogTitle: "Pipeline & mediation log",
     comingSoon: "COMING SOON",
     comingSoonDesc:
       "Application settings are not yet available in this MVP. Future releases will include notification preferences, branding options, and integration controls.",
@@ -445,11 +461,12 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragFileLabel: "Файл (TXT, PDF, DOCX)",
     promptsComingSoonDesc:
       "Налаштування AI-промптів буде доступне тут у майбутньому релізі.",
-    agentPromptsSubtitle: "Редагуйте системні промпти та тестуйте кожного агента пост-інтейк аналізу окремо.",
+    agentPromptsSubtitle: "Редагуйте системні промпти та тестуйте кожного агента аналізу окремо.",
     agentTabPsychodynamic: "Психодинаміка",
     agentTabInterests: "Інтереси",
     agentTabEmotionalTriggers: "Емоційні тригери",
     agentTabLegalAnalysis: "Правовий аналіз",
+    agentTabMediation: "Агент медіації",
     agentSystemPrompt: "Системний промпт",
     agentTestPanel: "Тест агента",
     agentTestSelectUser: "Оберіть учасника",
@@ -463,6 +480,13 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     agentTestResponseLocale: "Мова відповіді",
     agentLegalNotFoundTitle: "Релевантну правову інформацію не знайдено",
     agentPromptSaved: "Промпт агента збережено",
+    mediationStatusTitle: "Сесія медіації",
+    mediationPhaseLabel: "Фаза",
+    mediationRoundLabel: "Раунд",
+    mediationNotStarted: "Не розпочато",
+    mediationSelectedOption: "Обраний варіант",
+    mediationCompletedAt: "Завершено",
+    pipelineLogTitle: "Журнал пайплайну та медіації",
     comingSoon: "НЕЗАБАРОМ",
     comingSoonDesc:
       "Налаштування застосунку ще недоступні в цьому MVP. У майбутніх релізах з’являться сповіщення, брендинг та інтеграції.",
