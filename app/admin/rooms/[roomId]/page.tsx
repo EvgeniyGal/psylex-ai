@@ -1,8 +1,10 @@
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { pipelineEventLogs, rooms, users } from "@/drizzle/schema";
+import { rooms, users } from "@/drizzle/schema";
 import { RoomDetailContent } from "@/components/admin/room-detail-content";
+import { getAdminMediationDetails } from "@/lib/mediation/admin-room-details";
+import { getRoomActivityLog } from "@/lib/pipeline/room-activity-log";
 
 export default async function AdminRoomDetailPage({
   params,
@@ -14,20 +16,17 @@ export default async function AdminRoomDetailPage({
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   if (!room) notFound();
 
-  const [participants, pipelineEvents] = await Promise.all([
+  const [participants, activityLog, mediationDetails] = await Promise.all([
     db.select().from(users).where(eq(users.roomId, roomId)),
-    db
-      .select()
-      .from(pipelineEventLogs)
-      .where(eq(pipelineEventLogs.roomId, roomId))
-      .orderBy(desc(pipelineEventLogs.createdAt))
-      .limit(50),
+    getRoomActivityLog(roomId),
+    getAdminMediationDetails(roomId),
   ]);
 
   return (
     <RoomDetailContent
+      activityLog={activityLog}
+      mediationDetails={mediationDetails}
       participants={participants}
-      pipelineEvents={pipelineEvents}
       room={room}
     />
   );

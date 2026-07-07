@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -9,6 +9,8 @@ import { rooms, users } from "@/drizzle/schema";
 import { authOptions } from "@/lib/auth";
 import { requireSessionUserId } from "@/lib/auth-session";
 import { generateLogin, generatePassword } from "@/lib/generate-credentials";
+import type { Locale } from "@/lib/i18n";
+import { buildAdminAgreementDownload } from "@/lib/mediation/pdf";
 import { isRoomJurisdiction } from "@/lib/room/jurisdiction";
 import { isUsaSubJurisdiction, parseUsaSubJurisdiction } from "@/lib/rag/usa-jurisdictions";
 
@@ -26,6 +28,23 @@ async function assertCanManageRooms() {
   }
   const userId = await requireSessionUserId();
   return { role, userId };
+}
+
+async function assertCanAccessRoom(roomId: string) {
+  const { role, userId } = await assertCanManageRooms();
+  if (role === "mediator") {
+    const [room] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(and(eq(rooms.id, roomId), eq(rooms.createdByUserId, userId)))
+      .limit(1);
+    if (!room) throw new Error("Unauthorized");
+  }
+}
+
+export async function downloadRoomMediationResults(roomId: string, locale: Locale = "en") {
+  await assertCanAccessRoom(roomId);
+  return buildAdminAgreementDownload(roomId, locale);
 }
 
 export async function createRoom(formData: FormData) {

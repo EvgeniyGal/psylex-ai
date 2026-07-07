@@ -9,8 +9,12 @@ import {
   updateRoomMeta,
 } from "@/app/admin/rooms/actions";
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
+import { RoomMediationDetailsModal } from "@/components/admin/room-mediation-details-modal";
 import { useLocale } from "@/components/locale-provider";
 import { formatDateTime } from "@/lib/format-datetime";
+import { formatRoomActivityEntry } from "@/lib/pipeline/format-room-activity-log";
+import type { RoomActivityEntry } from "@/lib/pipeline/room-activity-log";
+import type { AdminMediationDetails } from "@/lib/mediation/admin-room-details";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
 import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
 
@@ -167,19 +171,16 @@ function ParticipantSection({
 export function RoomDetailContent({
   room,
   participants,
-  pipelineEvents = [],
+  activityLog = [],
+  mediationDetails = null,
   basePath = "/admin/rooms",
   readOnly = false,
   showCredentials,
 }: {
   room: RoomDetailRow;
   participants: RoomUserRow[];
-  pipelineEvents?: Array<{
-    id: string;
-    agentKey: string | null;
-    eventType: string;
-    createdAt: Date;
-  }>;
+  activityLog?: RoomActivityEntry[];
+  mediationDetails?: AdminMediationDetails | null;
   basePath?: string;
   readOnly?: boolean;
   showCredentials?: boolean;
@@ -193,6 +194,7 @@ export function RoomDetailContent({
   const [description, setDescription] = useState(room.description);
   const [roomPending, startRoomTransition] = useTransition();
   const [deletePending, startDeleteTransition] = useTransition();
+  const [mediationDetailsOpen, setMediationDetailsOpen] = useState(false);
 
   useEffect(() => {
     setTitle(room.title);
@@ -218,6 +220,10 @@ export function RoomDetailContent({
       await deleteRoom(formData);
     });
   };
+
+  const formattedActivityLog = activityLog.map((entry) =>
+    formatRoomActivityEntry(admin, entry),
+  );
 
   return (
     <section className="space-y-stack-lg">
@@ -245,7 +251,26 @@ export function RoomDetailContent({
             </span>
           </p>
         </div>
+        {mediationDetails ? (
+          <button
+            className="btn-primary inline-flex shrink-0 items-center gap-2 px-5 py-2.5 text-body-sm font-semibold shadow-md ring-2 ring-law/20 transition-shadow hover:shadow-lg"
+            onClick={() => setMediationDetailsOpen(true)}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[20px]">forum</span>
+            {admin.mediationDetailsButton}
+          </button>
+        ) : null}
       </div>
+
+      {mediationDetails ? (
+        <RoomMediationDetailsModal
+          details={mediationDetails}
+          onClose={() => setMediationDetailsOpen(false)}
+          open={mediationDetailsOpen}
+          roomId={room.id}
+        />
+      ) : null}
 
       {room.mediationStartedAt ? (
         <div className="glass-panel space-y-3 rounded-xl p-6">
@@ -270,21 +295,49 @@ export function RoomDetailContent({
         </div>
       ) : null}
 
-      {pipelineEvents.length > 0 ? (
-        <div className="glass-panel space-y-3 rounded-xl p-6">
+      <div className="glass-panel space-y-3 rounded-xl p-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h4 className="font-display text-headline-md text-on-surface">{admin.pipelineLogTitle}</h4>
-          <ul className="max-h-64 space-y-2 overflow-y-auto text-body-sm text-on-surface-variant">
-            {pipelineEvents.map((event) => (
-              <li className="border-b border-hair pb-2" key={event.id}>
-                <span className="text-on-surface">{event.eventType}</span>
-                {event.agentKey ? ` · ${event.agentKey}` : ""}
-                {" · "}
-                {formatDateTime(event.createdAt, locale)}
+          {formattedActivityLog.length > 0 ? (
+            <span className="text-body-sm text-on-surface-variant">
+              {formattedActivityLog.length}
+            </span>
+          ) : null}
+        </div>
+        {formattedActivityLog.length === 0 ? (
+          <p className="text-body-sm text-on-surface-variant">{admin.activityLogEmpty}</p>
+        ) : (
+          <ul className="max-h-[32rem] space-y-3 overflow-y-auto">
+            {formattedActivityLog.map((entry) => (
+              <li className="border-b border-hair pb-3 last:border-b-0" key={entry.id}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="text-body-sm font-semibold text-on-surface">{entry.title}</p>
+                    {entry.subtitle ? (
+                      <p className="text-body-sm text-on-surface-variant">{entry.subtitle}</p>
+                    ) : null}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-body-sm text-on-surface-variant">
+                      {formatDateTime(entry.occurredAt, locale)}
+                    </p>
+                    <p className="text-body-sm text-on-surface-variant/80">{entry.sourceLabel}</p>
+                  </div>
+                </div>
+                {entry.detailLines.length > 0 ? (
+                  <div className="mt-2 space-y-1 rounded-md bg-surface-container-low/60 p-3 text-body-sm text-on-surface-variant">
+                    {entry.detailLines.map((line, index) => (
+                      <p className="whitespace-pre-wrap break-words" key={`${entry.id}-${index}`}>
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
-        </div>
-      ) : null}
+        )}
+      </div>
 
       {readOnly ? (
         <div className="glass-panel space-y-4 rounded-xl p-6">

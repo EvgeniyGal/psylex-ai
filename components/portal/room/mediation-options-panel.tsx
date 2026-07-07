@@ -22,6 +22,7 @@ type MediationOptionsPanelProps = {
   partyBVoteOptionId: string | null;
   selectedOptionId: string | null;
   review?: boolean;
+  showHeading?: boolean;
   canVote?: boolean;
   pending?: boolean;
   onVote?: (optionId: string) => void;
@@ -44,6 +45,7 @@ export function MediationOptionsPanel({
   partyBVoteOptionId,
   selectedOptionId,
   review = false,
+  showHeading = true,
   canVote = false,
   pending = false,
   onVote,
@@ -63,7 +65,9 @@ export function MediationOptionsPanel({
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display text-headline-md text-on-surface">{t.mediationOptionsTitle}</h2>
+      {showHeading ? (
+        <h2 className="font-display text-headline-md text-on-surface">{t.mediationOptionsTitle}</h2>
+      ) : null}
       {options.map((option, index) => {
         const isSelfSelection = selfVote === option.id;
         const isPartyASelection = partyAVote === option.id;
@@ -142,16 +146,3 @@ export function MediationOptionsPanel({
     </div>
   );
 }
-
-function shouldShowOptionsPanel(phase: MediationPhase | null, optionsCount: number) {
-  if (optionsCount === 0) return false;
-  return (
-    phase === "generating_options" ||
-    phase === "voting" ||
-    phase === "voting_discrepancy" ||
-    phase === "agreement" ||
-    phase === "completed"
-  );
-}
-
-export { shouldShowOptionsPanel };

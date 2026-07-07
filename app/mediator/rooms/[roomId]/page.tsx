@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { rooms, users } from "@/drizzle/schema";
 import { requireSessionUserId } from "@/lib/auth-session";
 import { RoomDetailContent } from "@/components/admin/room-detail-content";
+import { getAdminMediationDetails } from "@/lib/mediation/admin-room-details";
+import { getRoomActivityLog } from "@/lib/pipeline/room-activity-log";
 
 export default async function MediatorRoomDetailPage({
   params,
@@ -20,11 +22,17 @@ export default async function MediatorRoomDetailPage({
     .limit(1);
   if (!room) notFound();
 
-  const participants = await db.select().from(users).where(eq(users.roomId, roomId));
+  const [participants, activityLog, mediationDetails] = await Promise.all([
+    db.select().from(users).where(eq(users.roomId, roomId)),
+    getRoomActivityLog(roomId),
+    getAdminMediationDetails(roomId),
+  ]);
 
   return (
     <RoomDetailContent
+      activityLog={activityLog}
       basePath="/mediator/rooms"
+      mediationDetails={mediationDetails}
       participants={participants}
       readOnly
       showCredentials

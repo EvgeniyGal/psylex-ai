@@ -151,6 +151,25 @@ export type AdminCopy = {
   mediationSelectedOption: string;
   mediationCompletedAt: string;
   pipelineLogTitle: string;
+  mediationDetailsButton: string;
+  mediationDetailsTitle: string;
+  mediationDetailsMessagesTitle: string;
+  mediationDetailsNoMessages: string;
+  mediationDetailsOptionsTitle: string;
+  mediationDetailsNoVote: string;
+  mediationDetailsAgreementTitle: string;
+  mediationDetailsAgreementPending: string;
+  mediationDetailsCompromiseVote: string;
+  mediationDetailsAccepted: string;
+  mediationDetailsRejected: string;
+  mediationDetailsActionFailed: string;
+  activityLogEmpty: string;
+  activityLogSourcePipeline: string;
+  activityLogSourceMilestone: string;
+  activityLogEvents: Record<string, string>;
+  activityLogPipelineEvents: Record<string, string>;
+  activityLogTests: Record<string, string>;
+  activityLogFields: Record<string, string>;
   comingSoon: string;
   comingSoonDesc: string;
   general: string;
@@ -317,6 +336,84 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediationSelectedOption: "Selected option",
     mediationCompletedAt: "Completed at",
     pipelineLogTitle: "Pipeline & mediation log",
+    mediationDetailsButton: "Mediation details",
+    mediationDetailsTitle: "Mediation details",
+    mediationDetailsMessagesTitle: "Mediation dialogue",
+    mediationDetailsNoMessages: "No messages yet.",
+    mediationDetailsOptionsTitle: "Solution options & votes",
+    mediationDetailsNoVote: "No vote",
+    mediationDetailsAgreementTitle: "Agreement & results",
+    mediationDetailsAgreementPending: "Agreement and final results will appear here after mediation is completed.",
+    mediationDetailsCompromiseVote: "Compromise vote",
+    mediationDetailsAccepted: "Accepted",
+    mediationDetailsRejected: "Rejected",
+    mediationDetailsActionFailed: "Action failed",
+    activityLogEmpty: "No activity recorded yet.",
+    activityLogSourcePipeline: "Pipeline",
+    activityLogSourceMilestone: "Milestone",
+    activityLogEvents: {
+      room_created: "Room created",
+      welcome_seen: "Welcome screen viewed",
+      disclaimer_accepted: "Disclaimer accepted",
+      test_completed: "Assessment test completed",
+      onboarding_completed: "Onboarding completed",
+      personal_bot_ready: "Personal AI bot ready",
+      dispute_intake_submitted: "Dispute intake submitted",
+      psychodynamic_profile_completed: "Psychodynamic profile generated",
+      emotional_triggers_completed: "Emotional triggers profile generated",
+      interests_analysis_completed: "Interests analysis completed",
+      legal_analysis_completed: "Legal analysis completed",
+      post_intake_pipeline_started: "Post-intake pipeline started",
+      post_intake_pipeline_completed: "Post-intake pipeline completed",
+      mediation_start_clicked: "Start mediation clicked",
+      mediation_started: "Mediation session started",
+      ready_for_options: "Ready for solution options",
+      agreement_accepted: "Agreement accepted",
+      agreement_finalized: "Agreement finalized",
+      mediation_completed: "Mediation completed",
+      compromise_votes_recorded: "Compromise votes recorded",
+      filing_receipt_saved: "Filing receipt saved",
+      participant_message: "Participant message",
+    },
+    activityLogPipelineEvents: {
+      pipeline_triggered: "Pipeline triggered",
+      pipeline_completed: "Pipeline completed",
+      agent_started: "Agent started",
+      agent_completed: "Agent completed",
+      agent_failed: "Agent failed",
+      agent_skipped: "Agent skipped",
+      mediation_phase_changed: "Mediation phase changed",
+      mediation_timer_expired: "Mediation timer expired",
+    },
+    activityLogTests: {
+      personality_type: "Personality type",
+      face_fear: "Face to face with fear",
+      character_traits: "Character traits",
+      personality_conflicts: "Personality conflicts",
+    },
+    activityLogFields: {
+      test: "Test",
+      disputeDescription: "Dispute description",
+      disputePriority: "Priority",
+      disputeAcceptableOutcome: "Acceptable outcome",
+      channel: "Channel",
+      messageKind: "Message type",
+      message: "Message",
+      personalBotPrompt: "Personal bot prompt",
+      phase: "Phase",
+      reason: "Reason",
+      step: "Step",
+      count: "Count",
+      selectedOptionId: "Selected option",
+      partyAVoteOptionId: "Party A vote",
+      partyBVoteOptionId: "Party B vote",
+      partyACompromiseVote: "Party A compromise vote",
+      partyBCompromiseVote: "Party B compromise vote",
+      contentHash: "Content hash",
+      profile: "Profile",
+      triggers: "Triggers",
+      error: "Error",
+    },
     comingSoon: "COMING SOON",
     comingSoonDesc:
       "Application settings are not yet available in this MVP. Future releases will include notification preferences, branding options, and integration controls.",
@@ -487,6 +584,85 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediationSelectedOption: "Обраний варіант",
     mediationCompletedAt: "Завершено",
     pipelineLogTitle: "Журнал пайплайну та медіації",
+    mediationDetailsButton: "Деталі медіації",
+    mediationDetailsTitle: "Деталі медіації",
+    mediationDetailsMessagesTitle: "Діалог медіації",
+    mediationDetailsNoMessages: "Повідомлень ще немає.",
+    mediationDetailsOptionsTitle: "Варіанти рішень і голоси",
+    mediationDetailsNoVote: "Без голосу",
+    mediationDetailsAgreementTitle: "Угода та результати",
+    mediationDetailsAgreementPending:
+      "Угода та фінальні результати з’являться тут після завершення медіації.",
+    mediationDetailsCompromiseVote: "Голос за компроміс",
+    mediationDetailsAccepted: "Прийнято",
+    mediationDetailsRejected: "Відхилено",
+    mediationDetailsActionFailed: "Не вдалося виконати дію",
+    activityLogEmpty: "Активність ще не зафіксована.",
+    activityLogSourcePipeline: "Пайплайн",
+    activityLogSourceMilestone: "Етап",
+    activityLogEvents: {
+      room_created: "Кімнату створено",
+      welcome_seen: "Переглянуто вітальний екран",
+      disclaimer_accepted: "Дисклеймер прийнято",
+      test_completed: "Тест пройдено",
+      onboarding_completed: "Онбординг завершено",
+      personal_bot_ready: "Особистий AI-бот готовий",
+      dispute_intake_submitted: "Анкету спору подано",
+      psychodynamic_profile_completed: "Психодинамічний профіль згенеровано",
+      emotional_triggers_completed: "Профіль емоційних тригерів згенеровано",
+      interests_analysis_completed: "Аналіз інтересів завершено",
+      legal_analysis_completed: "Правовий аналіз завершено",
+      post_intake_pipeline_started: "Пост-інтейк пайплайн розпочато",
+      post_intake_pipeline_completed: "Пост-інтейк пайплайн завершено",
+      mediation_start_clicked: "Натиснуто «Почати медіацію»",
+      mediation_started: "Сесію медіації розпочато",
+      ready_for_options: "Готовність до варіантів рішень",
+      agreement_accepted: "Угоду прийнято",
+      agreement_finalized: "Угоду фіналізовано",
+      mediation_completed: "Медіацію завершено",
+      compromise_votes_recorded: "Голоси за компроміс зафіксовано",
+      filing_receipt_saved: "Квитанцію подання збережено",
+      participant_message: "Повідомлення учасника",
+    },
+    activityLogPipelineEvents: {
+      pipeline_triggered: "Пайплайн запущено",
+      pipeline_completed: "Пайплайн завершено",
+      agent_started: "Агента запущено",
+      agent_completed: "Агента завершено",
+      agent_failed: "Помилка агента",
+      agent_skipped: "Агента пропущено",
+      mediation_phase_changed: "Фазу медіації змінено",
+      mediation_timer_expired: "Таймер медіації завершився",
+    },
+    activityLogTests: {
+      personality_type: "Тип особистості",
+      face_fear: "Віч-на-віч зі страхом",
+      character_traits: "Риси характеру",
+      personality_conflicts: "Конфлікти особистості",
+    },
+    activityLogFields: {
+      test: "Тест",
+      disputeDescription: "Опис спору",
+      disputePriority: "Пріоритет",
+      disputeAcceptableOutcome: "Прийнятний результат",
+      channel: "Канал",
+      messageKind: "Тип повідомлення",
+      message: "Повідомлення",
+      personalBotPrompt: "Промпт особистого бота",
+      phase: "Фаза",
+      reason: "Причина",
+      step: "Крок",
+      count: "Кількість",
+      selectedOptionId: "Обраний варіант",
+      partyAVoteOptionId: "Голос сторони А",
+      partyBVoteOptionId: "Голос сторони Б",
+      partyACompromiseVote: "Компроміс сторони А",
+      partyBCompromiseVote: "Компроміс сторони Б",
+      contentHash: "Хеш вмісту",
+      profile: "Профіль",
+      triggers: "Тригери",
+      error: "Помилка",
+    },
     comingSoon: "НЕЗАБАРОМ",
     comingSoonDesc:
       "Налаштування застосунку ще недоступні в цьому MVP. У майбутніх релізах з’являться сповіщення, брендинг та інтеграції.",
