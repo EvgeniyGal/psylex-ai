@@ -101,7 +101,7 @@ The `/room` route SHALL be accessible to side participants only when `rooms.medi
 
 ### Requirement: 20-minute mediation countdown
 
-The mediation room SHALL display a countdown timer showing remaining session time, defaulting to **20 minutes** from `mediation_started_at`.
+The mediation room SHALL display a countdown timer showing remaining session time, defaulting to **20 minutes** from `mediation_started_at`. When the timer reaches zero during an active mediation session, the system SHALL apply mediation session flow transition rules (advance to solution-option generation or close the current phase per `mediation-session-flow`) rather than showing only a placeholder message.
 
 #### Scenario: Countdown visible at start
 
@@ -115,9 +115,10 @@ The mediation room SHALL display a countdown timer showing remaining session tim
 
 #### Scenario: Countdown reaches zero
 
-- **WHEN** the countdown reaches 00:00
-- **THEN** a localized session-ended message is shown
-- **AND** no additional mediation logic is triggered (placeholder for future work)
+- **WHEN** the countdown reaches 00:00 during `opening`, `dialogue`, or `generating_options`
+- **THEN** the mediation session flow timer-expiry transition runs
+- **AND** participants see a localized notice that the dialogue time has ended
+- **AND** the session continues into solution options or voting per current phase rules
 
 ### Requirement: Handshake server guard
 
