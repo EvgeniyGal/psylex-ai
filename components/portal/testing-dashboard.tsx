@@ -8,6 +8,7 @@ import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
+import type { ParticipantFlowStepId } from "@/lib/participant-flow";
 import type { ParticipantRole } from "@/lib/participant-roles";
 import { buildTestUrl } from "@/lib/test-links";
 import type { TestKey } from "@/lib/test-keys";
@@ -40,7 +41,7 @@ type TestingDashboardProps = {
   testsComplete: boolean;
   personalBotReady: boolean;
   canProceed: boolean;
-  flowStep: 2;
+  flowStep: ParticipantFlowStepId;
   review?: boolean;
 };
 
