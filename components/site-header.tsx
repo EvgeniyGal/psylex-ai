@@ -53,10 +53,7 @@ export function SiteHeader({
       <div className="mx-auto flex h-14 max-w-container-max items-center justify-between gap-4 px-margin-mobile md:px-margin-desktop">
         <Link className="flex items-center gap-2.5 transition-opacity hover:opacity-90" href={brandHref}>
           <Image alt="PsyLex" className="h-7 w-auto" height={28} src="/logo.webp" unoptimized width={28} />
-          <span className="flex items-center gap-2.5 text-[13px] font-medium uppercase tracking-[0.12em] text-ink-soft">
-            <span className="h-[7px] w-[7px] rounded-full bg-law" />
-            <span className="wordmark text-[17px] normal-case tracking-[0.02em] text-ink">PsyLex</span>
-          </span>
+          <span className="wordmark text-[17px] font-medium normal-case tracking-[0.02em] text-ink">PsyLex</span>
         </Link>
         {trailing ? <div className="flex items-center gap-4">{trailing}</div> : null}
       </div>

@@ -89,6 +89,10 @@ type PortalCopy = {
   mediationActionFailed: string;
   mediationOptionsTitle: string;
   mediationOptionsReady: string;
+  mediationOptionLabel: string;
+  mediationYourSelection: string;
+  mediationPartySelected: string;
+  mediationAgreedResolution: string;
   mediationLegalInfo: string;
   mediationFulfillment: string;
   mediationRefusalRisks: string;
@@ -109,6 +113,10 @@ type PortalCopy = {
   mediationPdfPsychodynamicProfile: string;
   mediationPdfLegislation: string;
   mediationPdfSolution: string;
+  mediationPdfDocumentTitle: string;
+  mediationPdfCompanyName: string;
+  mediationPdfTopDisclaimer: string;
+  mediationPdfTerms: string;
   mediationPdfNotAvailable: string;
   mediationLegislationJurisdiction: string;
   mediationLegislationSolutionNorms: string;
@@ -118,6 +126,7 @@ type PortalCopy = {
   mediationLegislationCitations: string;
   mediationLegislationRelevance: string;
   mediationLegislationSource: string;
+  mediationLegislationExcerpt: string;
   mediationEmailPlaceholder: string;
   mediationEmailSend: string;
   mediationEmailComingSoon: string;
@@ -269,6 +278,10 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationOptionsTitle: "Solution options",
     mediationOptionsReady:
       "Solution options are ready. Please review and vote independently.",
+    mediationOptionLabel: "Option {n}",
+    mediationYourSelection: "Your selection",
+    mediationPartySelected: "{party} selected",
+    mediationAgreedResolution: "Agreed resolution",
     mediationLegalInfo: "Legal information (not advice)",
     mediationFulfillment: "Fulfillment likelihood",
     mediationRefusalRisks: "Risks if refused",
@@ -290,6 +303,11 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationPdfPsychodynamicProfile: "Psychodynamic profile",
     mediationPdfLegislation: "Legislation",
     mediationPdfSolution: "Solution",
+    mediationPdfDocumentTitle: "Mediation results",
+    mediationPdfCompanyName: "AI Innovation Management LLC",
+    mediationPdfTopDisclaimer:
+      "Legal information, not legal advice. PsyLex provides legal information only, not legal services. Every legal statement cites its source with an “information as of 2024–2025” note; a mediator confirms relevance before parties see it, and parties are referred to a licensed attorney for advice.",
+    mediationPdfTerms: "Terms",
     mediationPdfNotAvailable: "Not available for this session.",
     mediationLegislationJurisdiction: "Jurisdiction",
     mediationLegislationSolutionNorms: "Legal norms for the selected solution",
@@ -299,6 +317,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationLegislationCitations: "Source citations",
     mediationLegislationRelevance: "Relevance",
     mediationLegislationSource: "Source",
+    mediationLegislationExcerpt: "Excerpt",
     mediationEmailPlaceholder: "Email for agreement (optional)",
     mediationEmailSend: "Send",
     mediationEmailComingSoon: "Email delivery is coming soon. Use download for now.",
@@ -464,6 +483,10 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationOptionsTitle: "Варіанти рішення",
     mediationOptionsReady:
       "Варіанти рішення готові. Перегляньте їх і проголосуйте незалежно.",
+    mediationOptionLabel: "Варіант {n}",
+    mediationYourSelection: "Ваш вибір",
+    mediationPartySelected: "{party} обрала",
+    mediationAgreedResolution: "Узгоджене рішення",
     mediationLegalInfo: "Правова інформація (не порада)",
     mediationFulfillment: "Ймовірність виконання",
     mediationRefusalRisks: "Ризики відмови",
@@ -485,6 +508,11 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationPdfPsychodynamicProfile: "Психодинамічний профіль",
     mediationPdfLegislation: "Законодавство",
     mediationPdfSolution: "Рішення",
+    mediationPdfDocumentTitle: "Результати медіації",
+    mediationPdfCompanyName: "AI Innovation Management LLC",
+    mediationPdfTopDisclaimer:
+      "Правова інформація, а не правова консультація. PsyLex надає виключно правову інформацію, а не юридичні послуги. Кожне правове твердження містить посилання на джерело з позначкою «інформація станом на 2024–2025»; медіатор підтверджує релевантність перед тим, як сторони її бачать, а сторони направляються до ліцензованого адвоката за консультацією.",
+    mediationPdfTerms: "Умови",
     mediationPdfNotAvailable: "Недоступно для цієї сесії.",
     mediationLegislationJurisdiction: "Юрисдикція",
     mediationLegislationSolutionNorms: "Правові норми щодо обраного рішення",
@@ -494,6 +522,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationLegislationCitations: "Цитати з джерел",
     mediationLegislationRelevance: "Релевантність",
     mediationLegislationSource: "Джерело",
+    mediationLegislationExcerpt: "Уривок",
     mediationEmailPlaceholder: "Email для угоди (необовʼязково)",
     mediationEmailSend: "Надіслати",
     mediationEmailComingSoon: "Надсилання email незабаром. Поки що скористайтеся завантаженням.",

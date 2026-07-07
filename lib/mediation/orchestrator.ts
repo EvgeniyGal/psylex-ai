@@ -665,6 +665,11 @@ export async function getMediationRoomState(userId: string) {
     room!.mediationPhase === "agreement" ||
     room!.mediationPhase === "completed";
 
+  const showAllVotes =
+    room!.mediationPhase === "voting_discrepancy" ||
+    room!.mediationPhase === "agreement" ||
+    room!.mediationPhase === "completed";
+
   const statePayload = {
     room: {
       id: room!.id,
@@ -683,6 +688,8 @@ export async function getMediationRoomState(userId: string) {
           ? room!.partyBVoteOptionId
           : room!.partyAVoteOptionId
         : null,
+      partyAVoteOptionId: showAllVotes ? room!.partyAVoteOptionId : null,
+      partyBVoteOptionId: showAllVotes ? room!.partyBVoteOptionId : null,
       selfCompromiseVote:
         role === "party_a" ? room!.partyACompromiseVote : room!.partyBCompromiseVote,
       selfAccepted:

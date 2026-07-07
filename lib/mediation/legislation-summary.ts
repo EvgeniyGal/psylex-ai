@@ -1,24 +1,49 @@
 import type { Locale } from "@/lib/i18n";
 import type { LegalAnalysis } from "@/lib/pipeline/schemas";
 import { legalAnalysisSchema } from "@/lib/pipeline/schemas";
+import { resolveLocalizedOutput } from "@/lib/pipeline/locale";
 import { portalCopy } from "@/lib/portal-i18n";
 import { formatRoomJurisdiction, type RoomJurisdiction } from "@/lib/room/jurisdiction";
+
+export type LegislationLawItem = {
+  name: string;
+  summary: string;
+  relevance: string;
+};
+
+export type LegislationRegulationItem = {
+  name: string;
+  summary: string;
+};
+
+export type LegislationCitationItem = {
+  documentName: string;
+  excerpt: string;
+  sourceUrl?: string | null;
+};
 
 export type LegislationContentSection = {
   heading: string;
   body: string;
+  kind: "text" | "laws" | "regulations" | "citations";
+  laws?: LegislationLawItem[];
+  regulations?: LegislationRegulationItem[];
+  citations?: LegislationCitationItem[];
 };
 
-function normalizeLegalAnalysis(raw: unknown): LegalAnalysis | null {
-  if (!raw || typeof raw !== "object") return null;
+function normalizeLegalAnalysis(raw: unknown, locale: Locale): LegalAnalysis | null {
+  const localized = resolveLocalizedOutput<LegalAnalysis>(raw, locale);
+  const candidate = localized ?? raw;
 
-  const parsed = legalAnalysisSchema.safeParse(raw);
+  if (!candidate || typeof candidate !== "object") return null;
+
+  const parsed = legalAnalysisSchema.safeParse(candidate);
   if (parsed.success) return parsed.data;
 
-  const obj = raw as Record<string, unknown>;
+  const obj = candidate as Record<string, unknown>;
   const applicableLaws = Array.isArray(obj.applicableLaws)
     ? obj.applicableLaws.filter(
-        (item): item is { name: string; summary: string; relevance: string } =>
+        (item): item is LegislationLawItem =>
           !!item &&
           typeof item === "object" &&
           typeof (item as { name?: string }).name === "string" &&
@@ -29,7 +54,7 @@ function normalizeLegalAnalysis(raw: unknown): LegalAnalysis | null {
 
   const regulations = Array.isArray(obj.regulations)
     ? obj.regulations.filter(
-        (item): item is { name: string; summary: string } =>
+        (item): item is LegislationRegulationItem =>
           !!item &&
           typeof item === "object" &&
           typeof (item as { name?: string }).name === "string" &&
@@ -39,7 +64,7 @@ function normalizeLegalAnalysis(raw: unknown): LegalAnalysis | null {
 
   const citations = Array.isArray(obj.citations)
     ? obj.citations.filter(
-        (item): item is { documentName: string; excerpt: string; sourceUrl?: string | null } =>
+        (item): item is LegislationCitationItem =>
           !!item &&
           typeof item === "object" &&
           typeof (item as { documentName?: string }).documentName === "string" &&
@@ -68,6 +93,29 @@ function normalizeLegalAnalysis(raw: unknown): LegalAnalysis | null {
   };
 }
 
+function formatLawBody(laws: LegislationLawItem[], relevanceLabel: string): string {
+  return laws
+    .map((law) => [law.name, law.summary, `${relevanceLabel}: ${law.relevance}`].join("\n"))
+    .join("\n\n");
+}
+
+function formatRegulationBody(regulations: LegislationRegulationItem[]): string {
+  return regulations.map((regulation) => `${regulation.name}\n${regulation.summary}`).join("\n\n");
+}
+
+function formatCitationBody(
+  citations: LegislationCitationItem[],
+  sourceLabel: string,
+  excerptLabel: string,
+): string {
+  return citations
+    .map((citation) => {
+      const source = citation.sourceUrl ? `\n${sourceLabel}: ${citation.sourceUrl}` : "";
+      return `${citation.documentName}\n${excerptLabel}:\n${citation.excerpt}${source}`;
+    })
+    .join("\n\n");
+}
+
 export function buildLegislationSections(params: {
   locale: Locale;
   room: {
@@ -79,23 +127,21 @@ export function buildLegislationSections(params: {
 }): LegislationContentSection[] {
   const copy = portalCopy[params.locale];
   const sections: LegislationContentSection[] = [];
-  const analysis = normalizeLegalAnalysis(params.room.legalAnalysis);
+  const analysis = normalizeLegalAnalysis(params.room.legalAnalysis, params.locale);
 
   sections.push({
     heading: copy.mediationLegislationJurisdiction,
     body: formatRoomJurisdiction(params.room, params.locale),
+    kind: "text",
   });
 
-  if (params.optionLegalNorms?.trim()) {
-    sections.push({
-      heading: copy.mediationLegislationSolutionNorms,
-      body: params.optionLegalNorms.trim(),
-    });
-  }
-
   if (!analysis) {
-    if (sections.length === 1 && !params.optionLegalNorms?.trim()) {
-      return [];
+    if (params.optionLegalNorms?.trim()) {
+      sections.push({
+        heading: copy.mediationLegislationSolutionNorms,
+        body: params.optionLegalNorms.trim(),
+        kind: "text",
+      });
     }
     return sections;
   }
@@ -105,6 +151,7 @@ export function buildLegislationSections(params: {
       sections.push({
         heading: copy.mediationLegislationOverview,
         body: analysis.analysis.trim(),
+        kind: "text",
       });
     }
     return sections;
@@ -114,44 +161,46 @@ export function buildLegislationSections(params: {
     sections.push({
       heading: copy.mediationLegislationOverview,
       body: analysis.analysis.trim(),
+      kind: "text",
     });
   }
 
   if (analysis.applicableLaws.length > 0) {
     sections.push({
       heading: copy.mediationLegislationApplicableLaws,
-      body: analysis.applicableLaws
-        .map((law) =>
-          [
-            law.name,
-            law.summary,
-            `${copy.mediationLegislationRelevance}: ${law.relevance}`,
-          ].join("\n"),
-        )
-        .join("\n\n"),
+      body: formatLawBody(analysis.applicableLaws, copy.mediationLegislationRelevance),
+      kind: "laws",
+      laws: analysis.applicableLaws,
     });
   }
 
   if (analysis.regulations.length > 0) {
     sections.push({
       heading: copy.mediationLegislationRegulations,
-      body: analysis.regulations
-        .map((regulation) => `${regulation.name}\n${regulation.summary}`)
-        .join("\n\n"),
+      body: formatRegulationBody(analysis.regulations),
+      kind: "regulations",
+      regulations: analysis.regulations,
     });
   }
 
   if (analysis.citations.length > 0) {
     sections.push({
       heading: copy.mediationLegislationCitations,
-      body: analysis.citations
-        .map((citation) => {
-          const source = citation.sourceUrl
-            ? `\n${copy.mediationLegislationSource}: ${citation.sourceUrl}`
-            : "";
-          return `${citation.documentName}\n${citation.excerpt}${source}`;
-        })
-        .join("\n\n"),
+      body: formatCitationBody(
+        analysis.citations,
+        copy.mediationLegislationSource,
+        copy.mediationLegislationExcerpt,
+      ),
+      kind: "citations",
+      citations: analysis.citations,
+    });
+  }
+
+  if (params.optionLegalNorms?.trim()) {
+    sections.push({
+      heading: copy.mediationLegislationSolutionNorms,
+      body: params.optionLegalNorms.trim(),
+      kind: "text",
     });
   }
 

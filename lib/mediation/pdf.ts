@@ -12,6 +12,9 @@ export async function buildAgreementDownload(state: MediationState, locale: Loca
 
   const pdfBuffer = await generateMediationPdf({
     title: summary.agreementTitle,
+    documentLabel: copy.mediationPdfDocumentTitle,
+    companyName: copy.mediationPdfCompanyName,
+    generatedAt: new Date(),
     sections: [
       {
         heading: copy.mediationPdfPsychodynamicProfile,
@@ -29,6 +32,7 @@ export async function buildAgreementDownload(state: MediationState, locale: Loca
     agreementBody: summary.agreementBody ?? undefined,
     agreementHeading: copy.mediationAgreementTitle,
     terms: summary.terms,
+    topDisclaimer: copy.mediationPdfTopDisclaimer,
     disclaimer: copy.mediationUplDisclaimer,
     termsHeading: locale === "uk" ? "Умови" : "Terms",
   });

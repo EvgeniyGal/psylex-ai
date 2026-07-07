@@ -8,6 +8,9 @@ async function main() {
 
   const pdf = await generateMediationPdf({
     title: "Проєкт медіаційної угоди",
+    documentLabel: uk.mediationPdfDocumentTitle,
+    companyName: uk.mediationPdfCompanyName,
+    generatedAt: new Date(),
     sections: [
       {
         heading: uk.mediationPdfPsychodynamicProfile,
@@ -50,6 +53,7 @@ async function main() {
       "Сторони відмовляються від подальших вимог по цьому спору",
     ],
     disclaimer: uk.mediationUplDisclaimer,
+    topDisclaimer: uk.mediationPdfTopDisclaimer,
     termsHeading: "Умови",
   });
 

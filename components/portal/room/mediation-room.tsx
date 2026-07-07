@@ -14,6 +14,7 @@ import {
 } from "@/app/(participant)/room/actions";
 import { MediationCountdown } from "@/components/portal/mediation-countdown";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
+import { MediationOptionsPanel, shouldShowOptionsPanel } from "@/components/portal/room/mediation-options-panel";
 import { MediationResultsPanel } from "@/components/portal/room/mediation-results-panel";
 import { useLocale } from "@/components/locale-provider";
 import type { MediationPhase } from "@/lib/mediation/types";
@@ -182,6 +183,22 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
 
   const resultsSummary = "resultsSummary" in state ? state.resultsSummary : undefined;
 
+  const optionsPanel = shouldShowOptionsPanel(state.room.phase, state.options.length) ? (
+    <MediationOptionsPanel
+      canVote={!review && state.room.phase === "voting" && !state.room.selfVote}
+      onVote={onVote}
+      options={state.options}
+      partyAVoteOptionId={state.room.partyAVoteOptionId ?? null}
+      partyBVoteOptionId={state.room.partyBVoteOptionId ?? null}
+      pending={pending}
+      phase={state.room.phase}
+      review={review}
+      selectedOptionId={state.room.selectedOptionId}
+      selfVote={state.room.selfVote}
+      viewerRole={viewerRole}
+    />
+  ) : null;
+
   if (review) {
     return (
       <div className="space-y-6">
@@ -211,6 +228,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
             <p className="text-center text-body-md text-on-surface-variant">{t.mediationPreparing}</p>
           ) : null}
         </div>
+        {optionsPanel}
         <FlowReviewNext step={4} />
       </div>
     );
@@ -221,6 +239,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
       {isSessionComplete && resultsSummary ? (
         <>
           <p className="font-display text-headline-md text-success">{t.mediationSessionCompleted}</p>
+          {optionsPanel}
           <MediationResultsPanel summary={resultsSummary} />
           <div className="space-y-3 border-t border-hair pt-4">
             <button className="btn-secondary px-4 py-2 text-body-sm" disabled={pending} onClick={onDownload} type="button">
@@ -314,6 +333,8 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
             ) : null}
           </div>
 
+          {optionsPanel}
+
           {isMyTurn ? (
             <div className="space-y-2">
               <textarea
@@ -331,40 +352,6 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
               >
                 {t.mediationSendReply}
               </button>
-            </div>
-          ) : null}
-
-          {(state.room.phase === "voting" || state.room.phase === "generating_options") &&
-          state.options.length > 0 ? (
-            <div className="space-y-4">
-              <h2 className="font-display text-headline-md text-on-surface">{t.mediationOptionsTitle}</h2>
-              {state.options.map((option) => (
-                <div className="glass-panel space-y-2 rounded-xl p-4" key={option.id}>
-                  <p className="whitespace-pre-wrap text-body-md text-on-surface">{option.description}</p>
-                  <p className="text-body-sm text-on-surface-variant">
-                    <strong>{t.mediationLegalInfo}:</strong> {option.legalNorms}
-                  </p>
-                  <p className="text-body-sm text-on-surface-variant">
-                    <strong>{t.mediationFulfillment}:</strong> {option.fulfillmentProbability}
-                  </p>
-                  <p className="text-body-sm text-on-surface-variant">
-                    <strong>{t.mediationRefusalRisks}:</strong> {option.refusalRisks}
-                  </p>
-                  {state.room.phase === "voting" && !state.room.selfVote ? (
-                    <button
-                      className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
-                      disabled={pending}
-                      onClick={() => onVote(option.id)}
-                      type="button"
-                    >
-                      {t.mediationSelectOption}
-                    </button>
-                  ) : null}
-                </div>
-              ))}
-              {state.room.selfVote ? (
-                <p className="text-body-sm text-on-surface-variant">{t.mediationVoteRecorded}</p>
-              ) : null}
             </div>
           ) : null}
 
