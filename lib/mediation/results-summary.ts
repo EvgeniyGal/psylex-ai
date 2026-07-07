@@ -2,13 +2,14 @@ import { eq } from "drizzle-orm";
 import type { Locale } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { rooms } from "@/drizzle/schema";
+import { formatViewerPsychodynamicProfile } from "@/lib/mediation/format-pdf-content";
 import {
-  formatLegalAnalysis,
-  formatViewerPsychodynamicProfile,
-} from "@/lib/mediation/format-pdf-content";
+  buildLegislationSections,
+  formatLegislationSections,
+  type LegislationContentSection,
+} from "@/lib/mediation/legislation-summary";
 import type { getMediationRoomState } from "@/lib/mediation/orchestrator";
 import { getRoomPartiesForPipeline } from "@/lib/pipeline/gate";
-import type { LegalAnalysis } from "@/lib/pipeline/schemas";
 import { portalCopy } from "@/lib/portal-i18n";
 
 type MediationState = NonNullable<Awaited<ReturnType<typeof getMediationRoomState>>>;
@@ -16,6 +17,7 @@ type MediationState = NonNullable<Awaited<ReturnType<typeof getMediationRoomStat
 export type MediationResultsSummary = {
   psychodynamicProfile: string;
   legislation: string;
+  legislationSections: LegislationContentSection[];
   solution: string;
   agreementTitle: string;
   agreementBody: string | null;
@@ -55,14 +57,17 @@ export async function buildMediationResultsSummary(
       ? formatViewerPsychodynamicProfile(state.viewerRole, partyA, partyB, locale)
       : copy.mediationPdfNotAvailable;
 
-  const legislationParts: string[] = [];
-  if (selectedOption?.legalNorms) {
-    legislationParts.push(selectedOption.legalNorms);
-  }
-  const roomLegal = formatLegalAnalysis(room?.legalAnalysis as LegalAnalysis | null);
-  if (roomLegal) {
-    legislationParts.push(roomLegal);
-  }
+  const legislationSections = room
+    ? buildLegislationSections({
+        locale,
+        room: {
+          jurisdiction: room.jurisdiction,
+          usaSubJurisdiction: room.usaSubJurisdiction,
+          legalAnalysis: room.legalAnalysis,
+        },
+        optionLegalNorms: selectedOption?.legalNorms,
+      })
+    : [];
 
   const solutionParts: string[] = [];
   if (selectedOption) {
@@ -77,7 +82,11 @@ export async function buildMediationResultsSummary(
 
   return {
     psychodynamicProfile,
-    legislation: legislationParts.join("\n\n") || copy.mediationPdfNotAvailable,
+    legislationSections,
+    legislation:
+      legislationSections.length > 0
+        ? formatLegislationSections(legislationSections)
+        : copy.mediationPdfNotAvailable,
     solution: solutionParts.join("\n\n") || copy.mediationNoAgreementOutcome,
     agreementTitle: draft?.title ?? copy.mediationAgreementTitle,
     agreementBody: draft?.body ?? null,

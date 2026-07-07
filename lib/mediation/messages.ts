@@ -90,17 +90,52 @@ function viewerLocale(value: string | null | undefined): Locale {
   return value === "uk" ? "uk" : "en";
 }
 
+function shouldFallbackToCanonicalForEnglish(params: {
+  adapted: string;
+  canonical: string;
+  preferredLocale?: string | null;
+}) {
+  if (params.preferredLocale !== "en") return false;
+
+  const adapted = params.adapted.toLowerCase();
+  if (!adapted.trim()) return true;
+
+  // Guard against occasional Romance-language drift in model adaptations.
+  const romanceSignals = [
+    /\b(la|el|los|las|una|unos|del|que|por|para|con|sin)\b/g,
+    /\b(parte|ronda|mediaci[oó]n|comunidad|cumplimiento|acuerdo)\b/g,
+    /[áéíóúñçàèìòù]/g,
+  ];
+  const signalCount = romanceSignals.reduce(
+    (count, pattern) => count + ((adapted.match(pattern) ?? []).length > 0 ? 1 : 0),
+    0,
+  );
+
+  if (signalCount < 2) return false;
+  return params.canonical.trim().length > 0;
+}
+
 export function resolveMessageForViewer(
   message: typeof roomMessages.$inferSelect,
   viewerRole: PartyRole,
   viewerPreferredLocale?: string | null,
 ) {
   if (message.adaptations && message.canonicalContent) {
-    return resolveAdaptedText(
+    const adapted = resolveAdaptedText(
       message.adaptations as PartyAdaptations,
       message.canonicalContent,
       viewerRole,
     );
+    if (
+      shouldFallbackToCanonicalForEnglish({
+        adapted,
+        canonical: message.canonicalContent,
+        preferredLocale: viewerPreferredLocale,
+      })
+    ) {
+      return message.canonicalContent;
+    }
+    return adapted;
   }
   if (message.messageKind === "mediation_system" && viewerPreferredLocale) {
     return portalCopy[viewerLocale(viewerPreferredLocale)].mediationOptionsReady;

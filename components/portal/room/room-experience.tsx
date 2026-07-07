@@ -5,6 +5,7 @@ import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { MediationRoom } from "@/components/portal/room/mediation-room";
 import { useLocale } from "@/components/locale-provider";
 import { resolveRoomFlowStep } from "@/lib/participant-flow";
+import { cn } from "@/lib/utils";
 import type { MediationPhase } from "@/lib/mediation/types";
 import type { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 
@@ -17,10 +18,16 @@ export function RoomExperience({ mediationState, review = false }: RoomExperienc
   const { portal: t } = useLocale();
   const [phase, setPhase] = useState<MediationPhase | null>(mediationState.room.phase);
   const flowStep = resolveRoomFlowStep(phase, review);
+  const isTreatyView = phase === "completed" && !review;
 
   return (
     <PortalPageShell flowStep={flowStep}>
-      <main className="mx-auto w-full max-w-3xl space-y-6 px-gutter py-stack-lg">
+      <main
+        className={cn(
+          "mx-auto w-full space-y-6 px-gutter py-stack-lg",
+          isTreatyView ? "max-w-container-max" : "max-w-3xl",
+        )}
+      >
         <div>
           <h1 className="font-display text-display-lg text-on-surface">{t.roomTitle}</h1>
           <p className="text-body-md text-on-surface-variant">{mediationState.room.title}</p>

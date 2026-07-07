@@ -54,11 +54,6 @@ export function LandingPage() {
 
       <main className="flex-grow px-margin-mobile py-6 md:px-margin-desktop md:py-10">
         <section className="mx-auto max-w-landing pt-6 md:pt-12">
-          <div className="mb-3 flex items-center justify-center gap-2.5 text-eyebrow uppercase text-ink-soft">
-            <span className="h-[7px] w-[7px] rounded-full bg-law" />
-            <span>PsyLex</span>
-          </div>
-
           <h1 className="wordmark mb-2 text-center font-display text-display-lg text-ink">
             {t.headline}
             {t.headlineAccent ? (
@@ -70,13 +65,6 @@ export function LandingPage() {
           </h1>
 
           <p className="mx-auto mb-6 max-w-[620px] text-center text-body-md text-ink-soft">{t.subheadline}</p>
-
-          <div className="mb-8 flex justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-hair bg-surface-container px-3.5 py-1.5 text-[13px] text-ink-soft">
-              <b className="font-semibold text-ink">{t.psylexTitle}</b>
-              · {t.modeB}
-            </span>
-          </div>
 
           <div className="mb-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

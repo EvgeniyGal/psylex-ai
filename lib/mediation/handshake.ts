@@ -1,8 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { rooms, type rooms as roomsTable } from "@/drizzle/schema";
-import { getMediationLobbyData } from "@/lib/dispute-intake";
-import type { PartyRole } from "@/lib/participant-roles";
+import { rooms, users, type rooms as roomsTable } from "@/drizzle/schema";
+import { isPartyRole, type PartyRole } from "@/lib/participant-roles";
 
 export const HANDSHAKE_WINDOW_MS = 60_000;
 
@@ -206,18 +205,27 @@ export async function recordStartClick(roomId: string, role: PartyRole): Promise
 }
 
 export async function getHandshakeStatusForUser(userId: string): Promise<HandshakeStatusResponse> {
-  const lobby = await getMediationLobbyData(userId);
-  if (!lobby?.canStartMediation) {
+  const [viewer] = await db
+    .select({
+      roomId: users.roomId,
+      role: users.role,
+      disputeIntakeSubmittedAt: users.disputeIntakeSubmittedAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!viewer?.roomId || !isPartyRole(viewer.role) || !viewer.disputeIntakeSubmittedAt) {
     return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
   }
 
-  const role = lobby.self.role;
+  const role = viewer.role;
   const now = new Date();
-  const room = await loadRoomHandshake(lobby.room.id);
+  const room = await loadRoomHandshake(viewer.roomId);
   if (!room) {
     return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
   }
 
-  const state = await resolveHandshakeState(lobby.room.id, room, role, now);
+  const state = await resolveHandshakeState(viewer.roomId, room, role, now);
   return toResponse(state);
 }

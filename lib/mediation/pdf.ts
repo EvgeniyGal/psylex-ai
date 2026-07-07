@@ -17,10 +17,10 @@ export async function buildAgreementDownload(state: MediationState, locale: Loca
         heading: copy.mediationPdfPsychodynamicProfile,
         body: summary.psychodynamicProfile,
       },
-      {
-        heading: copy.mediationPdfLegislation,
-        body: summary.legislation,
-      },
+      ...summary.legislationSections.map((section) => ({
+        heading: `${copy.mediationPdfLegislation}: ${section.heading}`,
+        body: section.body,
+      })),
       {
         heading: copy.mediationPdfSolution,
         body: summary.solution,

@@ -8,10 +8,10 @@ import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 
 const textareaClass =
-  "w-full rounded-md border border-hair bg-paper px-4 py-3 font-sans text-body-md text-ink outline-none transition-colors focus:border-law focus:ring-1 focus:ring-law";
+  "w-full rounded-md border border-outline-variant/40 bg-surface-container px-4 py-3 font-sans text-body-md text-on-surface shadow-sm outline-none transition-colors placeholder:text-on-surface-variant focus:border-law focus:bg-paper focus:ring-2 focus:ring-law/20";
 
 const readOnlyFieldClass =
-  "w-full rounded-md border border-hair bg-surface-container px-4 py-3 font-sans text-body-md text-on-surface";
+  "w-full rounded-md border border-outline-variant/40 bg-surface-container px-4 py-3 font-sans text-body-md text-on-surface shadow-sm";
 
 function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: string }) {
   const { pending } = useFormStatus();

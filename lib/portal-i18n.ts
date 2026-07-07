@@ -110,6 +110,14 @@ type PortalCopy = {
   mediationPdfLegislation: string;
   mediationPdfSolution: string;
   mediationPdfNotAvailable: string;
+  mediationLegislationJurisdiction: string;
+  mediationLegislationSolutionNorms: string;
+  mediationLegislationOverview: string;
+  mediationLegislationApplicableLaws: string;
+  mediationLegislationRegulations: string;
+  mediationLegislationCitations: string;
+  mediationLegislationRelevance: string;
+  mediationLegislationSource: string;
   mediationEmailPlaceholder: string;
   mediationEmailSend: string;
   mediationEmailComingSoon: string;
@@ -283,6 +291,14 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationPdfLegislation: "Legislation",
     mediationPdfSolution: "Solution",
     mediationPdfNotAvailable: "Not available for this session.",
+    mediationLegislationJurisdiction: "Jurisdiction",
+    mediationLegislationSolutionNorms: "Legal norms for the selected solution",
+    mediationLegislationOverview: "Legal analysis overview",
+    mediationLegislationApplicableLaws: "Applicable laws",
+    mediationLegislationRegulations: "Regulations",
+    mediationLegislationCitations: "Source citations",
+    mediationLegislationRelevance: "Relevance",
+    mediationLegislationSource: "Source",
     mediationEmailPlaceholder: "Email for agreement (optional)",
     mediationEmailSend: "Send",
     mediationEmailComingSoon: "Email delivery is coming soon. Use download for now.",
@@ -470,6 +486,14 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationPdfLegislation: "Законодавство",
     mediationPdfSolution: "Рішення",
     mediationPdfNotAvailable: "Недоступно для цієї сесії.",
+    mediationLegislationJurisdiction: "Юрисдикція",
+    mediationLegislationSolutionNorms: "Правові норми щодо обраного рішення",
+    mediationLegislationOverview: "Загальний правовий аналіз",
+    mediationLegislationApplicableLaws: "Застосовні закони",
+    mediationLegislationRegulations: "Нормативні акти",
+    mediationLegislationCitations: "Цитати з джерел",
+    mediationLegislationRelevance: "Релевантність",
+    mediationLegislationSource: "Джерело",
     mediationEmailPlaceholder: "Email для угоди (необовʼязково)",
     mediationEmailSend: "Надіслати",
     mediationEmailComingSoon: "Надсилання email незабаром. Поки що скористайтеся завантаженням.",
