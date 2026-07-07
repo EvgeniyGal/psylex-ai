@@ -21,6 +21,7 @@ import {
   recordStartClick,
   type HandshakeStatusResponse,
 } from "@/lib/mediation/handshake";
+import { getMediationLobbyStatusForUser, type MediationLobbyStatus } from "@/lib/dispute-intake";
 
 async function requireSideParticipant() {
   const session = await getServerSession(authOptions);
@@ -115,6 +116,11 @@ export async function clickStartMediation(): Promise<HandshakeStatusResponse> {
 export async function getMediationHandshakeStatus(): Promise<HandshakeStatusResponse> {
   const { user } = await requireSideParticipant();
   return getHandshakeStatusForUser(user.id);
+}
+
+export async function getMediationLobbyStatus(): Promise<MediationLobbyStatus | null> {
+  const { user } = await requireSideParticipant();
+  return getMediationLobbyStatusForUser(user.id);
 }
 
 export async function runPostIntakePipelineForRoom(

@@ -91,9 +91,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
   }, [isMyTurn, state.room.turnDeadlineAt]);
 
   const showReadyButton =
-    state.room.phase === "opening" ||
-    state.room.phase === "dialogue" ||
-    state.room.phase === "generating_options";
+    state.room.phase === "opening" || state.room.phase === "dialogue";
 
   const draft = state.room.draftAgreement as {
     title?: string;
@@ -289,7 +287,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
           </div>
 
           {showReadyButton ? (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
               <button
                 className="btn-secondary px-4 py-2 text-body-sm disabled:opacity-60"
                 disabled={pending || state.room.selfReady}
@@ -298,11 +296,13 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
               >
                 {state.room.selfReady ? t.mediationReadyConfirmed : t.mediationReadyForOptions}
               </button>
-              {state.room.otherReady ? (
+              {state.room.selfReady && state.room.otherReady ? (
                 <span className="text-body-sm text-on-surface-variant">{t.mediationOtherReady}</span>
               ) : state.room.selfReady ? (
                 <span className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherReady}</span>
-              ) : null}
+              ) : (
+                <span className="text-body-sm text-on-surface-variant">{t.mediationReadyForOptionsHint}</span>
+              )}
             </div>
           ) : null}
 
@@ -399,8 +399,8 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
               </div>
               {draft.terms?.length ? (
                 <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
-                  {draft.terms.map((term) => (
-                    <li key={term}>{term}</li>
+                  {draft.terms.map((term, index) => (
+                    <li key={`${term}-${index}`}>{term}</li>
                   ))}
                 </ul>
               ) : null}

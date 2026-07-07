@@ -64,6 +64,29 @@ export async function getSideReadiness(user: UserRow): Promise<SideReadiness | n
   };
 }
 
+export type MediationLobbyStatus = {
+  self: SideReadiness;
+  opposite: SideReadiness | null;
+  bothReady: boolean;
+  pipelineRunning: boolean;
+  canStartMediation: boolean;
+  mediationStarted: boolean;
+};
+
+export async function getMediationLobbyStatusForUser(userId: string): Promise<MediationLobbyStatus | null> {
+  const lobby = await getMediationLobbyData(userId);
+  if (!lobby) return null;
+
+  return {
+    self: lobby.self,
+    opposite: lobby.opposite,
+    bothReady: lobby.bothReady,
+    pipelineRunning: lobby.pipelineRunning,
+    canStartMediation: lobby.canStartMediation,
+    mediationStarted: !!lobby.room.mediationStartedAt,
+  };
+}
+
 export async function getMediationLobbyData(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user?.roomId || !isPartyRole(user.role)) {

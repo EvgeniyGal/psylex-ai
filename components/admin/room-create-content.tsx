@@ -21,7 +21,7 @@ const inputClass =
 export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: string }) {
   const { admin, locale } = useLocale();
   const [pending, startTransition] = useTransition();
-  const [jurisdiction, setJurisdiction] = useState<RoomJurisdiction>("ukraine");
+  const [jurisdiction, setJurisdiction] = useState<RoomJurisdiction | "">("");
   const [usaSubJurisdiction, setUsaSubJurisdiction] = useState<"" | UsaSubJurisdiction>("");
   const labels = jurisdictionLabels(locale);
 

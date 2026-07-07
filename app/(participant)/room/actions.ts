@@ -18,8 +18,19 @@ import { buildAgreementDownload } from "@/lib/mediation/pdf";
 
 async function requireParticipant() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) throw new Error("Unauthorized");
-  return session.user.id;
+  let userId = session?.user?.id;
+
+  if (!userId && session?.user?.name) {
+    const [byLogin] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.login, session.user.name))
+      .limit(1);
+    userId = byLogin?.id;
+  }
+
+  if (!userId) throw new Error("Unauthorized");
+  return userId;
 }
 
 export async function fetchMediationRoomState() {

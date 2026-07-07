@@ -1,24 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   clickStartMediation,
   getMediationHandshakeStatus,
+  getMediationLobbyStatus,
   runPostIntakePipelineForRoom,
 } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
-import type { SideReadiness } from "@/lib/dispute-intake";
+import type { MediationLobbyStatus } from "@/lib/dispute-intake";
 import type { PartyRole } from "@/lib/participant-roles";
 import type { ParticipantFlowStepId } from "@/lib/participant-flow";
 
 type MediationLobbyProps = {
   roomId: string;
   roomTitle: string;
-  self: SideReadiness;
-  opposite: SideReadiness | null;
+  self: MediationLobbyStatus["self"];
+  opposite: MediationLobbyStatus["opposite"];
   oppositeRole: PartyRole;
   bothReady: boolean;
   pipelineRunning: boolean;
@@ -67,42 +67,92 @@ function useWindowSecondsRemaining(windowExpiresAt: string | null) {
 export function MediationLobby({
   roomId,
   roomTitle,
-  self,
-  opposite,
+  self: initialSelf,
+  opposite: initialOpposite,
   oppositeRole,
-  bothReady,
-  pipelineRunning,
-  canStartMediation,
+  bothReady: initialBothReady,
+  pipelineRunning: initialPipelineRunning,
+  canStartMediation: initialCanStartMediation,
   viewerRole,
   flowStep,
 }: MediationLobbyProps) {
   const { portal: t } = useLocale();
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [lobby, setLobby] = useState({
+    self: initialSelf,
+    opposite: initialOpposite,
+    bothReady: initialBothReady,
+    pipelineRunning: initialPipelineRunning,
+    canStartMediation: initialCanStartMediation,
+  });
   const [handshake, setHandshake] = useState<HandshakeStatusResponse | null>(null);
+  const redirectingRef = useRef(false);
   const windowSeconds = useWindowSecondsRemaining(
     handshake?.status === "waiting" && handshake.selfClicked ? handshake.windowExpiresAt : null,
   );
 
-  const applyHandshake = useCallback(
-    (result: HandshakeStatusResponse) => {
-      setHandshake(result);
-      if (result.status === "started") {
-        router.refresh();
-        router.push("/room");
-      }
-    },
-    [router],
-  );
+  const redirectToRoom = useCallback(() => {
+    if (redirectingRef.current) return;
+    redirectingRef.current = true;
+    window.location.assign("/room");
+  }, []);
+
+  const applyLobbyStatus = useCallback((result: MediationLobbyStatus) => {
+    if (result.mediationStarted) {
+      redirectToRoom();
+      return;
+    }
+    setLobby({
+      self: result.self,
+      opposite: result.opposite,
+      bothReady: result.bothReady,
+      pipelineRunning: result.pipelineRunning,
+      canStartMediation: result.canStartMediation,
+    });
+  }, [redirectToRoom]);
+
+  const applyHandshake = useCallback((result: HandshakeStatusResponse) => {
+    setHandshake(result);
+    if (result.status === "started") {
+      redirectToRoom();
+    }
+  }, [redirectToRoom]);
 
   useEffect(() => {
-    if (!pipelineRunning || !roomId) return;
+    if (redirectingRef.current) return;
+
+    const pollLobby = () => {
+      if (redirectingRef.current) return;
+      void getMediationLobbyStatus()
+        .then((result) => {
+          if (!result) return;
+          applyLobbyStatus(result);
+        })
+        .catch((error) => {
+          console.error("Failed to poll mediation lobby status:", error);
+        });
+    };
+
+    pollLobby();
+    const pollMs = lobby.bothReady && !lobby.canStartMediation ? 5000 : 3000;
+    const pollId = window.setInterval(pollLobby, pollMs);
+    return () => window.clearInterval(pollId);
+  }, [applyLobbyStatus, lobby.bothReady, lobby.canStartMediation]);
+
+  useEffect(() => {
+    if (!lobby.pipelineRunning || !roomId) return;
 
     const kickPipeline = () => {
       void runPostIntakePipelineForRoom(roomId)
         .then((result) => {
           if (result.status === "complete" || result.status === "ran") {
-            router.refresh();
+            void getMediationLobbyStatus()
+              .then((status) => {
+                if (status) applyLobbyStatus(status);
+              })
+              .catch((error) => {
+                console.error("Failed to refresh mediation lobby status:", error);
+              });
           }
         })
         .catch((error) => {
@@ -111,43 +161,42 @@ export function MediationLobby({
     };
 
     kickPipeline();
-
     const retryId = window.setInterval(kickPipeline, 30000);
-    const refreshId = window.setInterval(() => {
-      router.refresh();
-    }, 10000);
+    return () => window.clearInterval(retryId);
+  }, [applyLobbyStatus, lobby.pipelineRunning, roomId]);
 
-    return () => {
-      window.clearInterval(retryId);
-      window.clearInterval(refreshId);
+  useEffect(() => {
+    if (!lobby.canStartMediation || redirectingRef.current) return;
+
+    const pollHandshake = () => {
+      if (redirectingRef.current) return;
+      void getMediationHandshakeStatus()
+        .then((result) => {
+          if (result.status === "started") {
+            applyHandshake(result);
+            return;
+          }
+          setHandshake(result);
+        })
+        .catch((error) => {
+          console.error("Failed to poll mediation handshake status:", error);
+        });
     };
-  }, [pipelineRunning, roomId, router]);
 
-  useEffect(() => {
-    if (!canStartMediation) return;
-    void getMediationHandshakeStatus().then(applyHandshake);
-  }, [canStartMediation, applyHandshake]);
+    const bothClicked =
+      handshake?.status === "waiting" && handshake.selfClicked && handshake.oppositeClicked;
+    const pollMs = bothClicked ? 1000 : 3000;
 
-  const handshakeActive =
-    handshake?.status === "waiting" ||
-    handshake?.status === "started" ||
-    (handshake?.oppositeClicked && !handshake?.selfClicked);
-
-  useEffect(() => {
-    if (!canStartMediation || !handshakeActive) return;
-
-    const pollId = window.setInterval(() => {
-      void getMediationHandshakeStatus().then((result) => {
-        if (result.status === "started") {
-          applyHandshake(result);
-          return;
-        }
-        setHandshake((prev) => (prev?.status === "started" ? prev : result));
-      });
-    }, 3000);
-
+    pollHandshake();
+    const pollId = window.setInterval(pollHandshake, pollMs);
     return () => window.clearInterval(pollId);
-  }, [canStartMediation, handshakeActive, applyHandshake]);
+  }, [
+    lobby.canStartMediation,
+    applyHandshake,
+    handshake?.status,
+    handshake?.selfClicked,
+    handshake?.oppositeClicked,
+  ]);
 
   const handleStart = () => {
     startTransition(async () => {
@@ -156,12 +205,19 @@ export function MediationLobby({
     });
   };
 
-  const oppositeReady = !!opposite?.mediationReady;
-  const waitingForOpposite = handshake?.status === "waiting" && handshake.selfClicked;
+  const oppositeReady = !!lobby.opposite?.mediationReady;
+  const waitingForOpposite =
+    handshake?.status === "waiting" && handshake.selfClicked && !handshake.oppositeClicked;
+  const handshakeStarting =
+    handshake?.status === "waiting" && handshake.selfClicked && handshake.oppositeClicked;
   const oppositeReadyToStart = !!handshake?.oppositeClicked && !handshake?.selfClicked;
   const handshakeExpired = handshake?.status === "expired";
   const startDisabled =
-    !canStartMediation || isPending || waitingForOpposite || handshake?.status === "started";
+    !lobby.canStartMediation ||
+    isPending ||
+    waitingForOpposite ||
+    handshakeStarting ||
+    handshake?.status === "started";
 
   return (
     <PortalPageShell flowStep={flowStep}>
@@ -178,7 +234,7 @@ export function MediationLobby({
             <p className="mb-3 font-sans text-body-sm text-on-surface-variant">{t.roles[viewerRole]}</p>
             <StatusBadge
               notReadyLabel={t.mediationStatusNotReady}
-              ready={self.mediationReady}
+              ready={lobby.self.mediationReady}
               readyLabel={t.mediationStatusReady}
             />
           </div>
@@ -186,7 +242,7 @@ export function MediationLobby({
           <div className="rounded border border-hair border-t-[3px] border-t-party-b bg-surface-container p-6">
             <h2 className="mb-4 font-display text-headline-md text-ink">{t.mediationOppositeSide}</h2>
             <p className="mb-3 font-sans text-body-sm text-on-surface-variant">{t.roles[oppositeRole]}</p>
-            {opposite ? (
+            {lobby.opposite ? (
               <StatusBadge
                 notReadyLabel={t.mediationStatusNotReady}
                 ready={oppositeReady}
@@ -199,14 +255,14 @@ export function MediationLobby({
         </div>
 
         <div className="mt-stack-md flex flex-col items-center gap-stack-sm">
-          {!bothReady ? (
+          {!lobby.bothReady ? (
             <div className="flex w-full items-start gap-3 rounded-lg border border-outline-variant/20 bg-surface-container p-4">
               <span className="material-symbols-outlined mt-1 text-tertiary">info</span>
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationOppositeNotReady}</p>
             </div>
           ) : null}
 
-          {pipelineRunning ? (
+          {lobby.pipelineRunning ? (
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
               <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
@@ -231,6 +287,13 @@ export function MediationLobby({
             <div className="flex w-full items-start gap-3 rounded-lg border border-success/30 bg-success/10 p-4">
               <span className="material-symbols-outlined mt-1 text-success">person_check</span>
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeOppositeReady}</p>
+            </div>
+          ) : null}
+
+          {handshakeStarting ? (
+            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
+              <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
+              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeStarting}</p>
             </div>
           ) : null}
 

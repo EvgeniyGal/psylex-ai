@@ -62,6 +62,7 @@ type PortalCopy = {
   mediationAgentsWorking: string;
   mediationHandshakeWaiting: string;
   mediationHandshakeOppositeReady: string;
+  mediationHandshakeStarting: string;
   mediationHandshakeExpired: string;
   mediationHandshakeWindowRemaining: string;
   mediationCountdownLabel: string;
@@ -79,6 +80,7 @@ type PortalCopy = {
   mediationReadyConfirmed: string;
   mediationOtherReady: string;
   mediationWaitingOtherReady: string;
+  mediationReadyForOptionsHint: string;
   mediationPreparing: string;
   mediationYou: string;
   mediationAgent: string;
@@ -249,6 +251,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       "You clicked Start Mediation. Waiting for the opposite side to click as well.",
     mediationHandshakeOppositeReady:
       "The opposite side is ready to start. Click Start Mediation within the next minute to join the session together.",
+    mediationHandshakeStarting: "Both sides are ready. Starting mediation…",
     mediationHandshakeExpired:
       "The one-minute start window expired. Both sides need to click Start Mediation again.",
     mediationHandshakeWindowRemaining: "Time remaining for the opposite side to join: {seconds}s",
@@ -267,6 +270,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationReadyConfirmed: "You are ready for solution options",
     mediationOtherReady: "The other party is also ready.",
     mediationWaitingOtherReady: "Waiting for the other party to click ready.",
+    mediationReadyForOptionsHint:
+      "Both parties can click this at any time during dialogue to move to solution options early.",
     mediationPreparing: "The mediation agent is preparing your session…",
     mediationYou: "You",
     mediationAgent: "Mediation agent",
@@ -454,6 +459,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
       "Ви натиснули «Почати медіацію». Очікуємо, поки інша сторона також натисне кнопку.",
     mediationHandshakeOppositeReady:
       "Інша сторона готова почати. Натисніть «Почати медіацію» протягом наступної хвилини, щоб разом увійти в сесію.",
+    mediationHandshakeStarting: "Обидві сторони готові. Запускаємо медіацію…",
     mediationHandshakeExpired:
       "Хвилинне вікно для старту минуло. Обидві сторони мають знову натиснути «Почати медіацію».",
     mediationHandshakeWindowRemaining: "Час для приєднання іншої сторони: {seconds} с",
@@ -472,6 +478,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationReadyConfirmed: "Ви позначили готовність до варіантів",
     mediationOtherReady: "Інша сторона теж готова.",
     mediationWaitingOtherReady: "Очікуємо, поки інша сторона натисне «готово».",
+    mediationReadyForOptionsHint:
+      "Обидві сторони можуть натиснути це під час діалогу, щоб достроково перейти до варіантів рішення.",
     mediationPreparing: "Агент медіації готує сесію…",
     mediationYou: "Ви",
     mediationAgent: "Агент медіації",

@@ -55,6 +55,16 @@ function bothReady(room: RoomRow) {
   return !!room.partyAReadyForOptionsAt && !!room.partyBReadyForOptionsAt;
 }
 
+function isNegotiationPhase(phase: MediationPhase | null) {
+  return phase === "opening" || phase === "dialogue";
+}
+
+async function transitionIfBothReady(roomId: string, room: RoomRow) {
+  if (!bothReady(room) || !isNegotiationPhase(room.mediationPhase)) return false;
+  await transitionToGeneratingOptions(roomId, "both_ready");
+  return true;
+}
+
 async function loadRoom(roomId: string) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
   return room ?? null;
@@ -114,6 +124,8 @@ async function clearTurn(roomId: string) {
 }
 
 async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
+  if (await transitionIfBothReady(room.id, room)) return;
+
   const { ctx } = await buildContext(room);
   const result = await runMediationAgent({
     mode: "dialogue_question",
@@ -224,6 +236,8 @@ async function generateAndPublishOptions(roomId: string) {
 }
 
 async function startDialogueRound(room: RoomRow) {
+  if (await transitionIfBothReady(room.id, room)) return;
+
   const round = room.mediationRound <= 0 ? 1 : room.mediationRound;
   await db
     .update(rooms)
@@ -235,39 +249,39 @@ async function startDialogueRound(room: RoomRow) {
 }
 
 async function afterPartyReply(room: RoomRow, party: PartyRole) {
+  const fresh = (await loadRoom(room.id)) ?? room;
+  if (await transitionIfBothReady(room.id, fresh)) return;
+
   if (party === "party_a") {
-    await askDialogueQuestion(room, "party_b");
+    await askDialogueQuestion(fresh, "party_b");
     return;
   }
 
-  await postRoundSummary(room);
-  const fresh = await loadRoom(room.id);
-  if (!fresh) return;
+  await postRoundSummary(fresh);
+  const afterSummary = await loadRoom(room.id);
+  if (!afterSummary) return;
 
-  if (bothReady(fresh)) {
-    await transitionToGeneratingOptions(room.id, "both_ready");
-    return;
-  }
+  if (await transitionIfBothReady(room.id, afterSummary)) return;
 
-  if (isSessionExpired(fresh)) {
+  if (isSessionExpired(afterSummary)) {
     await transitionToGeneratingOptions(room.id, "timer_expired");
     return;
   }
 
-  const sufficient = await checkDataSufficiency(fresh);
+  const sufficient = await checkDataSufficiency(afterSummary);
   if (sufficient) {
     await transitionToGeneratingOptions(room.id, "ai_data_sufficiency");
     return;
   }
 
-  if (fresh.mediationRound >= MAX_DIALOGUE_ROUNDS) {
+  if (afterSummary.mediationRound >= MAX_DIALOGUE_ROUNDS) {
     await transitionToGeneratingOptions(room.id, "rounds_complete");
     return;
   }
 
   await db
     .update(rooms)
-    .set({ mediationRound: fresh.mediationRound + 1 })
+    .set({ mediationRound: afterSummary.mediationRound + 1 })
     .where(eq(rooms.id, room.id));
 
   const nextRound = await loadRoom(room.id);
@@ -351,8 +365,9 @@ export async function tickMediationTimers(roomId: string) {
     if (fresh) await afterPartyReply(fresh, timedOutParty);
   }
 
-  if (bothReady(room) && room.mediationPhase === "dialogue") {
+  if (bothReady(room) && isNegotiationPhase(room.mediationPhase)) {
     await transitionToGeneratingOptions(roomId, "both_ready");
+    return loadRoom(roomId);
   }
 
   return loadRoom(roomId);
@@ -413,7 +428,19 @@ export async function markReadyForOptions(userId: string) {
   const participant = await getParticipantRoom(userId);
   if (!participant) throw new Error("Not in a room.");
 
+  const room = await loadRoom(participant.roomId);
+  if (!room || !isNegotiationPhase(room.mediationPhase)) {
+    throw new Error("Ready for options is only available during mediation.");
+  }
+
   const role = partyRoleFromUser(participant.user);
+  const alreadyReady =
+    role === "party_a" ? room.partyAReadyForOptionsAt : room.partyBReadyForOptionsAt;
+  if (alreadyReady) {
+    await tickMediationTimers(participant.roomId);
+    return;
+  }
+
   const patch =
     role === "party_a"
       ? { partyAReadyForOptionsAt: new Date() }
@@ -629,8 +656,9 @@ export async function getMediationRoomState(userId: string) {
         .where(eq(rooms.id, room.id));
       room = (await loadRoom(room.id)) ?? room;
     } else {
-      await startMediationSession(room.id);
-      room = await loadRoom(room.id);
+      void startMediationSession(room.id).catch((error) => {
+        console.error("Failed to start mediation session", error);
+      });
     }
   }
 

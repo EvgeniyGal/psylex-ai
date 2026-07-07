@@ -41,9 +41,8 @@ export default async function RoomPage({ searchParams }: RoomPageProps) {
   }
 
   const mediationState = await fetchMediationRoomState();
-  if (!mediationState) {
-    redirect("/mediation");
-  }
 
-  return <RoomExperience mediationState={mediationState} review={review} />;
+  return (
+    <RoomExperience mediationState={mediationState} review={review} roomTitle={lobby.room.title} />
+  );
 }

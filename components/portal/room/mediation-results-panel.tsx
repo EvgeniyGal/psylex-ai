@@ -38,8 +38,8 @@ function LegislationSubsection({
   if (section.kind === "laws" && section.laws?.length) {
     return (
       <div className="space-y-3">
-        {section.laws.map((law) => (
-          <article className="rounded-lg border border-hair bg-[#F7F5F0] p-4" key={law.name}>
+        {section.laws.map((law, index) => (
+          <article className="rounded-lg border border-hair bg-[#F7F5F0] p-4" key={`${law.name}-${index}`}>
             <h4 className="font-display text-headline-sm text-on-surface">{law.name}</h4>
             <p className="mt-2 whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
               {law.summary}
@@ -56,10 +56,10 @@ function LegislationSubsection({
   if (section.kind === "regulations" && section.regulations?.length) {
     return (
       <div className="space-y-3">
-        {section.regulations.map((regulation) => (
+        {section.regulations.map((regulation, index) => (
           <article
             className="rounded-lg border border-hair bg-[#F7F5F0] p-4"
-            key={regulation.name}
+            key={`${regulation.name}-${index}`}
           >
             <h4 className="font-display text-headline-sm text-on-surface">{regulation.name}</h4>
             <p className="mt-2 whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
@@ -138,10 +138,10 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
         </DocumentSection>
 
         {summary.legislationSections.length > 0 ? (
-          summary.legislationSections.map((section) => (
+          summary.legislationSections.map((section, index) => (
             <DocumentSection
               heading={`${t.mediationPdfLegislation}: ${section.heading}`}
-              key={section.heading}
+              key={`${section.heading}-${index}`}
             >
               <LegislationSubsection
                 excerptLabel={t.mediationLegislationExcerpt}
@@ -175,8 +175,8 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
               <div className="space-y-2">
                 <h4 className="font-display text-headline-sm text-on-surface">{t.mediationPdfTerms}</h4>
                 <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
-                  {summary.terms.map((term) => (
-                    <li key={term}>{term}</li>
+                  {summary.terms.map((term, index) => (
+                    <li key={`${term}-${index}`}>{term}</li>
                   ))}
                 </ul>
               </div>

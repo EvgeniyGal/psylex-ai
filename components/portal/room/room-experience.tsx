@@ -1,22 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { MediationRoom } from "@/components/portal/room/mediation-room";
 import { useLocale } from "@/components/locale-provider";
 import { resolveRoomFlowStep } from "@/lib/participant-flow";
 import { cn } from "@/lib/utils";
 import type { MediationPhase } from "@/lib/mediation/types";
-import type { fetchMediationRoomState } from "@/app/(participant)/room/actions";
+
+type MediationRoomState = NonNullable<Awaited<ReturnType<typeof fetchMediationRoomState>>>;
 
 type RoomExperienceProps = {
-  mediationState: NonNullable<Awaited<ReturnType<typeof fetchMediationRoomState>>>;
+  mediationState: MediationRoomState | null;
+  roomTitle: string;
   review?: boolean;
 };
 
-export function RoomExperience({ mediationState, review = false }: RoomExperienceProps) {
+export function RoomExperience({ mediationState, roomTitle, review = false }: RoomExperienceProps) {
+  const router = useRouter();
   const { portal: t } = useLocale();
-  const [phase, setPhase] = useState<MediationPhase | null>(mediationState.room.phase);
+  const [phase, setPhase] = useState<MediationPhase | null>(mediationState?.room.phase ?? null);
+  const refreshingRef = useRef(false);
+
+  useEffect(() => {
+    if (mediationState) return;
+
+    let cancelled = false;
+    let timeoutId: number | undefined;
+
+    const poll = async () => {
+      try {
+        const next = await fetchMediationRoomState();
+        if (cancelled) return;
+        if (next) {
+          if (!refreshingRef.current) {
+            refreshingRef.current = true;
+            router.refresh();
+          }
+          return;
+        }
+      } catch {
+        // retry on transient errors
+      }
+
+      if (!cancelled && !refreshingRef.current) {
+        timeoutId = window.setTimeout(() => {
+          void poll();
+        }, 2000);
+      }
+    };
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [mediationState, router]);
+
+  if (!mediationState) {
+    const flowStep = resolveRoomFlowStep(null, review);
+
+    return (
+      <PortalPageShell flowStep={flowStep}>
+        <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col items-center justify-center gap-4 px-margin-mobile py-stack-lg md:px-margin-desktop">
+          <span className="material-symbols-outlined animate-spin text-4xl text-tertiary">progress_activity</span>
+          <div className="text-center">
+            <h1 className="mb-2 font-display text-display-lg text-on-surface">{t.roomTitle}</h1>
+            <p className="font-sans text-body-lg text-on-surface-variant">{roomTitle}</p>
+            <p className="mt-4 font-sans text-body-sm text-on-surface-variant">{t.mediationPreparing}</p>
+          </div>
+        </main>
+      </PortalPageShell>
+    );
+  }
+
   const flowStep = resolveRoomFlowStep(phase, review);
   const isTreatyView = phase === "completed" && !review;
 
