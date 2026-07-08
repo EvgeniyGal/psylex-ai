@@ -32,7 +32,8 @@ const COLORS = {
 const PAGE = {
   margin: 56,
   headerBottom: 132,
-  footerReserve: 28,
+  // Reserved band above the bottom margin for footer line + company/page text.
+  footerReserve: 40,
 } as const;
 
 function assetPath(...segments: string[]) {
@@ -53,14 +54,6 @@ function contentWidth(doc: PDFKit.PDFDocument) {
 
 function contentBottom(doc: PDFKit.PDFDocument) {
   return doc.page.height - PAGE.margin - PAGE.footerReserve;
-}
-
-function footerLineY(doc: PDFKit.PDFDocument) {
-  return doc.page.height - PAGE.margin - 18;
-}
-
-function footerTextY(doc: PDFKit.PDFDocument) {
-  return doc.page.height - PAGE.margin - 12;
 }
 
 function drawDocumentHeader(
@@ -122,25 +115,43 @@ function drawPageFooters(
   for (let index = 0; index < pageCount; index += 1) {
     doc.switchToPage(pageRange.start + index);
 
+    const margins = { ...doc.page.margins };
+    doc.page.margins.top = 0;
+    doc.page.margins.bottom = 0;
+    doc.page.margins.left = 0;
+    doc.page.margins.right = 0;
+
+    const lineY = doc.page.height - PAGE.margin - 18;
+    const textY = doc.page.height - PAGE.margin - 10;
+
     doc
-      .moveTo(PAGE.margin, footerLineY(doc))
-      .lineTo(doc.page.width - PAGE.margin, footerLineY(doc))
+      .moveTo(PAGE.margin, lineY)
+      .lineTo(doc.page.width - PAGE.margin, lineY)
       .lineWidth(0.5)
       .strokeColor(COLORS.hairline)
       .stroke();
 
     doc.font(regularFont).fontSize(8).fillColor(COLORS.muted);
-    doc.text(companyName, PAGE.margin, footerTextY(doc), { lineBreak: false });
-    doc.text(`${index + 1} / ${pageCount}`, PAGE.margin, footerTextY(doc), {
-      width: contentWidth(doc),
-      align: "right",
+
+    // Important: do not pass `width`. PDFKit LineWrapper creates empty pages when
+    // footer Y sits below the content bottom margin.
+    doc.text(companyName, PAGE.margin, textY, { lineBreak: false });
+
+    const pageLabel = `${index + 1} / ${pageCount}`;
+    const pageLabelWidth = doc.widthOfString(pageLabel);
+    doc.text(pageLabel, doc.page.width - PAGE.margin - pageLabelWidth, textY, {
       lineBreak: false,
     });
+
+    doc.page.margins.top = margins.top;
+    doc.page.margins.bottom = margins.bottom;
+    doc.page.margins.left = margins.left;
+    doc.page.margins.right = margins.right;
   }
 
   doc.switchToPage(pageRange.start + pageCount - 1);
   doc.x = savedX;
-  doc.y = savedY;
+  doc.y = Math.min(savedY, contentBottom(doc));
 }
 
 function ensureMinSpace(doc: PDFKit.PDFDocument, minHeight: number) {
@@ -298,7 +309,13 @@ function renderPdf(content: MediationPdfContent): Promise<Buffer> {
 
     const doc = new PDFDocument({
       size: "A4",
-      margins: { top: PAGE.margin, bottom: PAGE.margin, left: PAGE.margin, right: PAGE.margin },
+      margins: {
+        top: PAGE.margin,
+        // Keep automatic text pagination above the reserved footer band.
+        bottom: PAGE.margin + PAGE.footerReserve,
+        left: PAGE.margin,
+        right: PAGE.margin,
+      },
       bufferPages: true,
       info: {
         Title: content.title,
@@ -346,7 +363,11 @@ function renderPdf(content: MediationPdfContent): Promise<Buffer> {
       doc.font(regularFont).fontSize(10.5).fillColor(COLORS.ink);
       for (const term of content.terms) {
         ensureMinSpace(doc, 16);
-        doc.text(`• ${term}`, { indent: 12, lineGap: 2, width: contentWidth(doc) });
+        doc.text(`• ${term}`, {
+          indent: 12,
+          lineGap: 2,
+          width: contentWidth(doc),
+        });
       }
       doc.moveDown(0.55);
     }
