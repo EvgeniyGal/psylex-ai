@@ -127,9 +127,11 @@ async function finalizeMediationStart(roomId: string, room: RoomHandshakeRow) {
     .where(eq(rooms.id, roomId));
 
   const { startMediationSession } = await import("@/lib/mediation/orchestrator");
-  void startMediationSession(roomId).catch((error) => {
+  try {
+    await startMediationSession(roomId);
+  } catch (error) {
     console.error("Failed to start mediation session", error);
-  });
+  }
 
   return startedAt;
 }

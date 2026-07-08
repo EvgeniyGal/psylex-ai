@@ -13,6 +13,7 @@ import {
   isPostIntakePipelineComplete,
 } from "@/lib/pipeline/gate";
 import { tryRunPostIntakePipeline, ensurePostIntakePipeline } from "@/lib/pipeline/trigger";
+import { ensureMediationOpeningPrepared, isMediationOpeningPrepared } from "@/lib/mediation/prepare-opening";
 import { isPartyRole } from "@/lib/participant-roles";
 import { disputeIntakeSchema } from "@/lib/dispute-intake-schema";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
@@ -139,11 +140,42 @@ export async function runPostIntakePipelineForRoom(
 
   const complete = await isPostIntakePipelineComplete(roomId);
   if (complete) {
+    if (!(await isMediationOpeningPrepared(roomId))) {
+      await ensureMediationOpeningPrepared(roomId);
+    }
     revalidatePath("/mediation");
     return { status: "complete" };
   }
 
   await ensurePostIntakePipeline(roomId);
+  if (!(await isMediationOpeningPrepared(roomId))) {
+    await ensureMediationOpeningPrepared(roomId);
+  }
+  revalidatePath("/mediation");
+  return { status: "ran" };
+}
+
+export async function prepareMediationOpeningForRoom(
+  roomId: string,
+): Promise<{ status: "complete" | "ran" | "ineligible" }> {
+  const { user } = await requireSideParticipant();
+
+  if (!roomId || !user.roomId || user.roomId !== roomId) {
+    throw new Error("Unauthorized");
+  }
+
+  const pipelineComplete = await isPostIntakePipelineComplete(roomId);
+  if (!pipelineComplete) {
+    return { status: "ineligible" };
+  }
+
+  const prepared = await isMediationOpeningPrepared(roomId);
+  if (prepared) {
+    revalidatePath("/mediation");
+    return { status: "complete" };
+  }
+
+  await ensureMediationOpeningPrepared(roomId);
   revalidatePath("/mediation");
   return { status: "ran" };
 }

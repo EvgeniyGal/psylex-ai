@@ -60,6 +60,7 @@ type PortalCopy = {
   mediationStart: string;
   mediationYourStatus: string;
   mediationAgentsWorking: string;
+  mediationRoomPreparing: string;
   mediationHandshakeWaiting: string;
   mediationHandshakeOppositeReady: string;
   mediationHandshakeStarting: string;
@@ -82,6 +83,8 @@ type PortalCopy = {
   mediationWaitingOtherReady: string;
   mediationReadyForOptionsHint: string;
   mediationPreparing: string;
+  mediationAwaitingAgent: string;
+  mediationQuestionIncoming: string;
   mediationYou: string;
   mediationAgent: string;
   mediationSystem: string;
@@ -247,6 +250,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationYourStatus: "Your status",
     mediationAgentsWorking:
       "Our analysis agents are preparing your mediation session. This may take several minutes. Please wait — the Start Mediation button will become available when analysis is complete.",
+    mediationRoomPreparing:
+      "The mediation agent is preparing your opening messages. This usually takes a minute — the Start Mediation button will appear when the room is ready.",
     mediationHandshakeWaiting:
       "You clicked Start Mediation. Waiting for the opposite side to click as well.",
     mediationHandshakeOppositeReady:
@@ -273,6 +278,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationReadyForOptionsHint:
       "Both parties can click this at any time during dialogue to move to solution options early.",
     mediationPreparing: "The mediation agent is preparing your session…",
+    mediationAwaitingAgent: "The mediation agent is working on the next step. Please wait a moment.",
+    mediationQuestionIncoming: "Your question is being prepared…",
     mediationYou: "You",
     mediationAgent: "Mediation agent",
     mediationSystem: "System",
@@ -455,6 +462,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationYourStatus: "Ваш статус",
     mediationAgentsWorking:
       "Агенти аналізу готують вашу сесію медіації. Це може зайняти кілька хвилин. Зачекайте — кнопка «Почати медіацію» стане доступною після завершення аналізу.",
+    mediationRoomPreparing:
+      "Агент медіації готує вступні повідомлення. Зазвичай це займає хвилину — кнопка «Почати медіацію» з’явиться, коли кімната буде готова.",
     mediationHandshakeWaiting:
       "Ви натиснули «Почати медіацію». Очікуємо, поки інша сторона також натисне кнопку.",
     mediationHandshakeOppositeReady:
@@ -481,6 +490,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationReadyForOptionsHint:
       "Обидві сторони можуть натиснути це під час діалогу, щоб достроково перейти до варіантів рішення.",
     mediationPreparing: "Агент медіації готує сесію…",
+    mediationAwaitingAgent: "Агент медіації готує наступний крок. Зачекайте, будь ласка.",
+    mediationQuestionIncoming: "Ваше запитання готується…",
     mediationYou: "Ви",
     mediationAgent: "Агент медіації",
     mediationSystem: "Система",

@@ -119,6 +119,11 @@ function buildAdminMediationState(
       phase: room.mediationPhase,
       round: room.mediationRound,
       activeParty: room.mediationActiveParty,
+      isAwaitingAgent:
+        room.mediationPhase === "generating_options" ||
+        (room.mediationPhase === "dialogue" && !room.mediationActiveParty) ||
+        (room.mediationPhase === "agreement" && !room.draftAgreement) ||
+        (room.mediationPhase === "voting_discrepancy" && !room.compromiseOption),
       turnDeadlineAt: room.mediationTurnDeadlineAt?.toISOString() ?? null,
       mediationStartedAt: room.mediationStartedAt!.toISOString(),
       mediationDurationMinutes: room.mediationDurationMinutes,

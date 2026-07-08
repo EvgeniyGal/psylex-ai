@@ -76,6 +76,14 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
   const isMyTurn =
     state.room.phase === "dialogue" && state.room.activeParty === viewerRole;
 
+  const lastMessage = state.messages.at(-1);
+  const questionReady =
+    state.room.phase !== "dialogue" ||
+    !isMyTurn ||
+    lastMessage?.messageKind === "mediation_question";
+
+  const isAwaitingAgent = state.room.isAwaitingAgent;
+
   const [replyRemaining, setReplyRemaining] = useState<string | null>(null);
 
   useEffect(() => {
@@ -91,7 +99,9 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
   }, [isMyTurn, state.room.turnDeadlineAt]);
 
   const showReadyButton =
-    state.room.phase === "opening" || state.room.phase === "dialogue";
+    state.room.phase === "opening" ||
+    state.room.phase === "dialogue" ||
+    state.room.phase === "generating_options";
 
   const draft = state.room.draftAgreement as {
     title?: string;
@@ -302,6 +312,13 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
             ) : null}
           </div>
 
+          {isAwaitingAgent ? (
+            <div className="flex items-start gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
+              <span className="material-symbols-outlined animate-spin text-tertiary">progress_activity</span>
+              <p className="text-body-sm text-on-surface-variant">{t.mediationAwaitingAgent}</p>
+            </div>
+          ) : null}
+
           {showReadyButton ? (
             <div className="flex flex-wrap items-center gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
               <button
@@ -353,21 +370,30 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
 
           {isMyTurn ? (
             <div className="space-y-2">
-              <textarea
-                className="w-full rounded-lg border border-hair bg-paper p-3 text-body-md text-ink"
-                onChange={(event) => setReply(event.target.value)}
-                placeholder={t.mediationReplyPlaceholder}
-                rows={3}
-                value={reply}
-              />
-              <button
-                className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
-                disabled={pending || !reply.trim()}
-                onClick={onSendReply}
-                type="button"
-              >
-                {t.mediationSendReply}
-              </button>
+              {!questionReady ? (
+                <div className="flex items-center gap-2 rounded-lg border border-law-line bg-law-fill/40 p-3 text-body-sm text-on-surface-variant">
+                  <span className="material-symbols-outlined animate-spin text-tertiary">progress_activity</span>
+                  {t.mediationQuestionIncoming}
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    className="w-full rounded-lg border border-hair bg-paper p-3 text-body-md text-ink"
+                    onChange={(event) => setReply(event.target.value)}
+                    placeholder={t.mediationReplyPlaceholder}
+                    rows={3}
+                    value={reply}
+                  />
+                  <button
+                    className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
+                    disabled={pending || !reply.trim()}
+                    onClick={onSendReply}
+                    type="button"
+                  >
+                    {t.mediationSendReply}
+                  </button>
+                </>
+              )}
             </div>
           ) : null}
 

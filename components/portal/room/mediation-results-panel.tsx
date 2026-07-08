@@ -9,7 +9,29 @@ type MediationResultsPanelProps = {
   summary: MediationResultsSummary;
 };
 
-function DocumentSection({
+function ChapterSection({
+  index,
+  heading,
+  children,
+}: {
+  index: number;
+  heading: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-hair bg-surface-container/40 p-5 md:p-6">
+      <div className="mb-4 flex items-center gap-3 border-b border-hair pb-3">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-law/40 bg-law-fill/40 text-label-sm font-semibold text-on-surface">
+          {index}
+        </span>
+        <h3 className="font-display text-headline-sm text-on-surface">{heading}</h3>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function SubchapterSection({
   heading,
   children,
 }: {
@@ -17,8 +39,8 @@ function DocumentSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-l-[3px] border-law pl-4">
-      <h3 className="font-display text-headline-sm text-on-surface">{heading}</h3>
+    <section className="rounded-lg border border-hair bg-paper p-4">
+      <h4 className="font-display text-headline-sm text-on-surface">{heading}</h4>
       <div className="mt-2">{children}</div>
     </section>
   );
@@ -131,48 +153,45 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
           <p className="text-body-sm text-on-surface-variant">{formatDocumentDate(locale)}</p>
         </div>
 
-        <DocumentSection heading={t.mediationPdfPsychodynamicProfile}>
+        <ChapterSection heading={t.mediationPdfPsychodynamicProfile} index={1}>
           <p className="whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
             {summary.psychodynamicProfile}
           </p>
-        </DocumentSection>
+        </ChapterSection>
 
-        {summary.legislationSections.length > 0 ? (
-          summary.legislationSections.map((section, index) => (
-            <DocumentSection
-              heading={`${t.mediationPdfLegislation}: ${section.heading}`}
-              key={`${section.heading}-${index}`}
-            >
-              <LegislationSubsection
-                excerptLabel={t.mediationLegislationExcerpt}
-                relevanceLabel={t.mediationLegislationRelevance}
-                section={section}
-                sourceLabel={t.mediationLegislationSource}
-              />
-            </DocumentSection>
-          ))
-        ) : (
-          <DocumentSection heading={t.mediationPdfLegislation}>
+        <ChapterSection heading={t.mediationPdfLegislation} index={2}>
+          {summary.legislationSections.length > 0 ? (
+            summary.legislationSections.map((section, index) => (
+              <SubchapterSection heading={section.heading} key={`${section.heading}-${index}`}>
+                <LegislationSubsection
+                  excerptLabel={t.mediationLegislationExcerpt}
+                  relevanceLabel={t.mediationLegislationRelevance}
+                  section={section}
+                  sourceLabel={t.mediationLegislationSource}
+                />
+              </SubchapterSection>
+            ))
+          ) : (
             <p className="text-body-md text-on-surface-variant">{t.mediationPdfNotAvailable}</p>
-          </DocumentSection>
-        )}
+          )}
+        </ChapterSection>
 
-        <DocumentSection heading={t.mediationPdfSolution}>
+        <ChapterSection heading={t.mediationPdfSolution} index={3}>
           <p className="whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
             {summary.solution}
           </p>
-        </DocumentSection>
+        </ChapterSection>
 
-        {(summary.agreementBody || summary.terms.length > 0) && (
-          <div className="space-y-4 border-t border-hair pt-2">
-            <h3 className="font-display text-headline-sm text-on-surface">{t.mediationAgreementTitle}</h3>
+        <ChapterSection heading={t.mediationAgreementTitle} index={4}>
+          {summary.agreementBody || summary.terms.length > 0 ? (
+            <>
             {summary.agreementBody ? (
               <p className="whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
                 {summary.agreementBody}
               </p>
             ) : null}
             {summary.terms.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2 rounded-lg border border-hair bg-paper p-4">
                 <h4 className="font-display text-headline-sm text-on-surface">{t.mediationPdfTerms}</h4>
                 <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
                   {summary.terms.map((term, index) => (
@@ -181,8 +200,11 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
                 </ul>
               </div>
             ) : null}
-          </div>
-        )}
+            </>
+          ) : (
+            <p className="text-body-md text-on-surface-variant">{t.mediationPdfNotAvailable}</p>
+          )}
+        </ChapterSection>
 
         <p className="rounded-lg border border-hair bg-surface-container p-4 text-body-sm leading-relaxed text-on-surface-variant">
           {t.mediationUplDisclaimer}

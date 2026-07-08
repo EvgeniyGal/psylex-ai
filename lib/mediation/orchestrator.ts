@@ -35,11 +35,14 @@ import {
   type MediationOption,
   type MediationPhase,
 } from "@/lib/mediation/types";
+import { isMediationOpeningPrepared } from "@/lib/mediation/prepare-opening";
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { getRoomPartiesForPipeline, isPostIntakePipelineComplete } from "@/lib/pipeline/gate";
 import type { PartyRole } from "@/lib/participant-roles";
 
 type RoomRow = typeof rooms.$inferSelect;
+
+const mediationAgentWork = new Set<string>();
 
 function sessionEndsAt(room: RoomRow) {
   if (!room.mediationStartedAt) return null;
@@ -125,23 +128,29 @@ async function clearTurn(roomId: string) {
 
 async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
   if (await transitionIfBothReady(room.id, room)) return;
+  if (mediationAgentWork.has(room.id)) return;
 
-  const { ctx } = await buildContext(room);
-  const result = await runMediationAgent({
-    mode: "dialogue_question",
-    context: ctx,
-    schema: mediationDialogueQuestionSchema,
-    extraInstruction: `Set addressee to "${addressee}". Round ${room.mediationRound}.`,
-  });
+  mediationAgentWork.add(room.id);
+  try {
+    await beginTurn(room.id, addressee);
 
-  await insertAgentMessage({
-    roomId: room.id,
-    canonicalContent: result.canonicalContent,
-    adaptations: toPartyAdaptations(result),
-    messageKind: "mediation_question",
-  });
+    const { ctx } = await buildContext(room);
+    const result = await runMediationAgent({
+      mode: "dialogue_question",
+      context: ctx,
+      schema: mediationDialogueQuestionSchema,
+      extraInstruction: `Set addressee to "${addressee}". Round ${room.mediationRound}.`,
+    });
 
-  await beginTurn(room.id, addressee);
+    await insertAgentMessage({
+      roomId: room.id,
+      canonicalContent: result.canonicalContent,
+      adaptations: toPartyAdaptations(result),
+      messageKind: "mediation_question",
+    });
+  } finally {
+    mediationAgentWork.delete(room.id);
+  }
 }
 
 async function postRoundSummary(room: RoomRow) {
@@ -173,7 +182,10 @@ async function checkDataSufficiency(room: RoomRow) {
 
 export async function transitionToGeneratingOptions(roomId: string, reason: string) {
   const room = await loadRoom(roomId);
-  if (!room || room.mediationPhase === "generating_options" || room.mediationPhase === "voting") {
+  if (!room || room.mediationPhase === "voting") return;
+
+  if (room.mediationPhase === "generating_options") {
+    await ensureOptionsPublished(roomId);
     return;
   }
 
@@ -182,57 +194,77 @@ export async function transitionToGeneratingOptions(roomId: string, reason: stri
   await generateAndPublishOptions(roomId);
 }
 
+async function ensureOptionsPublished(roomId: string) {
+  const room = await loadRoom(roomId);
+  if (!room || room.mediationPhase !== "generating_options") return;
+
+  const options = (room.mediationOptions as MediationOption[] | null) ?? [];
+  if (options.length > 0) return;
+
+  await generateAndPublishOptions(roomId);
+}
+
 async function generateAndPublishOptions(roomId: string) {
   const room = await loadRoom(roomId);
   if (!room) return;
 
-  const { ctx } = await buildContext(room);
-  const result = await runMediationAgent({
-    mode: "options",
-    context: ctx,
-    schema: mediationOptionsSchema,
-  });
+  if (mediationAgentWork.has(roomId)) return;
+  mediationAgentWork.add(roomId);
 
-  const options: MediationOption[] = result.options.map((option) => ({
-    id: option.id,
-    canonicalDescription: option.canonicalDescription,
-    legalNorms: option.legalNorms,
-    fulfillmentProbability: option.fulfillmentProbability,
-    refusalRisks: option.refusalRisks,
-    partyA: option.partyA,
-    partyB: option.partyB,
-  }));
+  try {
+    const existing = (room.mediationOptions as MediationOption[] | null) ?? [];
+    if (existing.length > 0) return;
 
-  await db
-    .update(rooms)
-    .set({
-      mediationOptions: options,
-      mediationPhase: "voting",
-      partyAVoteOptionId: null,
-      partyBVoteOptionId: null,
-    })
-    .where(eq(rooms.id, roomId));
+    const { ctx } = await buildContext(room);
+    const result = await runMediationAgent({
+      mode: "options",
+      context: ctx,
+      schema: mediationOptionsSchema,
+    });
 
-  const canonical = portalCopy.en.mediationOptionsReady;
-  await insertSystemMessage({
-    roomId,
-    content: canonical,
-    canonicalContent: canonical,
-    adaptations: toPartyAdaptations({
+    const options: MediationOption[] = result.options.map((option) => ({
+      id: option.id,
+      canonicalDescription: option.canonicalDescription,
+      legalNorms: option.legalNorms,
+      fulfillmentProbability: option.fulfillmentProbability,
+      refusalRisks: option.refusalRisks,
+      partyA: option.partyA,
+      partyB: option.partyB,
+    }));
+
+    await db
+      .update(rooms)
+      .set({
+        mediationOptions: options,
+        mediationPhase: "voting",
+        partyAVoteOptionId: null,
+        partyBVoteOptionId: null,
+      })
+      .where(eq(rooms.id, roomId));
+
+    const canonical = portalCopy.en.mediationOptionsReady;
+    await insertSystemMessage({
+      roomId,
+      content: canonical,
       canonicalContent: canonical,
-      partyA:
-        portalCopy[(ctx.partyA.preferredLocale as Locale) ?? "en"].mediationOptionsReady,
-      partyB:
-        portalCopy[(ctx.partyB.preferredLocale as Locale) ?? "en"].mediationOptionsReady,
-    }),
-  });
+      adaptations: toPartyAdaptations({
+        canonicalContent: canonical,
+        partyA:
+          portalCopy[(ctx.partyA.preferredLocale as Locale) ?? "en"].mediationOptionsReady,
+        partyB:
+          portalCopy[(ctx.partyB.preferredLocale as Locale) ?? "en"].mediationOptionsReady,
+      }),
+    });
 
-  await logPipelineEvent({
-    roomId,
-    agentKey: "mediation",
-    eventType: "agent_completed",
-    payload: { step: "options_published", count: options.length },
-  });
+    await logPipelineEvent({
+      roomId,
+      agentKey: "mediation",
+      eventType: "agent_completed",
+      payload: { step: "options_published", count: options.length },
+    });
+  } finally {
+    mediationAgentWork.delete(roomId);
+  }
 }
 
 async function startDialogueRound(room: RoomRow) {
@@ -288,6 +320,27 @@ async function afterPartyReply(room: RoomRow, party: PartyRole) {
   if (nextRound) await startDialogueRound(nextRound);
 }
 
+async function activatePreparedSession(roomId: string) {
+  await db
+    .update(rooms)
+    .set({ mediationPhase: "dialogue", mediationRound: 1 })
+    .where(eq(rooms.id, roomId));
+
+  await logPipelineEvent({
+    roomId,
+    agentKey: "mediation",
+    eventType: "agent_completed",
+    payload: { step: "opening", prepared: true },
+  });
+
+  await beginTurn(roomId, "party_a");
+}
+
+async function hasMessageKindInRoom(roomId: string, messageKind: string) {
+  const messages = await listRoomMessages(roomId);
+  return messages.some((message) => message.messageKind === messageKind);
+}
+
 export async function startMediationSession(roomId: string) {
   const room = await loadRoom(roomId);
   if (!room?.mediationStartedAt) return;
@@ -296,6 +349,16 @@ export async function startMediationSession(roomId: string) {
 
   const complete = await isPostIntakePipelineComplete(roomId);
   if (!complete) return;
+
+  if (!(await isMediationOpeningPrepared(roomId))) {
+    const { prepareMediationOpening } = await import("@/lib/mediation/prepare-opening");
+    await prepareMediationOpening(roomId);
+  }
+
+  if (await isMediationOpeningPrepared(roomId)) {
+    await activatePreparedSession(roomId);
+    return;
+  }
 
   await db
     .update(rooms)
@@ -314,28 +377,91 @@ export async function startMediationSession(roomId: string) {
 }
 
 async function runOpeningPhase(room: RoomRow) {
-  const { ctx } = await buildContext(room);
-  const opening = await runMediationAgent({
-    mode: "opening",
-    context: ctx,
-    schema: mediationOpeningSchema,
-  });
+  if (await isMediationOpeningPrepared(room.id)) {
+    await activatePreparedSession(room.id);
+    return;
+  }
 
-  await insertAgentMessage({
-    roomId: room.id,
-    canonicalContent: opening.canonicalContent,
-    adaptations: toPartyAdaptations(opening),
-    messageKind: "mediation_opening",
-  });
+  const hasOpening = await hasMessageKindInRoom(room.id, "mediation_opening");
+  if (!hasOpening) {
+    const { ctx } = await buildContext(room);
+    const opening = await runMediationAgent({
+      mode: "opening",
+      context: ctx,
+      schema: mediationOpeningSchema,
+    });
 
+    await insertAgentMessage({
+      roomId: room.id,
+      canonicalContent: opening.canonicalContent,
+      adaptations: toPartyAdaptations(opening),
+      messageKind: "mediation_opening",
+    });
+  }
+
+  const hasQuestion = await hasMessageKindInRoom(room.id, "mediation_question");
   await db
     .update(rooms)
-    .set({ mediationRound: 1 })
+    .set({ mediationRound: 1, mediationPhase: "dialogue" })
     .where(eq(rooms.id, room.id));
 
-  await setPhase(room.id, "dialogue");
+  if (hasQuestion) {
+    await beginTurn(room.id, "party_a");
+    return;
+  }
+
   const updated = await loadRoom(room.id);
-  if (updated) await startDialogueRound(updated);
+  if (updated) await askDialogueQuestion({ ...updated, mediationRound: 1, mediationPhase: "dialogue" }, "party_a");
+}
+
+async function ensureCompromiseOption(room: RoomRow) {
+  if (room.mediationPhase !== "voting_discrepancy" || room.compromiseOption) return;
+  if (!room.partyAVoteOptionId || !room.partyBVoteOptionId) return;
+  if (room.partyAVoteOptionId === room.partyBVoteOptionId) return;
+  if (mediationAgentWork.has(room.id)) return;
+
+  mediationAgentWork.add(room.id);
+  try {
+    const fresh = await loadRoom(room.id);
+    if (!fresh || fresh.compromiseOption) return;
+
+    const { ctx } = await buildContext(fresh);
+    const compromise = await runMediationAgent({
+      mode: "compromise",
+      context: ctx,
+      schema: mediationCompromiseSchema,
+      extraInstruction: `Party A voted ${fresh.partyAVoteOptionId}, Party B voted ${fresh.partyBVoteOptionId}.`,
+    });
+
+    const compromiseOption: MediationOption = {
+      id: compromise.option.id,
+      canonicalDescription: compromise.option.canonicalDescription,
+      legalNorms: compromise.option.legalNorms,
+      fulfillmentProbability: compromise.option.fulfillmentProbability,
+      refusalRisks: compromise.option.refusalRisks,
+      partyA: compromise.option.partyA,
+      partyB: compromise.option.partyB,
+    };
+
+    await db
+      .update(rooms)
+      .set({ compromiseOption })
+      .where(eq(rooms.id, room.id));
+  } finally {
+    mediationAgentWork.delete(room.id);
+  }
+}
+
+async function ensureDraftAgreement(room: RoomRow) {
+  if (room.mediationPhase !== "agreement" || room.draftAgreement || !room.selectedOptionId) return;
+  if (mediationAgentWork.has(room.id)) return;
+
+  mediationAgentWork.add(room.id);
+  try {
+    await generateDraftAgreement(room.id, room.selectedOptionId);
+  } finally {
+    mediationAgentWork.delete(room.id);
+  }
 }
 
 export async function tickMediationTimers(roomId: string) {
@@ -349,7 +475,24 @@ export async function tickMediationTimers(roomId: string) {
   ) {
     if (room.mediationPhase !== "generating_options") {
       await transitionToGeneratingOptions(roomId, "timer_expired");
+    } else {
+      await ensureOptionsPublished(roomId);
     }
+    return loadRoom(roomId);
+  }
+
+  if (room.mediationPhase === "generating_options") {
+    await ensureOptionsPublished(roomId);
+    return loadRoom(roomId);
+  }
+
+  if (room.mediationPhase === "voting_discrepancy") {
+    await ensureCompromiseOption(room);
+    return loadRoom(roomId);
+  }
+
+  if (room.mediationPhase === "agreement") {
+    await ensureDraftAgreement(room);
     return loadRoom(roomId);
   }
 
@@ -484,7 +627,6 @@ export async function castVote(userId: string, optionId: string) {
     return loadRoom(room.id);
   }
 
-  await setPhase(room.id, "voting_discrepancy");
   const { ctx } = await buildContext(updated);
   const compromise = await runMediationAgent({
     mode: "compromise",
@@ -503,6 +645,7 @@ export async function castVote(userId: string, optionId: string) {
     partyB: compromise.option.partyB,
   };
 
+  await setPhase(room.id, "voting_discrepancy");
   await db
     .update(rooms)
     .set({
@@ -656,9 +799,11 @@ export async function getMediationRoomState(userId: string) {
         .where(eq(rooms.id, room.id));
       room = (await loadRoom(room.id)) ?? room;
     } else {
-      void startMediationSession(room.id).catch((error) => {
+      try {
+        await startMediationSession(room.id);
+      } catch (error) {
         console.error("Failed to start mediation session", error);
-      });
+      }
     }
   }
 
@@ -698,6 +843,12 @@ export async function getMediationRoomState(userId: string) {
     room!.mediationPhase === "agreement" ||
     room!.mediationPhase === "completed";
 
+  const isAwaitingAgent =
+    room!.mediationPhase === "generating_options" ||
+    (room!.mediationPhase === "dialogue" && !room!.mediationActiveParty) ||
+    (room!.mediationPhase === "agreement" && !room!.draftAgreement) ||
+    (room!.mediationPhase === "voting_discrepancy" && !room!.compromiseOption);
+
   const statePayload = {
     room: {
       id: room!.id,
@@ -705,6 +856,7 @@ export async function getMediationRoomState(userId: string) {
       phase: room!.mediationPhase,
       round: room!.mediationRound,
       activeParty: room!.mediationActiveParty,
+      isAwaitingAgent,
       turnDeadlineAt: room!.mediationTurnDeadlineAt?.toISOString() ?? null,
       mediationStartedAt: room!.mediationStartedAt!.toISOString(),
       mediationDurationMinutes: room!.mediationDurationMinutes,

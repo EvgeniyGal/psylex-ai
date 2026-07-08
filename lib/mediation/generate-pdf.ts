@@ -56,11 +56,11 @@ function contentBottom(doc: PDFKit.PDFDocument) {
 }
 
 function footerLineY(doc: PDFKit.PDFDocument) {
-  return doc.page.height - PAGE.margin - 14;
+  return doc.page.height - PAGE.margin - 18;
 }
 
 function footerTextY(doc: PDFKit.PDFDocument) {
-  return doc.page.height - 62;
+  return doc.page.height - PAGE.margin - 12;
 }
 
 function drawDocumentHeader(
@@ -131,7 +131,8 @@ function drawPageFooters(
 
     doc.font(regularFont).fontSize(8).fillColor(COLORS.muted);
     doc.text(companyName, PAGE.margin, footerTextY(doc), { lineBreak: false });
-    doc.text(`${index + 1} / ${pageCount}`, 0, footerTextY(doc), {
+    doc.text(`${index + 1} / ${pageCount}`, PAGE.margin, footerTextY(doc), {
+      width: contentWidth(doc),
       align: "right",
       lineBreak: false,
     });

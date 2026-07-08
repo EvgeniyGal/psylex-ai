@@ -58,6 +58,9 @@ export async function runPostIntakePipeline(roomId: string) {
     if (await isPostIntakePipelineComplete(roomId)) {
       await markPipelineCompleted(roomId);
       await logPipelineEvent({ roomId, eventType: "pipeline_completed" });
+
+      const { tryPrepareMediationOpening } = await import("@/lib/mediation/prepare-opening");
+      tryPrepareMediationOpening(roomId);
     } else {
       await logPipelineEvent({
         roomId,

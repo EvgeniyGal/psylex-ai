@@ -7,9 +7,44 @@ import { portalCopy } from "@/lib/portal-i18n";
 
 type MediationState = NonNullable<Awaited<ReturnType<typeof getMediationRoomState>>>;
 
+function formatLegislationChapterBody(summary: Awaited<ReturnType<typeof buildMediationResultsSummary>>) {
+  if (summary.legislationSections.length === 0) {
+    return summary.legislation;
+  }
+
+  return summary.legislationSections
+    .map((section) => `${section.heading}\n${section.body}`)
+    .join("\n\n");
+}
+
+function formatDraftAgreementChapterBody(params: {
+  agreementBody: string | null;
+  terms: string[];
+  termsHeading: string;
+  notAvailable: string;
+}) {
+  const parts: string[] = [];
+
+  if (params.agreementBody?.trim()) {
+    parts.push(params.agreementBody.trim());
+  }
+
+  if (params.terms.length > 0) {
+    const terms = params.terms.map((term) => `• ${term}`).join("\n");
+    parts.push(`${params.termsHeading}\n${terms}`);
+  }
+
+  if (parts.length === 0) {
+    return params.notAvailable;
+  }
+
+  return parts.join("\n\n");
+}
+
 export async function buildAgreementDownload(state: MediationState, locale: Locale = "en") {
   const copy = portalCopy[locale];
   const summary = await buildMediationResultsSummary(state, locale);
+  const termsHeading = locale === "uk" ? "Умови" : "Terms";
 
   const pdfBuffer = await generateMediationPdf({
     title: summary.agreementTitle,
@@ -18,24 +53,33 @@ export async function buildAgreementDownload(state: MediationState, locale: Loca
     generatedAt: new Date(),
     sections: [
       {
-        heading: copy.mediationPdfPsychodynamicProfile,
+        heading: `1. ${copy.mediationPdfPsychodynamicProfile}`,
         body: summary.psychodynamicProfile,
       },
-      ...summary.legislationSections.map((section) => ({
-        heading: `${copy.mediationPdfLegislation}: ${section.heading}`,
-        body: section.body,
-      })),
       {
-        heading: copy.mediationPdfSolution,
+        heading: `2. ${copy.mediationPdfLegislation}`,
+        body: formatLegislationChapterBody(summary),
+      },
+      {
+        heading: `3. ${copy.mediationPdfSolution}`,
         body: summary.solution,
       },
+      {
+        heading: `4. ${copy.mediationAgreementTitle}`,
+        body: formatDraftAgreementChapterBody({
+          agreementBody: summary.agreementBody,
+          terms: summary.terms,
+          termsHeading,
+          notAvailable: copy.mediationPdfNotAvailable,
+        }),
+      },
     ],
-    agreementBody: summary.agreementBody ?? undefined,
+    agreementBody: undefined,
     agreementHeading: copy.mediationAgreementTitle,
-    terms: summary.terms,
+    terms: [],
     topDisclaimer: copy.mediationPdfTopDisclaimer,
     disclaimer: copy.mediationUplDisclaimer,
-    termsHeading: locale === "uk" ? "Умови" : "Terms",
+    termsHeading,
   });
 
   return {
@@ -48,6 +92,7 @@ export async function buildAgreementDownload(state: MediationState, locale: Loca
 export async function buildAdminAgreementDownload(roomId: string, locale: Locale = "en") {
   const { summary } = await buildAdminMediationDownload(roomId, locale);
   const copy = portalCopy[locale];
+  const termsHeading = locale === "uk" ? "Умови" : "Terms";
 
   const pdfBuffer = await generateMediationPdf({
     title: summary.agreementTitle,
@@ -56,24 +101,33 @@ export async function buildAdminAgreementDownload(roomId: string, locale: Locale
     generatedAt: new Date(),
     sections: [
       {
-        heading: copy.mediationPdfPsychodynamicProfile,
+        heading: `1. ${copy.mediationPdfPsychodynamicProfile}`,
         body: summary.psychodynamicProfile,
       },
-      ...summary.legislationSections.map((section) => ({
-        heading: `${copy.mediationPdfLegislation}: ${section.heading}`,
-        body: section.body,
-      })),
       {
-        heading: copy.mediationPdfSolution,
+        heading: `2. ${copy.mediationPdfLegislation}`,
+        body: formatLegislationChapterBody(summary),
+      },
+      {
+        heading: `3. ${copy.mediationPdfSolution}`,
         body: summary.solution,
       },
+      {
+        heading: `4. ${copy.mediationAgreementTitle}`,
+        body: formatDraftAgreementChapterBody({
+          agreementBody: summary.agreementBody,
+          terms: summary.terms,
+          termsHeading,
+          notAvailable: copy.mediationPdfNotAvailable,
+        }),
+      },
     ],
-    agreementBody: summary.agreementBody ?? undefined,
+    agreementBody: undefined,
     agreementHeading: copy.mediationAgreementTitle,
-    terms: summary.terms,
+    terms: [],
     topDisclaimer: copy.mediationPdfTopDisclaimer,
     disclaimer: copy.mediationUplDisclaimer,
-    termsHeading: locale === "uk" ? "Умови" : "Terms",
+    termsHeading,
   });
 
   return {

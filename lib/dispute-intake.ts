@@ -12,6 +12,7 @@ import {
   canTriggerPostIntakePipeline,
   isPostIntakePipelineComplete,
 } from "@/lib/pipeline/gate";
+import { isMediationOpeningPrepared } from "@/lib/mediation/prepare-opening";
 
 export type SideReadiness = {
   userId: string;
@@ -69,6 +70,7 @@ export type MediationLobbyStatus = {
   opposite: SideReadiness | null;
   bothReady: boolean;
   pipelineRunning: boolean;
+  preparingMediationRoom: boolean;
   canStartMediation: boolean;
   mediationStarted: boolean;
 };
@@ -82,6 +84,7 @@ export async function getMediationLobbyStatusForUser(userId: string): Promise<Me
     opposite: lobby.opposite,
     bothReady: lobby.bothReady,
     pipelineRunning: lobby.pipelineRunning,
+    preparingMediationRoom: lobby.preparingMediationRoom,
     canStartMediation: lobby.canStartMediation,
     mediationStarted: !!lobby.room.mediationStartedAt,
   };
@@ -107,7 +110,9 @@ export async function getMediationLobbyData(userId: string) {
   const bothReady = selfReadiness.mediationReady && !!oppositeReadiness?.mediationReady;
   const pipelineComplete = await isPostIntakePipelineComplete(room.id);
   const pipelineRunning = bothReady && !pipelineComplete && (await canTriggerPostIntakePipeline(room.id));
-  const canStartMediation = bothReady && pipelineComplete;
+  const openingPrepared = pipelineComplete ? await isMediationOpeningPrepared(room.id) : false;
+  const preparingMediationRoom = bothReady && pipelineComplete && !openingPrepared;
+  const canStartMediation = bothReady && pipelineComplete && openingPrepared;
 
   return {
     room,
@@ -117,6 +122,7 @@ export async function getMediationLobbyData(userId: string) {
     bothReady,
     pipelineComplete,
     pipelineRunning,
+    preparingMediationRoom,
     canStartMediation,
   };
 }

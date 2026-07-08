@@ -5,6 +5,7 @@ import {
   clickStartMediation,
   getMediationHandshakeStatus,
   getMediationLobbyStatus,
+  prepareMediationOpeningForRoom,
   runPostIntakePipelineForRoom,
 } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
@@ -22,6 +23,7 @@ type MediationLobbyProps = {
   oppositeRole: PartyRole;
   bothReady: boolean;
   pipelineRunning: boolean;
+  preparingMediationRoom: boolean;
   canStartMediation: boolean;
   viewerRole: PartyRole;
   flowStep: ParticipantFlowStepId;
@@ -72,6 +74,7 @@ export function MediationLobby({
   oppositeRole,
   bothReady: initialBothReady,
   pipelineRunning: initialPipelineRunning,
+  preparingMediationRoom: initialPreparingMediationRoom,
   canStartMediation: initialCanStartMediation,
   viewerRole,
   flowStep,
@@ -83,6 +86,7 @@ export function MediationLobby({
     opposite: initialOpposite,
     bothReady: initialBothReady,
     pipelineRunning: initialPipelineRunning,
+    preparingMediationRoom: initialPreparingMediationRoom,
     canStartMediation: initialCanStartMediation,
   });
   const [handshake, setHandshake] = useState<HandshakeStatusResponse | null>(null);
@@ -107,6 +111,7 @@ export function MediationLobby({
       opposite: result.opposite,
       bothReady: result.bothReady,
       pipelineRunning: result.pipelineRunning,
+      preparingMediationRoom: result.preparingMediationRoom,
       canStartMediation: result.canStartMediation,
     });
   }, [redirectToRoom]);
@@ -134,10 +139,39 @@ export function MediationLobby({
     };
 
     pollLobby();
-    const pollMs = lobby.bothReady && !lobby.canStartMediation ? 5000 : 3000;
+    const pollMs =
+      lobby.pipelineRunning || lobby.preparingMediationRoom
+        ? 5000
+        : 3000;
     const pollId = window.setInterval(pollLobby, pollMs);
     return () => window.clearInterval(pollId);
-  }, [applyLobbyStatus, lobby.bothReady, lobby.canStartMediation]);
+  }, [applyLobbyStatus, lobby.pipelineRunning, lobby.preparingMediationRoom, lobby.canStartMediation]);
+
+  useEffect(() => {
+    if (!lobby.preparingMediationRoom || !roomId) return;
+
+    const kickPreparation = () => {
+      void prepareMediationOpeningForRoom(roomId)
+        .then((result) => {
+          if (result.status === "complete" || result.status === "ran") {
+            void getMediationLobbyStatus()
+              .then((status) => {
+                if (status) applyLobbyStatus(status);
+              })
+              .catch((error) => {
+                console.error("Failed to refresh mediation lobby status:", error);
+              });
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to prepare mediation opening:", error);
+        });
+    };
+
+    kickPreparation();
+    const retryId = window.setInterval(kickPreparation, 30000);
+    return () => window.clearInterval(retryId);
+  }, [applyLobbyStatus, lobby.preparingMediationRoom, roomId]);
 
   useEffect(() => {
     if (!lobby.pipelineRunning || !roomId) return;
@@ -266,6 +300,13 @@ export function MediationLobby({
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
               <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
+            </div>
+          ) : null}
+
+          {lobby.preparingMediationRoom ? (
+            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
+              <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
+              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationRoomPreparing}</p>
             </div>
           ) : null}
 
