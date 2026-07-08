@@ -31,6 +31,8 @@ export async function insertAgentMessage(params: {
   canonicalContent: string;
   adaptations: PartyAdaptations;
   messageKind: MediationMessageKind;
+  /** When set, only this participant sees the agent message (e.g. dialogue questions). */
+  addresseeUserId?: string | null;
 }) {
   const [row] = await db
     .insert(roomMessages)
@@ -42,6 +44,7 @@ export async function insertAgentMessage(params: {
       canonicalContent: params.canonicalContent,
       adaptations: params.adaptations,
       messageKind: params.messageKind,
+      participantUserId: params.addresseeUserId ?? null,
     })
     .returning();
   return row;
@@ -113,6 +116,81 @@ function shouldFallbackToCanonicalForEnglish(params: {
 
   if (signalCount < 2) return false;
   return params.canonical.trim().length > 0;
+}
+
+type RoomMessageRow = typeof roomMessages.$inferSelect;
+
+function inferQuestionAddresseeUserId(
+  message: RoomMessageRow,
+  allMessages: RoomMessageRow[],
+  partyAUserId: string,
+  partyBUserId: string,
+) {
+  if (message.messageKind !== "mediation_question") return null;
+
+  const questions = allMessages.filter(
+    (row) =>
+      row.messageKind === "mediation_question" &&
+      row.createdAt.getTime() <= message.createdAt.getTime(),
+  );
+  const index = questions.findIndex((row) => row.id === message.id);
+  if (index < 0) return null;
+
+  return index % 2 === 0 ? partyAUserId : partyBUserId;
+}
+
+function resolveTargetUserId(
+  message: RoomMessageRow,
+  allMessages: RoomMessageRow[],
+  partyAUserId: string,
+  partyBUserId: string,
+) {
+  if (message.participantUserId) return message.participantUserId;
+  return inferQuestionAddresseeUserId(message, allMessages, partyAUserId, partyBUserId);
+}
+
+export function isMessageVisibleToViewer(
+  message: RoomMessageRow,
+  viewerUserId: string,
+  context: {
+    allMessages: RoomMessageRow[];
+    partyAUserId: string;
+    partyBUserId: string;
+    includeRoundSummaries?: boolean;
+  },
+) {
+  if (message.senderType === "participant") {
+    return message.senderUserId === viewerUserId;
+  }
+
+  if (message.senderType === "system") {
+    return true;
+  }
+
+  if (message.senderType !== "agent") {
+    return false;
+  }
+
+  const kind = message.messageKind;
+  if (kind === "mediation_opening" || kind === "mediation_system") {
+    return true;
+  }
+
+  if (kind === "mediation_summary") {
+    return !!context.includeRoundSummaries;
+  }
+
+  if (kind === "mediation_question" || kind === "mediation_moderation") {
+    const targetUserId = resolveTargetUserId(
+      message,
+      context.allMessages,
+      context.partyAUserId,
+      context.partyBUserId,
+    );
+    return targetUserId === viewerUserId;
+  }
+
+  return true;
 }
 
 export function resolveMessageForViewer(

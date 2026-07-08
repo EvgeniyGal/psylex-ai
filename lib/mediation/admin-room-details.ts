@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { rooms } from "@/drizzle/schema";
 import { formatPartyPsychodynamicProfiles } from "@/lib/mediation/format-pdf-content";
-import { listRoomMessages, resolveMessageForViewer } from "@/lib/mediation/messages";
+import { listRoomMessages, resolveMessageForViewer, isMessageVisibleToViewer } from "@/lib/mediation/messages";
 import {
   buildMediationResultsSummary,
   type MediationResultsSummary,
@@ -67,14 +67,27 @@ function buildPartyMessages(
   messages: Awaited<ReturnType<typeof listRoomMessages>>,
   role: PartyRole,
   partyUserId: string,
+  partyAUserId: string,
+  partyBUserId: string,
   preferredLocale: string | null,
   labels: { party: string; agent: string; system: string },
 ): AdminMediationMessageView[] {
   const thread: AdminMediationMessageView[] = [];
+  const visibilityContext = {
+    allMessages: messages,
+    partyAUserId,
+    partyBUserId,
+    includeRoundSummaries: true,
+  };
 
   for (const message of messages) {
+    if (
+      !isMessageVisibleToViewer(message, partyUserId, visibilityContext)
+    ) {
+      continue;
+    }
+
     if (message.senderType === "participant") {
-      if (message.senderUserId !== partyUserId) continue;
       thread.push({
         id: message.id,
         senderType: "participant",
@@ -190,16 +203,32 @@ export async function getAdminMediationDetails(roomId: string): Promise<AdminMed
   const compromise = room.compromiseOption as MediationOption | null;
   const copy = portalCopy[locale];
 
-  const partyAMessages = buildPartyMessages(messages, "party_a", partyA.id, partyA.preferredLocale, {
-    party: partyRoleLabel("party_a", locale),
-    agent: copy.mediationAgent,
-    system: copy.mediationSystem,
-  });
-  const partyBMessages = buildPartyMessages(messages, "party_b", partyB.id, partyB.preferredLocale, {
-    party: partyRoleLabel("party_b", locale),
-    agent: copy.mediationAgent,
-    system: copy.mediationSystem,
-  });
+  const partyAMessages = buildPartyMessages(
+    messages,
+    "party_a",
+    partyA.id,
+    partyA.id,
+    partyB.id,
+    partyA.preferredLocale,
+    {
+      party: partyRoleLabel("party_a", locale),
+      agent: copy.mediationAgent,
+      system: copy.mediationSystem,
+    },
+  );
+  const partyBMessages = buildPartyMessages(
+    messages,
+    "party_b",
+    partyB.id,
+    partyA.id,
+    partyB.id,
+    partyB.preferredLocale,
+    {
+      party: partyRoleLabel("party_b", locale),
+      agent: copy.mediationAgent,
+      system: copy.mediationSystem,
+    },
+  );
 
   let resultsSummary: MediationResultsSummary | null = null;
   if (room.mediationPhase === "completed") {

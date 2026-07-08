@@ -378,7 +378,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
               ) : (
                 <>
                   <textarea
-                    className="w-full rounded-lg border border-hair bg-paper p-3 text-body-md text-ink"
+                    className="w-full rounded-lg border-2 border-ink/25 bg-surface p-3 text-body-md text-ink shadow-sm outline-none transition-colors placeholder:text-on-surface-variant focus:border-law focus:ring-2 focus:ring-law/25"
                     onChange={(event) => setReply(event.target.value)}
                     placeholder={t.mediationReplyPlaceholder}
                     rows={3}

@@ -89,6 +89,7 @@ async function generateOpeningMessage(roomId: string) {
 }
 
 async function generateFirstQuestion(roomId: string) {
+  const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
   const { ctx } = await buildPreparationContext(roomId);
   const result = await runMediationAgent({
     mode: "dialogue_question",
@@ -102,6 +103,7 @@ async function generateFirstQuestion(roomId: string) {
     canonicalContent: result.canonicalContent,
     adaptations: toPartyAdaptations(result),
     messageKind: "mediation_question",
+    addresseeUserId: partyA?.id ?? null,
   });
 }
 

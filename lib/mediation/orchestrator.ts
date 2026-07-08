@@ -11,6 +11,7 @@ import {
   insertAgentMessage,
   insertParticipantMessage,
   insertSystemMessage,
+  isMessageVisibleToViewer,
   listRoomMessages,
   resolveMessageForViewer,
   toPartyAdaptations,
@@ -134,6 +135,10 @@ async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
   try {
     await beginTurn(room.id, addressee);
 
+    const { partyA, partyB } = await getRoomPartiesForPipeline(room.id);
+    const addresseeUserId =
+      addressee === "party_a" ? partyA?.id ?? null : partyB?.id ?? null;
+
     const { ctx } = await buildContext(room);
     const result = await runMediationAgent({
       mode: "dialogue_question",
@@ -147,6 +152,7 @@ async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
       canonicalContent: result.canonicalContent,
       adaptations: toPartyAdaptations(result),
       messageKind: "mediation_question",
+      addresseeUserId,
     });
   } finally {
     mediationAgentWork.delete(room.id);
@@ -548,6 +554,7 @@ export async function submitDialogueReply(userId: string, content: string) {
       canonicalContent: redirect.canonicalContent,
       adaptations: toPartyAdaptations(redirect),
       messageKind: "mediation_moderation",
+      addresseeUserId: userId,
     });
 
     return { moderated: true as const };
@@ -812,18 +819,31 @@ export async function getMediationRoomState(userId: string) {
   }
 
   const role = partyRoleFromUser(participant.user);
+  const { partyA, partyB } = await getRoomPartiesForPipeline(participant.roomId);
   const messages = await listRoomMessages(room!.id);
   const options = (room!.mediationOptions as MediationOption[] | null) ?? [];
   const compromise = room!.compromiseOption as MediationOption | null;
 
-  const viewerMessages = messages.map((message) => ({
-    id: message.id,
-    senderType: message.senderType,
-    messageKind: message.messageKind,
-    content: resolveMessageForViewer(message, role, participant.user.preferredLocale),
-    createdAt: message.createdAt.toISOString(),
-    isOwn: message.senderUserId === userId,
-  }));
+  const visibilityContext = {
+    allMessages: messages,
+    partyAUserId: partyA?.id ?? "",
+    partyBUserId: partyB?.id ?? "",
+  };
+
+  const viewerMessages = messages
+    .filter((message) =>
+      partyA?.id && partyB?.id
+        ? isMessageVisibleToViewer(message, userId, visibilityContext)
+        : message.senderUserId === userId || message.senderType !== "participant",
+    )
+    .map((message) => ({
+      id: message.id,
+      senderType: message.senderType,
+      messageKind: message.messageKind,
+      content: resolveMessageForViewer(message, role, participant.user.preferredLocale),
+      createdAt: message.createdAt.toISOString(),
+      isOwn: message.senderUserId === userId,
+    }));
 
   const mapOption = (option: MediationOption) => ({
     id: option.id,
