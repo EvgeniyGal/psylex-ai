@@ -106,10 +106,14 @@ type PortalCopy = {
   mediationSelectOption: string;
   mediationVoteRecorded: string;
   mediationOtherChose: string;
+  mediationVotesDiscrepancy: string;
   mediationCompromiseTitle: string;
   mediationAcceptCompromise: string;
   mediationRejectCompromise: string;
   mediationCompromiseVoteRecorded: string;
+  mediationCompromiseAccepted: string;
+  mediationCompromiseRejected: string;
+  mediationCompromiseNoVote: string;
   mediationAgreementTitle: string;
   mediationUplDisclaimer: string;
   mediationIAccept: string;
@@ -304,10 +308,14 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationSelectOption: "Select this option",
     mediationVoteRecorded: "Your vote has been recorded. Waiting for the other party.",
     mediationOtherChose: "The other party selected option",
+    mediationVotesDiscrepancy: "The parties selected different options. Review the compromise proposal below.",
     mediationCompromiseTitle: "Compromise option",
     mediationAcceptCompromise: "Accept compromise",
     mediationRejectCompromise: "Reject compromise",
     mediationCompromiseVoteRecorded: "Your compromise vote has been recorded.",
+    mediationCompromiseAccepted: "Accepted compromise",
+    mediationCompromiseRejected: "Rejected compromise",
+    mediationCompromiseNoVote: "No vote",
     mediationAgreementTitle: "Draft agreement",
     mediationUplDisclaimer:
       "This agreement is the result of a voluntary choice made by the parties. PsyLex provides legal information exclusively and does not render legal services. To give the document legal force, it is recommended to consult a licensed attorney.",
@@ -518,10 +526,14 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationSelectOption: "Обрати цей варіант",
     mediationVoteRecorded: "Ваш голос зафіксовано. Очікуємо іншу сторону.",
     mediationOtherChose: "Інша сторона обрала варіант",
+    mediationVotesDiscrepancy: "Сторони обрали різні варіанти. Перегляньте компромісну пропозицію нижче.",
     mediationCompromiseTitle: "Компромісний варіант",
     mediationAcceptCompromise: "Прийняти компроміс",
     mediationRejectCompromise: "Відхилити компроміс",
     mediationCompromiseVoteRecorded: "Ваш голос щодо компромісу зафіксовано.",
+    mediationCompromiseAccepted: "Компроміс прийнято",
+    mediationCompromiseRejected: "Компроміс відхилено",
+    mediationCompromiseNoVote: "Без голосу",
     mediationAgreementTitle: "Проєкт угоди",
     mediationUplDisclaimer:
       "Ця угода є результатом добровільного вибору сторін. PsyLex надає виключно правову інформацію і не надає юридичних послуг. Щоб надати документу юридичну силу, рекомендується звернутися до ліцензованого адвоката.",

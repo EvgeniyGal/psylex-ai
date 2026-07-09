@@ -890,6 +890,8 @@ export async function getMediationRoomState(userId: string) {
         : null,
       partyAVoteOptionId: showAllVotes ? room!.partyAVoteOptionId : null,
       partyBVoteOptionId: showAllVotes ? room!.partyBVoteOptionId : null,
+      partyACompromiseVote: showAllVotes ? room!.partyACompromiseVote : null,
+      partyBCompromiseVote: showAllVotes ? room!.partyBCompromiseVote : null,
       selfCompromiseVote:
         role === "party_a" ? room!.partyACompromiseVote : room!.partyBCompromiseVote,
       selfAccepted:
