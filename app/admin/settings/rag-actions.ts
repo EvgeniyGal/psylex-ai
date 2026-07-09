@@ -37,14 +37,14 @@ const uploadSchema = z
       if (!value.usaSubJurisdiction || !isUsaSubJurisdiction(value.usaSubJurisdiction)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "US state or territory is required.",
+          message: "US jurisdiction is required.",
           path: ["usaSubJurisdiction"],
         });
       }
     } else if (value.usaSubJurisdiction) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "US state or territory is only valid for USA documents.",
+        message: "US jurisdiction is only valid for USA documents.",
         path: ["usaSubJurisdiction"],
       });
     }
@@ -62,7 +62,7 @@ const updateSchema = z
     if (value.usaSubJurisdiction && !isUsaSubJurisdiction(value.usaSubJurisdiction)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Invalid US state or territory.",
+        message: "Invalid US jurisdiction.",
         path: ["usaSubJurisdiction"],
       });
     }

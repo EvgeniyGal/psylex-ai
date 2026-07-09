@@ -1,7 +1,9 @@
 import type { Locale } from "@/lib/i18n";
 
-/** 50 states + DC + 5 US territories. */
-export const USA_SUB_JURISDICTIONS = [
+export const USA_FEDERAL_SUB_JURISDICTION = "FEDERAL" as const;
+
+/** Federal + 50 states + DC + 5 US territories. */
+const USA_STATE_AND_TERRITORY_JURISDICTIONS = [
   "AL",
   "AK",
   "AZ",
@@ -60,9 +62,15 @@ export const USA_SUB_JURISDICTIONS = [
   "MP",
 ] as const;
 
+export const USA_SUB_JURISDICTIONS = [
+  USA_FEDERAL_SUB_JURISDICTION,
+  ...USA_STATE_AND_TERRITORY_JURISDICTIONS,
+] as const;
+
 export type UsaSubJurisdiction = (typeof USA_SUB_JURISDICTIONS)[number];
 
 const EN_LABELS: Record<UsaSubJurisdiction, string> = {
+  FEDERAL: "Federal (nationwide)",
   AL: "Alabama",
   AK: "Alaska",
   AZ: "Arizona",
@@ -122,6 +130,7 @@ const EN_LABELS: Record<UsaSubJurisdiction, string> = {
 };
 
 const UK_LABELS: Record<UsaSubJurisdiction, string> = {
+  FEDERAL: "Федеральна (загальнодержавна)",
   AL: "Алабама",
   AK: "Аляска",
   AZ: "Аризона",
@@ -197,6 +206,19 @@ export function compareUsaSubJurisdictions(left: UsaSubJurisdiction, right: UsaS
   return getUsaSubJurisdictionLabel(left, locale).localeCompare(getUsaSubJurisdictionLabel(right, locale), locale);
 }
 
-export const USA_SUB_JURISDICTIONS_SORTED = [...USA_SUB_JURISDICTIONS].sort((left, right) =>
-  EN_LABELS[left].localeCompare(EN_LABELS[right]),
-);
+/** Federal first, then states and territories alphabetically by English label. */
+export const USA_SUB_JURISDICTIONS_SORTED = [
+  USA_FEDERAL_SUB_JURISDICTION,
+  ...[...USA_STATE_AND_TERRITORY_JURISDICTIONS].sort((left, right) =>
+    EN_LABELS[left].localeCompare(EN_LABELS[right]),
+  ),
+];
+
+export function documentMatchesUsaSubJurisdiction(
+  scope: UsaSubJurisdiction,
+  documentSub: UsaSubJurisdiction | null,
+): boolean {
+  if (!documentSub) return false;
+  if (documentSub === scope) return true;
+  return documentSub === USA_FEDERAL_SUB_JURISDICTION && scope !== USA_FEDERAL_SUB_JURISDICTION;
+}

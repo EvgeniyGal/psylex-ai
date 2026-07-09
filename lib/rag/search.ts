@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { documentChunks, legalDocuments } from "@/drizzle/schema";
 import { RAG_DEFAULTS } from "@/lib/rag/config";
 import { embedQuery, formatEmbeddingForPg } from "@/lib/rag/embed";
-import type { LegalDocumentCategory, RagSearchResult, RoomJurisdiction, SearchLegalCorpusParams } from "@/lib/rag/types";
+import type { LegalDocumentCategory, RagSearchResult, SearchLegalCorpusParams } from "@/lib/rag/types";
+import { USA_FEDERAL_SUB_JURISDICTION } from "@/lib/rag/usa-jurisdictions";
 
 type CandidateRow = {
   chunk_id: string;
@@ -32,7 +33,15 @@ function buildFilters({
   documentId,
 }: Pick<SearchLegalCorpusParams, "jurisdiction" | "usaSubJurisdiction" | "category" | "documentId">) {
   const filters: SQL[] = [sql`ld.jurisdiction = ${jurisdiction}`];
-  if (usaSubJurisdiction) filters.push(sql`ld.usa_sub_jurisdiction = ${usaSubJurisdiction}`);
+  if (usaSubJurisdiction) {
+    if (usaSubJurisdiction === USA_FEDERAL_SUB_JURISDICTION) {
+      filters.push(sql`ld.usa_sub_jurisdiction = ${usaSubJurisdiction}`);
+    } else {
+      filters.push(
+        sql`(ld.usa_sub_jurisdiction = ${usaSubJurisdiction} OR ld.usa_sub_jurisdiction = ${USA_FEDERAL_SUB_JURISDICTION})`,
+      );
+    }
+  }
   if (category) filters.push(sql`ld.category = ${category}`);
   if (documentId) filters.push(sql`ld.id = ${documentId}::uuid`);
   return sql.join(filters, sql` AND `);

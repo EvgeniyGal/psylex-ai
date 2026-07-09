@@ -16,6 +16,7 @@ import type { LegalDocumentCategory, LegalDocumentRow, RoomJurisdiction } from "
 import type { RagInquiryResult } from "@/lib/rag/types";
 import {
   USA_SUB_JURISDICTIONS_SORTED,
+  documentMatchesUsaSubJurisdiction,
   getUsaSubJurisdictionLabel,
   type UsaSubJurisdiction,
 } from "@/lib/rag/usa-jurisdictions";
@@ -96,7 +97,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
           (!testCategory || doc.category === testCategory) &&
           (testJurisdiction !== "usa" ||
             !testUsaSubJurisdiction ||
-            doc.usaSubJurisdiction === testUsaSubJurisdiction),
+            documentMatchesUsaSubJurisdiction(testUsaSubJurisdiction, doc.usaSubJurisdiction)),
       ),
     [readyDocuments, testJurisdiction, testCategory, testUsaSubJurisdiction],
   );
