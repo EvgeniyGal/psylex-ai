@@ -124,6 +124,9 @@ export type AdminCopy = {
   ragDocumentDeleted: string;
   ragProcessingIncomplete: string;
   ragFileLabel: string;
+  ragFileInputAriaLabel: string;
+  ragChooseFile: string;
+  ragNoFileChosen: string;
   promptsComingSoonDesc: string;
   agentPromptsSubtitle: string;
   agentTabPsychodynamic: string;
@@ -309,6 +312,9 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragDocumentDeleted: "Document deleted",
     ragProcessingIncomplete: "Document processing is not complete.",
     ragFileLabel: "File (TXT, PDF, DOCX)",
+    ragFileInputAriaLabel: "Upload file (TXT, PDF, DOCX)",
+    ragChooseFile: "Choose file",
+    ragNoFileChosen: "No file chosen",
     promptsComingSoonDesc:
       "AI prompt configuration will be available here in a future release.",
     agentPromptsSubtitle: "Edit system prompts and test each analysis agent in isolation.",
@@ -558,6 +564,9 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     ragDocumentDeleted: "Документ видалено",
     ragProcessingIncomplete: "Обробка документа ще не завершена.",
     ragFileLabel: "Файл (TXT, PDF, DOCX)",
+    ragFileInputAriaLabel: "Завантажити файл (TXT, PDF, DOCX)",
+    ragChooseFile: "Обрати файл",
+    ragNoFileChosen: "Файл не обрано",
     promptsComingSoonDesc:
       "Налаштування AI-промптів буде доступне тут у майбутньому релізі.",
     agentPromptsSubtitle: "Редагуйте системні промпти та тестуйте кожного агента аналізу окремо.",

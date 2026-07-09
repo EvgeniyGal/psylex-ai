@@ -75,6 +75,8 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
 
   const isMyTurn =
     state.room.phase === "dialogue" && state.room.activeParty === viewerRole;
+  const isOtherPartyAnswering =
+    state.room.phase === "dialogue" && !!state.room.activeParty && state.room.activeParty !== viewerRole;
 
   const lastMessage = state.messages.at(-1);
   const questionReady =
@@ -294,24 +296,6 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
             />
           ) : null}
 
-          <div className="glass-panel rounded-xl p-4 text-body-sm text-on-surface-variant">
-            <p>
-              {t.mediationPhaseLabel}:{" "}
-              <strong className="text-on-surface">{t.mediationPhases[state.room.phase ?? "opening"]}</strong>
-            </p>
-            {state.room.phase === "dialogue" ? (
-              <p>
-                {t.mediationRoundLabel}: {state.room.round}
-                {isMyTurn ? ` · ${t.mediationYourTurn}` : ""}
-                {replyRemaining
-                  ? ` · ${t.mediationReplyTimer}: ${replyRemaining}`
-                  : isMyTurn
-                    ? ` · ${t.mediationReplyTimer}: --:--`
-                    : ""}
-              </p>
-            ) : null}
-          </div>
-
           {isAwaitingAgent ? (
             <div className="flex items-start gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
               <span className="material-symbols-outlined animate-spin text-tertiary">progress_activity</span>
@@ -339,7 +323,52 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
             </div>
           ) : null}
 
-          <div className="glass-panel max-h-[420px] space-y-3 overflow-y-auto rounded-xl p-4">
+          <div className="glass-panel overflow-hidden rounded-xl">
+            <div
+              className={
+                isOtherPartyAnswering
+                  ? "flex flex-wrap items-center gap-3 border-b border-party-a-line bg-party-a-fill/35 px-4 py-3"
+                  : isMyTurn
+                    ? "flex flex-wrap items-center gap-3 border-b border-law-line bg-law-fill/45 px-4 py-3"
+                    : "flex flex-wrap items-center gap-3 border-b border-hair bg-surface-container-high/80 px-4 py-3"
+              }
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1 text-label-md font-semibold uppercase tracking-wide text-on-surface">
+                <span className="material-symbols-outlined text-[18px] text-tertiary">forum</span>
+                {t.mediationPhases[state.room.phase ?? "opening"]}
+              </span>
+              {state.room.phase === "dialogue" ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1 text-body-sm font-medium text-on-surface">
+                    {t.mediationRoundLabel} {state.room.round}
+                  </span>
+                  {isMyTurn ? (
+                    <span className="inline-flex items-center gap-1.5 font-display text-body-md font-semibold text-law">
+                      <span className="material-symbols-outlined text-[20px]">edit_square</span>
+                      {t.mediationYourTurn}
+                    </span>
+                  ) : null}
+                  {isOtherPartyAnswering ? (
+                    <span className="inline-flex items-center gap-1.5 font-display text-body-md font-semibold text-party-a">
+                      <span className="material-symbols-outlined animate-pulse text-[20px]">hourglass_top</span>
+                      {t.mediationOtherPartyAnswering}
+                    </span>
+                  ) : null}
+                  {isMyTurn ? (
+                    <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-law-fill px-3 py-1 font-mono text-body-sm font-semibold text-law">
+                      <span className="material-symbols-outlined text-[18px]">timer</span>
+                      {replyRemaining ?? "--:--"}
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+            {isOtherPartyAnswering ? (
+              <p className="border-b border-party-a-line/60 bg-party-a-fill/20 px-4 py-2.5 text-body-sm font-medium text-on-surface">
+                {t.mediationOtherPartyAnsweringHint}
+              </p>
+            ) : null}
+            <div className="max-h-[420px] space-y-3 overflow-y-auto p-4">
             {state.messages.map((message) => (
               <div
                 className={
@@ -364,6 +393,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
             {state.messages.length === 0 ? (
               <p className="text-center text-body-md text-on-surface-variant">{t.mediationPreparing}</p>
             ) : null}
+            </div>
           </div>
 
           {liveVotingPanel}

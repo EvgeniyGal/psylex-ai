@@ -76,6 +76,8 @@ type PortalCopy = {
   mediationPhaseLabel: string;
   mediationRoundLabel: string;
   mediationYourTurn: string;
+  mediationOtherPartyAnswering: string;
+  mediationOtherPartyAnsweringHint: string;
   mediationReplyTimer: string;
   mediationReadyForOptions: string;
   mediationReadyConfirmed: string;
@@ -270,6 +272,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationPhaseLabel: "Phase",
     mediationRoundLabel: "Round",
     mediationYourTurn: "Your turn to reply",
+    mediationOtherPartyAnswering: "Other party is answering",
+    mediationOtherPartyAnsweringHint: "The other party is currently answering this question.",
     mediationReplyTimer: "Reply time",
     mediationReadyForOptions: "I am ready for solution options",
     mediationReadyConfirmed: "You are ready for solution options",
@@ -482,6 +486,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationPhaseLabel: "Фаза",
     mediationRoundLabel: "Раунд",
     mediationYourTurn: "Ваша черга відповісти",
+    mediationOtherPartyAnswering: "Інша сторона відповідає",
+    mediationOtherPartyAnsweringHint: "Інша сторона зараз відповідає на це запитання.",
     mediationReplyTimer: "Час відповіді",
     mediationReadyForOptions: "Я готовий до варіантів рішення",
     mediationReadyConfirmed: "Ви позначили готовність до варіантів",

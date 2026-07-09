@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   deleteDocument,
@@ -56,6 +56,7 @@ function statusClass(status: LegalDocumentRow["status"]) {
 export function RagSettingsContent({ documents }: RagSettingsContentProps) {
   const { admin, locale } = useLocale();
   const [modal, setModal] = useState<ModalState>(null);
+  const [selectedUploadFileName, setSelectedUploadFileName] = useState("");
   const [activeJurisdictionTab, setActiveJurisdictionTab] = useState<JurisdictionTab>("ukraine");
   const [ukraineCategoryFilter, setUkraineCategoryFilter] = useState<"" | LegalDocumentCategory>("");
   const [usaCategoryFilter, setUsaCategoryFilter] = useState<"" | LegalDocumentCategory>("");
@@ -67,6 +68,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
   const [testQuestion, setTestQuestion] = useState("");
   const [testResult, setTestResult] = useState<RagInquiryResult | null>(null);
   const [pending, startTransition] = useTransition();
+  const uploadFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const ukraineDocuments = useMemo(
     () =>
@@ -114,6 +116,12 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
       setTestDocumentId("");
     }
   }, [testDocumentId, testSelectableDocuments]);
+
+  useEffect(() => {
+    if (modal?.type !== "upload") {
+      setSelectedUploadFileName("");
+    }
+  }, [modal]);
 
   const resetTestInquiryForJurisdiction = (next: RoomJurisdiction) => {
     setTestJurisdiction(next);
@@ -568,7 +576,33 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
             </div>
             <div>
               <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.ragFileLabel}</label>
-              <input accept=".txt,.pdf,.docx" className={inputClass} disabled={isUploading} name="file" required type="file" />
+              <input
+                accept=".txt,.pdf,.docx"
+                aria-label={admin.ragFileInputAriaLabel}
+                className="sr-only"
+                disabled={isUploading}
+                name="file"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  setSelectedUploadFileName(file?.name ?? "");
+                }}
+                ref={uploadFileInputRef}
+                required
+                type="file"
+              />
+              <div className="flex items-center gap-3">
+                <button
+                  className="rounded-md border border-hair bg-paper px-3 py-2 text-ink transition-colors hover:border-law disabled:opacity-60"
+                  disabled={isUploading}
+                  onClick={() => uploadFileInputRef.current?.click()}
+                  type="button"
+                >
+                  {admin.ragChooseFile}
+                </button>
+                <span className="text-body-sm text-on-surface-variant">
+                  {selectedUploadFileName || admin.ragNoFileChosen}
+                </span>
+              </div>
             </div>
             <div className="flex justify-end gap-3">
               <button
