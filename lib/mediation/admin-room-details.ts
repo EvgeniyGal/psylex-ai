@@ -146,6 +146,8 @@ function buildAdminMediationState(
       otherVote: room.partyBVoteOptionId,
       partyAVoteOptionId: room.partyAVoteOptionId,
       partyBVoteOptionId: room.partyBVoteOptionId,
+      partyACompromiseVote: room.partyACompromiseVote,
+      partyBCompromiseVote: room.partyBCompromiseVote,
       selfCompromiseVote: room.partyACompromiseVote,
       selfAccepted: !!room.partyAAgreementAcceptedAt,
       otherAccepted: !!room.partyBAgreementAcceptedAt,
