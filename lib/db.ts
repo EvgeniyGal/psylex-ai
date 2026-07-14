@@ -1,6 +1,7 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "@/drizzle/schema";
+import { postgresSslOption } from "@/lib/db-ssl";
 
 const connectionString = process.env.DATABASE_URL ?? "postgres://invalid:invalid@localhost:5432/invalid";
 
@@ -14,6 +15,7 @@ function createClient() {
   return postgres(connectionString, {
     prepare: false,
     connect_timeout: 2,
+    ssl: postgresSslOption(connectionString),
     // Supabase session pooler caps total clients; keep each app instance small.
     max: process.env.NODE_ENV === "production" ? 1 : 3,
   });

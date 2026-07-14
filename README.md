@@ -5,40 +5,43 @@
 - Next.js App Router + TypeScript
 - Tailwind CSS + lightweight shadcn setup
 - NextAuth credentials auth (plain-text password for MVP)
-- Drizzle ORM + PostgreSQL (self-hosted Supabase or Neon)
+- Drizzle ORM + PostgreSQL (Supabase Cloud recommended)
 - Supabase Realtime for mediation / lobby live updates
 
 ## Setup
 
 1. Copy `.env.example` to `.env`
-2. Fill in `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
-3. For live mediation UX, also set:
-   - `NEXT_PUBLIC_SUPABASE_URL` — your self-hosted Supabase API URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon/public key from Supabase
-4. Install dependencies:
+2. Fill in:
+   - `DATABASE_URL` — **Session pooler** URI from Supabase Dashboard → Connect  
+     (direct `db.*.supabase.co` is IPv6-only; most home networks need the pooler)
+   - `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
+   - `NEXT_PUBLIC_SUPABASE_URL` — `https://<project>.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon/public JWT from Project Settings → API
+3. Install dependencies:
 
 ```bash
 npm install
 ```
 
-5. Generate migration files:
+4. Generate migration files:
 
 ```bash
 npm run db:generate
 ```
 
-6. Apply migrations:
+5. Apply migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-Migration `0020_supabase_realtime` adds `rooms`, `room_messages`, `users`, and `user_test_completions` to the `supabase_realtime` publication so clients can subscribe to postgres changes.
+Migration `0020_supabase_realtime` adds `rooms`, `room_messages`, `users`, and `user_test_completions` to the `supabase_realtime` publication.  
+Migration `0022_realtime_replica_identity` sets `REPLICA IDENTITY FULL` so filtered UPDATE/DELETE events work.
 
-7. Create admin user manually in DB (example):
+6. Create admin user manually in DB (example):
 
 ```sql
-INSERT INTO users (id, login, password, role, title, description, session_id)
+INSERT INTO users (id, login, password, role, title, description, room_id)
 VALUES (
   gen_random_uuid(),
   'psylex_550e8400-e29b-41d4-a716-446655440000',
@@ -50,22 +53,30 @@ VALUES (
 );
 ```
 
-8. Run app:
+7. Run app:
 
 ```bash
 npm run dev
+```
+
+### Migrating from self-hosted Supabase
+
+Keep the old DB URL as `O_DATABASE_URL`, set cloud pooler as `DATABASE_URL`, then:
+
+```bash
+node scripts/migrate-selfhosted-to-cloud.mjs
 ```
 
 ## Supabase Realtime
 
 Live updates prefer push, not polling:
 
-1. **Postgres LISTEN/NOTIFY + SSE** (`/api/realtime/room/[roomId]`) — primary path; works with your self-hosted database after migration `0021`
-2. **Supabase Realtime WebSocket** (`postgres_changes`) — also attempted when `NEXT_PUBLIC_SUPABASE_*` is set
+1. **Supabase Realtime WebSocket** (`postgres_changes`) — primary when `NEXT_PUBLIC_SUPABASE_URL` is `https://`
+2. **Postgres LISTEN/NOTIFY + SSE** (`/api/realtime/room/[roomId]`) — fallback if WS is slow/unavailable
 
 On each change the client refetches authoritative state via Next.js server actions (no full state over the wire).
 
-Tables/triggers watched:
+Tables watched:
 
 | Table | Used for |
 |-------|----------|
@@ -73,17 +84,6 @@ Tables/triggers watched:
 | `room_messages` | new mediation messages |
 | `users` | opposite-party readiness in lobby |
 | `user_test_completions` | testing dashboard / lobby readiness |
-
-### Self-hosted Realtime WebSocket (optional)
-
-Your production site is **HTTPS** (`*.vercel.app`). Browsers block Mixed Content, so
-`NEXT_PUBLIC_SUPABASE_URL=http://...` cannot open `ws://...` from HTTPS.
-
-Use either:
-- `NEXT_PUBLIC_SUPABASE_URL=https://...` (TLS terminated with working `wss://`), or
-- leave HTTPS/`http://` as-is — the app **skips** Supabase WS on HTTPS pages and uses **SSE + `pg_notify`** instead (no crash).
-
-This project’s Kong Realtime endpoint previously returned **403** on WebSocket upgrade even over HTTP. Until JWT/`x-api-key`/tenant issues are fixed on the host, SSE remains the reliable path.
 
 ## Routes
 

@@ -4,6 +4,14 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let browserClient: SupabaseClient | null | undefined;
 
+function resolveSupabaseAnonKey() {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+    ""
+  );
+}
+
 /**
  * Returns a browser Supabase client for Realtime, or null if env is not configured.
  * App auth stays on NextAuth; this client is used only for postgres_changes when WS works.
@@ -12,7 +20,7 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
   if (browserClient !== undefined) return browserClient;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const anonKey = resolveSupabaseAnonKey();
 
   if (!url || !anonKey) {
     browserClient = null;
@@ -29,18 +37,12 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
       headers: {
         apikey: anonKey,
         Authorization: `Bearer ${anonKey}`,
-        "x-api-key": anonKey,
       },
     },
     realtime: {
       params: {
         apikey: anonKey,
         eventsPerSecond: 10,
-      },
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
-        "x-api-key": anonKey,
       },
     },
   });
@@ -50,8 +52,7 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
 
 export function isSupabaseRealtimeConfigured() {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim(),
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && resolveSupabaseAnonKey(),
   );
 }
 

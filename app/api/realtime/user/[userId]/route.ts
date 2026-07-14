@@ -4,6 +4,7 @@ import postgres from "postgres";
 import { eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { postgresSslOption } from "@/lib/db-ssl";
 import { users } from "@/drizzle/schema";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +68,7 @@ export async function GET(request: Request, context: RouteContext) {
           prepare: false,
           idle_timeout: 0,
           max_lifetime: 0,
+          ssl: postgresSslOption(connectionString),
         });
 
         await listenSql.listen("mediation_user", (payload) => {

@@ -7,6 +7,8 @@ import {
 } from "@/lib/supabase/browser-client";
 
 const DEBOUNCE_MS = 150;
+/** Open Postgres SSE fallback if Supabase WS has not subscribed yet. */
+const SSE_FALLBACK_MS = 2500;
 
 export type RoomRealtimeOptions = {
   watchUsers?: boolean;
@@ -44,8 +46,8 @@ function openUserSse(userId: string, onEvent: () => void) {
 }
 
 /**
- * Live room updates via Postgres LISTEN/NOTIFY (SSE) and optional Supabase Realtime WS.
- * No interval polling while push transport is active.
+ * Live room updates via Supabase Realtime WebSocket (preferred on HTTPS cloud)
+ * with Postgres LISTEN/NOTIFY SSE as fallback.
  */
 export function useRoomRealtime(
   roomId: string | null | undefined,
@@ -62,7 +64,9 @@ export function useRoomRealtime(
 
     let cancelled = false;
     let debounceId: number | undefined;
-    let supabaseGaveUp = false;
+    let sseCleanup: (() => void) | undefined;
+    let fallbackTimer: number | undefined;
+    let supabaseSubscribed = false;
 
     const schedule = () => {
       if (cancelled) return;
@@ -72,8 +76,15 @@ export function useRoomRealtime(
       }, DEBOUNCE_MS);
     };
 
+    const ensureSse = () => {
+      if (cancelled || sseCleanup) return;
+      sseCleanup = openRoomSse(roomId, schedule);
+      if (process.env.NODE_ENV === "development") {
+        console.info("[realtime] using Postgres SSE for room", roomId);
+      }
+    };
+
     const cleanups: Array<() => void> = [];
-    cleanups.push(openRoomSse(roomId, schedule));
 
     if (canUseSupabaseRealtimeWebSocket()) {
       const supabase = getSupabaseBrowserClient();
@@ -125,35 +136,47 @@ export function useRoomRealtime(
           channel.subscribe((status, err) => {
             if (cancelled) return;
             if (status === "SUBSCRIBED") {
+              supabaseSubscribed = true;
+              if (fallbackTimer !== undefined) {
+                window.clearTimeout(fallbackTimer);
+                fallbackTimer = undefined;
+              }
               if (process.env.NODE_ENV === "development") {
                 console.info("[realtime] Supabase channel subscribed", channelName);
               }
               return;
             }
             if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-              if (!supabaseGaveUp) {
-                supabaseGaveUp = true;
-                if (process.env.NODE_ENV === "development") {
-                  console.warn(
-                    "[realtime] Supabase WS failed (using Postgres SSE)",
-                    status,
-                    err?.message ?? err,
-                  );
-                }
+              if (process.env.NODE_ENV === "development") {
+                console.warn(
+                  "[realtime] Supabase WS failed; falling back to SSE",
+                  status,
+                  err?.message ?? err,
+                );
               }
               void supabase.removeChannel(channel);
+              ensureSse();
             }
           });
 
           cleanups.push(() => {
             void supabase.removeChannel(channel);
           });
+
+          fallbackTimer = window.setTimeout(() => {
+            if (!cancelled && !supabaseSubscribed) ensureSse();
+          }, SSE_FALLBACK_MS);
         } catch (error) {
           if (process.env.NODE_ENV === "development") {
             console.warn("[realtime] Supabase subscribe skipped; using SSE", error);
           }
+          ensureSse();
         }
+      } else {
+        ensureSse();
       }
+    } else {
+      ensureSse();
     }
 
     const onVisible = () => {
@@ -165,6 +188,8 @@ export function useRoomRealtime(
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisible);
       if (debounceId !== undefined) window.clearTimeout(debounceId);
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+      sseCleanup?.();
       for (const cleanup of cleanups) cleanup();
     };
     // partyUserIds is represented by partyKey
@@ -206,7 +231,7 @@ export function useDeadlineRefresh(
 }
 
 /**
- * Live user updates for testing dashboard (SSE + optional Supabase).
+ * Live user updates for testing dashboard (Supabase WS preferred, SSE fallback).
  */
 export function useUserRealtime(
   userId: string | null | undefined,
@@ -222,6 +247,9 @@ export function useUserRealtime(
 
     let cancelled = false;
     let debounceId: number | undefined;
+    let sseCleanup: (() => void) | undefined;
+    let fallbackTimer: number | undefined;
+    let supabaseSubscribed = false;
 
     const schedule = () => {
       if (cancelled) return;
@@ -231,7 +259,12 @@ export function useUserRealtime(
       }, DEBOUNCE_MS);
     };
 
-    const cleanups: Array<() => void> = [openUserSse(userId, schedule)];
+    const ensureSse = () => {
+      if (cancelled || sseCleanup) return;
+      sseCleanup = openUserSse(userId, schedule);
+    };
+
+    const cleanups: Array<() => void> = [];
 
     if (canUseSupabaseRealtimeWebSocket()) {
       const supabase = getSupabaseBrowserClient();
@@ -256,23 +289,44 @@ export function useUserRealtime(
             )
             .subscribe((status, err) => {
               if (cancelled) return;
+              if (status === "SUBSCRIBED") {
+                supabaseSubscribed = true;
+                if (fallbackTimer !== undefined) {
+                  window.clearTimeout(fallbackTimer);
+                  fallbackTimer = undefined;
+                }
+                return;
+              }
               if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
                 if (process.env.NODE_ENV === "development") {
-                  console.warn("[realtime] Supabase user channel failed; SSE active", err?.message ?? err);
+                  console.warn(
+                    "[realtime] Supabase user channel failed; SSE fallback",
+                    err?.message ?? err,
+                  );
                 }
                 void supabase.removeChannel(channel);
+                ensureSse();
               }
             });
 
           cleanups.push(() => {
             void supabase.removeChannel(channel);
           });
+
+          fallbackTimer = window.setTimeout(() => {
+            if (!cancelled && !supabaseSubscribed) ensureSse();
+          }, SSE_FALLBACK_MS);
         } catch (error) {
           if (process.env.NODE_ENV === "development") {
             console.warn("[realtime] Supabase user subscribe skipped; using SSE", error);
           }
+          ensureSse();
         }
+      } else {
+        ensureSse();
       }
+    } else {
+      ensureSse();
     }
 
     const onVisible = () => {
@@ -284,6 +338,8 @@ export function useUserRealtime(
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisible);
       if (debounceId !== undefined) window.clearTimeout(debounceId);
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+      sseCleanup?.();
       for (const cleanup of cleanups) cleanup();
     };
   }, [userId, enabled]);
