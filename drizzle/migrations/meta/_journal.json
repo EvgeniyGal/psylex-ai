@@ -141,6 +141,20 @@
       "when": 1783000000000,
       "tag": "0019_mediation_agent_flow",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1783800000000,
+      "tag": "0020_supabase_realtime",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1783880000000,
+      "tag": "0021_mediation_pg_notify",
+      "breakpoints": true
     }
   ]
 }

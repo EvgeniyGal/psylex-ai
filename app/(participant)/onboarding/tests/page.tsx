@@ -51,6 +51,7 @@ export default async function TestsPage({ searchParams }: TestsPageProps) {
       role={role as ParticipantRole}
       tests={tests}
       testsComplete={review ? true : status.testsComplete}
+      userId={userId}
     />
   );
 }

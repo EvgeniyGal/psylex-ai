@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { MediationRoom } from "@/components/portal/room/mediation-room";
 import { useLocale } from "@/components/locale-provider";
+import { useRoomRealtime } from "@/hooks/use-room-realtime";
 import { resolveRoomFlowStep } from "@/lib/participant-flow";
 import { cn } from "@/lib/utils";
 import type { MediationPhase } from "@/lib/mediation/types";
@@ -14,51 +15,41 @@ type MediationRoomState = NonNullable<Awaited<ReturnType<typeof fetchMediationRo
 
 type RoomExperienceProps = {
   mediationState: MediationRoomState | null;
+  roomId: string;
   roomTitle: string;
   review?: boolean;
 };
 
-export function RoomExperience({ mediationState, roomTitle, review = false }: RoomExperienceProps) {
+export function RoomExperience({
+  mediationState,
+  roomId,
+  roomTitle,
+  review = false,
+}: RoomExperienceProps) {
   const router = useRouter();
   const { portal: t } = useLocale();
   const [phase, setPhase] = useState<MediationPhase | null>(mediationState?.room.phase ?? null);
   const refreshingRef = useRef(false);
 
-  useEffect(() => {
-    if (mediationState) return;
-
-    let cancelled = false;
-    let timeoutId: number | undefined;
-
-    const poll = async () => {
-      try {
-        const next = await fetchMediationRoomState();
-        if (cancelled) return;
-        if (next) {
-          if (!refreshingRef.current) {
-            refreshingRef.current = true;
-            router.refresh();
-          }
-          return;
-        }
-      } catch {
-        // retry on transient errors
-      }
-
-      if (!cancelled && !refreshingRef.current) {
-        timeoutId = window.setTimeout(() => {
-          void poll();
-        }, 2000);
-      }
-    };
-
-    void poll();
-
-    return () => {
-      cancelled = true;
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
-    };
-  }, [mediationState, router]);
+  useRoomRealtime(
+    roomId,
+    () => {
+      if (mediationState || refreshingRef.current || review) return;
+      void fetchMediationRoomState()
+        .then((next) => {
+          if (!next || refreshingRef.current) return;
+          refreshingRef.current = true;
+          router.refresh();
+        })
+        .catch(() => {
+          // retry via realtime / safety poll
+        });
+    },
+    {
+      enabled: !mediationState && !review,
+      watchUsers: false,
+    },
+  );
 
   if (!mediationState) {
     const flowStep = resolveRoomFlowStep(null, review);

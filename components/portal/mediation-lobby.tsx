@@ -10,6 +10,7 @@ import {
 } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
+import { useDeadlineRefresh, useRoomRealtime } from "@/hooks/use-room-realtime";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
 import type { MediationLobbyStatus } from "@/lib/dispute-intake";
 import type { PartyRole } from "@/lib/participant-roles";
@@ -106,47 +107,111 @@ export function MediationLobby({
       redirectToRoom();
       return;
     }
-    setLobby({
-      self: result.self,
-      opposite: result.opposite,
-      bothReady: result.bothReady,
-      pipelineRunning: result.pipelineRunning,
-      preparingMediationRoom: result.preparingMediationRoom,
-      canStartMediation: result.canStartMediation,
+    setLobby((prev) => {
+      const next = {
+        self: result.self,
+        opposite: result.opposite,
+        bothReady: result.bothReady,
+        pipelineRunning: result.pipelineRunning,
+        preparingMediationRoom: result.preparingMediationRoom,
+        canStartMediation: result.canStartMediation,
+      };
+      if (
+        prev.self.userId === next.self.userId &&
+        prev.self.mediationReady === next.self.mediationReady &&
+        prev.opposite?.userId === next.opposite?.userId &&
+        prev.opposite?.mediationReady === next.opposite?.mediationReady &&
+        prev.bothReady === next.bothReady &&
+        prev.pipelineRunning === next.pipelineRunning &&
+        prev.preparingMediationRoom === next.preparingMediationRoom &&
+        prev.canStartMediation === next.canStartMediation
+      ) {
+        return prev;
+      }
+      return next;
     });
   }, [redirectToRoom]);
 
   const applyHandshake = useCallback((result: HandshakeStatusResponse) => {
-    setHandshake(result);
+    setHandshake((prev) => {
+      if (
+        prev &&
+        prev.status === result.status &&
+        prev.selfClicked === result.selfClicked &&
+        prev.oppositeClicked === result.oppositeClicked &&
+        prev.windowExpiresAt === result.windowExpiresAt
+      ) {
+        return prev;
+      }
+      return result;
+    });
     if (result.status === "started") {
       redirectToRoom();
     }
   }, [redirectToRoom]);
 
-  useEffect(() => {
+  const refreshLobby = useCallback(() => {
     if (redirectingRef.current) return;
+    void getMediationLobbyStatus()
+      .then((result) => {
+        if (!result) return;
+        applyLobbyStatus(result);
+      })
+      .catch((error) => {
+        console.error("Failed to refresh mediation lobby status:", error);
+      });
+  }, [applyLobbyStatus]);
 
-    const pollLobby = () => {
-      if (redirectingRef.current) return;
-      void getMediationLobbyStatus()
-        .then((result) => {
-          if (!result) return;
-          applyLobbyStatus(result);
-        })
-        .catch((error) => {
-          console.error("Failed to poll mediation lobby status:", error);
-        });
-    };
+  const refreshHandshake = useCallback(() => {
+    if (redirectingRef.current || !lobby.canStartMediation) return;
+    void getMediationHandshakeStatus()
+      .then((result) => {
+        if (result.status === "started") {
+          applyHandshake(result);
+          return;
+        }
+        setHandshake(result);
+      })
+      .catch((error) => {
+        console.error("Failed to refresh mediation handshake status:", error);
+      });
+  }, [applyHandshake, lobby.canStartMediation]);
 
-    pollLobby();
-    const pollMs =
-      lobby.pipelineRunning || lobby.preparingMediationRoom
-        ? 5000
-        : 3000;
-    const pollId = window.setInterval(pollLobby, pollMs);
-    return () => window.clearInterval(pollId);
-  }, [applyLobbyStatus, lobby.pipelineRunning, lobby.preparingMediationRoom, lobby.canStartMediation]);
+  const partyUserIds = [lobby.self.userId, lobby.opposite?.userId].filter(
+    (id): id is string => Boolean(id),
+  );
 
+  useRoomRealtime(
+    roomId,
+    () => {
+      refreshLobby();
+      refreshHandshake();
+    },
+    {
+      enabled: !redirectingRef.current,
+      watchUsers: true,
+      partyUserIds,
+    },
+  );
+
+  useDeadlineRefresh(
+    handshake?.status === "waiting" && handshake.selfClicked ? handshake.windowExpiresAt : null,
+    () => {
+      refreshHandshake();
+      refreshLobby();
+    },
+  );
+
+  useEffect(() => {
+    refreshLobby();
+  }, [refreshLobby]);
+
+  useEffect(() => {
+    if (!lobby.canStartMediation) return;
+    refreshHandshake();
+  }, [lobby.canStartMediation, refreshHandshake]);
+
+  // Keep rare kickers for long-running server work (not status polling).
   useEffect(() => {
     if (!lobby.preparingMediationRoom || !roomId) return;
 
@@ -154,13 +219,7 @@ export function MediationLobby({
       void prepareMediationOpeningForRoom(roomId)
         .then((result) => {
           if (result.status === "complete" || result.status === "ran") {
-            void getMediationLobbyStatus()
-              .then((status) => {
-                if (status) applyLobbyStatus(status);
-              })
-              .catch((error) => {
-                console.error("Failed to refresh mediation lobby status:", error);
-              });
+            refreshLobby();
           }
         })
         .catch((error) => {
@@ -169,9 +228,9 @@ export function MediationLobby({
     };
 
     kickPreparation();
-    const retryId = window.setInterval(kickPreparation, 30000);
+    const retryId = window.setInterval(kickPreparation, 30_000);
     return () => window.clearInterval(retryId);
-  }, [applyLobbyStatus, lobby.preparingMediationRoom, roomId]);
+  }, [lobby.preparingMediationRoom, refreshLobby, roomId]);
 
   useEffect(() => {
     if (!lobby.pipelineRunning || !roomId) return;
@@ -180,13 +239,7 @@ export function MediationLobby({
       void runPostIntakePipelineForRoom(roomId)
         .then((result) => {
           if (result.status === "complete" || result.status === "ran") {
-            void getMediationLobbyStatus()
-              .then((status) => {
-                if (status) applyLobbyStatus(status);
-              })
-              .catch((error) => {
-                console.error("Failed to refresh mediation lobby status:", error);
-              });
+            refreshLobby();
           }
         })
         .catch((error) => {
@@ -195,42 +248,9 @@ export function MediationLobby({
     };
 
     kickPipeline();
-    const retryId = window.setInterval(kickPipeline, 30000);
+    const retryId = window.setInterval(kickPipeline, 30_000);
     return () => window.clearInterval(retryId);
-  }, [applyLobbyStatus, lobby.pipelineRunning, roomId]);
-
-  useEffect(() => {
-    if (!lobby.canStartMediation || redirectingRef.current) return;
-
-    const pollHandshake = () => {
-      if (redirectingRef.current) return;
-      void getMediationHandshakeStatus()
-        .then((result) => {
-          if (result.status === "started") {
-            applyHandshake(result);
-            return;
-          }
-          setHandshake(result);
-        })
-        .catch((error) => {
-          console.error("Failed to poll mediation handshake status:", error);
-        });
-    };
-
-    const bothClicked =
-      handshake?.status === "waiting" && handshake.selfClicked && handshake.oppositeClicked;
-    const pollMs = bothClicked ? 1000 : 3000;
-
-    pollHandshake();
-    const pollId = window.setInterval(pollHandshake, pollMs);
-    return () => window.clearInterval(pollId);
-  }, [
-    lobby.canStartMediation,
-    applyHandshake,
-    handshake?.status,
-    handshake?.selfClicked,
-    handshake?.oppositeClicked,
-  ]);
+  }, [lobby.pipelineRunning, refreshLobby, roomId]);
 
   const handleStart = () => {
     startTransition(async () => {

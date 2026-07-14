@@ -43,6 +43,11 @@ export default async function RoomPage({ searchParams }: RoomPageProps) {
   const mediationState = await fetchMediationRoomState();
 
   return (
-    <RoomExperience mediationState={mediationState} review={review} roomTitle={lobby.room.title} />
+    <RoomExperience
+      mediationState={mediationState}
+      review={review}
+      roomId={lobby.room.id}
+      roomTitle={lobby.room.title}
+    />
   );
 }

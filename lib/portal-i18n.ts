@@ -142,7 +142,6 @@ type PortalCopy = {
   mediationEmailSend: string;
   mediationEmailComingSoon: string;
   mediationNoAgreementOutcome: string;
-  mediationRefresh: string;
   mediationPhases: Record<string, string>;
   participantFlowNavLabel: string;
   flowReviewNext: string;
@@ -346,7 +345,6 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationEmailSend: "Send",
     mediationEmailComingSoon: "Email delivery is coming soon. Use download for now.",
     mediationNoAgreementOutcome: "No mutual agreement was reached in this session.",
-    mediationRefresh: "Refresh",
     mediationPhases: {
       opening: "Opening",
       dialogue: "Dialogue",
@@ -564,7 +562,6 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationEmailSend: "Надіслати",
     mediationEmailComingSoon: "Надсилання email незабаром. Поки що скористайтеся завантаженням.",
     mediationNoAgreementOutcome: "У цій сесії взаємну згоду не досягнуто.",
-    mediationRefresh: "Оновити",
     mediationPhases: {
       opening: "Відкриття",
       dialogue: "Діалог",

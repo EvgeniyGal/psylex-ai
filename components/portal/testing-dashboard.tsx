@@ -2,18 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import { useTransition } from "react";
 import { completeOnboarding, updateTestStatus } from "@/app/onboarding/actions";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
+import { useUserRealtime } from "@/hooks/use-room-realtime";
 import { getRoleCopy } from "@/lib/portal-i18n";
 import type { ParticipantFlowStepId } from "@/lib/participant-flow";
 import type { ParticipantRole } from "@/lib/participant-roles";
 import { buildTestUrl } from "@/lib/test-links";
 import type { TestKey } from "@/lib/test-keys";
-
-const STATUS_POLL_INTERVAL_MS = 30 * 60 * 1000;
 
 const openTestButtonClass =
   "flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-hair bg-surface-container px-3 py-2 text-ink transition-colors hover:border-[#c9ced6] sm:w-auto sm:shrink-0 sm:justify-start sm:py-1";
@@ -35,6 +34,7 @@ type TestDefinition = {
 };
 
 type TestingDashboardProps = {
+  userId: string;
   role: ParticipantRole;
   login: string;
   tests: TestDefinition[];
@@ -46,6 +46,7 @@ type TestingDashboardProps = {
 };
 
 export function TestingDashboard({
+  userId,
   role,
   login,
   tests,
@@ -79,16 +80,19 @@ export function TestingDashboard({
     });
   };
 
-  useEffect(() => {
-    if (review || canProceed) return;
-
-    const intervalId = window.setInterval(async () => {
-      await updateTestStatus();
-      router.refresh();
-    }, STATUS_POLL_INTERVAL_MS);
-
-    return () => window.clearInterval(intervalId);
-  }, [canProceed, review, router]);
+  useUserRealtime(
+    userId,
+    () => {
+      void updateTestStatus()
+        .then(() => router.refresh())
+        .catch(() => {
+          // ignore transient refresh errors
+        });
+    },
+    {
+      enabled: !review && !canProceed,
+    },
+  );
 
   const showUpdateTestButton = !review && !testsComplete;
   const showUpdateBotButton = !review && testsComplete && !personalBotReady;

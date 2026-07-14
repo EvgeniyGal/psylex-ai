@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   clickReadyForOptions,
@@ -23,6 +22,7 @@ import {
   MediationChatStatusBar,
 } from "@/components/portal/room/mediation-chat";
 import { useLocale } from "@/components/locale-provider";
+import { useDeadlineRefresh, useRoomRealtime } from "@/hooks/use-room-realtime";
 import type { MediationPhase } from "@/lib/mediation/types";
 
 type MediationRoomState = NonNullable<Awaited<ReturnType<typeof fetchMediationRoomState>>>;
@@ -33,8 +33,6 @@ type MediationRoomProps = {
   onPhaseChange?: (phase: MediationPhase | null) => void;
   review?: boolean;
 };
-
-const POLL_MS = 3000;
 
 function formatReplyRemaining(deadlineIso: string | null) {
   if (!deadlineIso) return null;
@@ -47,7 +45,6 @@ function formatReplyRemaining(deadlineIso: string | null) {
 }
 
 export function MediationRoom({ initialState, viewerRole, onPhaseChange, review = false }: MediationRoomProps) {
-  const router = useRouter();
   const { portal: t } = useLocale();
   const [state, setState] = useState(initialState);
   const [reply, setReply] = useState("");
@@ -66,18 +63,32 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
       const next = await fetchMediationRoomState();
       if (next) setState(next);
     } catch {
-      // ignore transient poll errors
+      // ignore transient realtime/poll errors
     }
   }, []);
 
-  useEffect(() => {
-    if (review || isSessionComplete) return;
+  useRoomRealtime(state.room.id, () => {
+    void refresh();
+  }, {
+    enabled: !review && !isSessionComplete,
+    watchUsers: false,
+  });
 
-    const id = window.setInterval(() => {
-      void refresh();
-    }, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [refresh, isSessionComplete, review]);
+  const sessionEndsAt = useMemo(() => {
+    if (!state.room.mediationStartedAt) return null;
+    return new Date(
+      new Date(state.room.mediationStartedAt).getTime() +
+        state.room.mediationDurationMinutes * 60_000,
+    ).toISOString();
+  }, [state.room.mediationStartedAt, state.room.mediationDurationMinutes]);
+
+  useDeadlineRefresh(state.room.turnDeadlineAt, () => {
+    void refresh();
+  }, !review && !isSessionComplete);
+
+  useDeadlineRefresh(sessionEndsAt, () => {
+    void refresh();
+  }, !review && !isSessionComplete);
 
   const isMyTurn =
     state.room.phase === "dialogue" && state.room.activeParty === viewerRole;
@@ -443,14 +454,6 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
           ) : null}
         </>
       )}
-
-      <button
-        className="text-body-sm text-on-surface-variant underline"
-        onClick={() => router.refresh()}
-        type="button"
-      >
-        {t.mediationRefresh}
-      </button>
     </div>
   );
 }
