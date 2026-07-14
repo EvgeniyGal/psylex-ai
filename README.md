@@ -19,6 +19,7 @@ npm install
 
 4. Generate migration files:
 
+
 ```bash
 npm run db:generate
 ```
