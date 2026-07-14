@@ -76,16 +76,14 @@ Tables/triggers watched:
 
 ### Self-hosted Realtime WebSocket (optional)
 
-This project’s Kong Realtime endpoint currently returns **403** on WebSocket upgrade (`/realtime/v1/websocket`). Until that is fixed on the Supabase host (JWT secret / `x-api-key` mirroring / Realtime tenant), the app uses **SSE + `pg_notify`** so the lobby and room stay live without polling.
+Your production site is **HTTPS** (`*.vercel.app`). Browsers block Mixed Content, so
+`NEXT_PUBLIC_SUPABASE_URL=http://...` cannot open `ws://...` from HTTPS.
 
-Checklist to get Supabase WS working later:
+Use either:
+- `NEXT_PUBLIC_SUPABASE_URL=https://...` (TLS terminated with working `wss://`), or
+- leave HTTPS/`http://` as-is — the app **skips** Supabase WS on HTTPS pages and uses **SSE + `pg_notify`** instead (no crash).
 
-1. Realtime container healthy and reachable through Kong
-2. `ANON_KEY` JWT signed with the same `JWT_SECRET` Realtime uses
-3. Kong copies `apikey` → `x-api-key` on the Realtime WS route
-4. Migration `0020` publication includes the tables above
-
-Until then, SSE is enough — you should see a single `EventSource` to `/api/realtime/room/...` and **no** repeated `getMediationLobbyStatus` POSTs while idle.
+This project’s Kong Realtime endpoint previously returned **403** on WebSocket upgrade even over HTTP. Until JWT/`x-api-key`/tenant issues are fixed on the host, SSE remains the reliable path.
 
 ## Routes
 

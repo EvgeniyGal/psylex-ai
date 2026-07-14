@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import {
+  canUseSupabaseRealtimeWebSocket,
   getSupabaseBrowserClient,
-  isSupabaseRealtimeConfigured,
 } from "@/lib/supabase/browser-client";
 
 const DEBOUNCE_MS = 150;
@@ -75,78 +75,84 @@ export function useRoomRealtime(
     const cleanups: Array<() => void> = [];
     cleanups.push(openRoomSse(roomId, schedule));
 
-    if (isSupabaseRealtimeConfigured()) {
+    if (canUseSupabaseRealtimeWebSocket()) {
       const supabase = getSupabaseBrowserClient();
       if (supabase) {
         const channelName = `room:${roomId}:${partyKey || "rooms"}`;
-        const channel = supabase.channel(channelName);
+        try {
+          const channel = supabase.channel(channelName);
 
-        channel.on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
-          schedule,
-        );
-        channel.on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "room_messages",
-            filter: `room_id=eq.${roomId}`,
-          },
-          schedule,
-        );
-        if (watchUsers) {
+          channel.on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "rooms", filter: `id=eq.${roomId}` },
+            schedule,
+          );
           channel.on(
             "postgres_changes",
             {
               event: "*",
               schema: "public",
-              table: "users",
+              table: "room_messages",
               filter: `room_id=eq.${roomId}`,
             },
             schedule,
           );
-        }
-        for (const userId of partyUserIds.filter(Boolean)) {
-          channel.on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "user_test_completions",
-              filter: `user_id=eq.${userId}`,
-            },
-            schedule,
-          );
-        }
-
-        channel.subscribe((status, err) => {
-          if (cancelled) return;
-          if (status === "SUBSCRIBED") {
-            if (process.env.NODE_ENV === "development") {
-              console.info("[realtime] Supabase channel subscribed", channelName);
-            }
-            return;
+          if (watchUsers) {
+            channel.on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "users",
+                filter: `room_id=eq.${roomId}`,
+              },
+              schedule,
+            );
           }
-          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            if (!supabaseGaveUp) {
-              supabaseGaveUp = true;
+          for (const userId of partyUserIds.filter(Boolean)) {
+            channel.on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "user_test_completions",
+                filter: `user_id=eq.${userId}`,
+              },
+              schedule,
+            );
+          }
+
+          channel.subscribe((status, err) => {
+            if (cancelled) return;
+            if (status === "SUBSCRIBED") {
               if (process.env.NODE_ENV === "development") {
-                console.warn(
-                  "[realtime] Supabase WS failed (using Postgres SSE)",
-                  status,
-                  err?.message ?? err,
-                );
+                console.info("[realtime] Supabase channel subscribed", channelName);
               }
+              return;
             }
-            void supabase.removeChannel(channel);
-          }
-        });
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              if (!supabaseGaveUp) {
+                supabaseGaveUp = true;
+                if (process.env.NODE_ENV === "development") {
+                  console.warn(
+                    "[realtime] Supabase WS failed (using Postgres SSE)",
+                    status,
+                    err?.message ?? err,
+                  );
+                }
+              }
+              void supabase.removeChannel(channel);
+            }
+          });
 
-        cleanups.push(() => {
-          void supabase.removeChannel(channel);
-        });
+          cleanups.push(() => {
+            void supabase.removeChannel(channel);
+          });
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("[realtime] Supabase subscribe skipped; using SSE", error);
+          }
+        }
       }
     }
 
@@ -227,39 +233,45 @@ export function useUserRealtime(
 
     const cleanups: Array<() => void> = [openUserSse(userId, schedule)];
 
-    if (isSupabaseRealtimeConfigured()) {
+    if (canUseSupabaseRealtimeWebSocket()) {
       const supabase = getSupabaseBrowserClient();
       if (supabase) {
-        const channel = supabase
-          .channel(`user:${userId}`)
-          .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "users", filter: `id=eq.${userId}` },
-            schedule,
-          )
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "user_test_completions",
-              filter: `user_id=eq.${userId}`,
-            },
-            schedule,
-          )
-          .subscribe((status, err) => {
-            if (cancelled) return;
-            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-              if (process.env.NODE_ENV === "development") {
-                console.warn("[realtime] Supabase user channel failed; SSE active", err?.message ?? err);
+        try {
+          const channel = supabase
+            .channel(`user:${userId}`)
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "users", filter: `id=eq.${userId}` },
+              schedule,
+            )
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "user_test_completions",
+                filter: `user_id=eq.${userId}`,
+              },
+              schedule,
+            )
+            .subscribe((status, err) => {
+              if (cancelled) return;
+              if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+                if (process.env.NODE_ENV === "development") {
+                  console.warn("[realtime] Supabase user channel failed; SSE active", err?.message ?? err);
+                }
+                void supabase.removeChannel(channel);
               }
-              void supabase.removeChannel(channel);
-            }
-          });
+            });
 
-        cleanups.push(() => {
-          void supabase.removeChannel(channel);
-        });
+          cleanups.push(() => {
+            void supabase.removeChannel(channel);
+          });
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("[realtime] Supabase user subscribe skipped; using SSE", error);
+          }
+        }
       }
     }
 
