@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
 import type { LegislationContentSection } from "@/lib/mediation/legislation-summary";
 import type { MediationResultsSummary } from "@/lib/mediation/results-summary";
@@ -140,6 +140,12 @@ function formatDocumentDate(locale: string) {
 
 export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
   const { locale, portal: t } = useLocale();
+  // Defer locale date until after mount to avoid SSR/client timezone hydration mismatch.
+  const [documentDate, setDocumentDate] = useState("");
+
+  useEffect(() => {
+    setDocumentDate(formatDocumentDate(locale));
+  }, [locale]);
 
   return (
     <article className="overflow-hidden rounded-xl border border-hair bg-paper shadow-sm">
@@ -150,7 +156,9 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
 
         <div className="space-y-1 border-b border-hair pb-5">
           <h2 className="font-display text-headline-lg text-on-surface">{summary.agreementTitle}</h2>
-          <p className="text-body-sm text-on-surface-variant">{formatDocumentDate(locale)}</p>
+          <p className="text-body-sm text-on-surface-variant" suppressHydrationWarning>
+            {documentDate}
+          </p>
         </div>
 
         <ChapterSection heading={t.mediationPdfPsychodynamicProfile} index={1}>

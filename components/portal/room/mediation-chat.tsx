@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -44,14 +44,17 @@ function MediationChatBubble({
   message,
   labels,
   locale,
+  showTimes,
 }: {
   message: MediationChatMessage;
   labels: MediationChatLabels;
   locale: Locale;
+  showTimes: boolean;
 }) {
   const isAgent = message.senderType === "agent";
   const isSystem = message.senderType === "system";
-  const time = formatMessageTime(message.createdAt, locale);
+  // Defer locale time until after mount — SSR (UTC) vs browser timezone otherwise mismatches.
+  const time = showTimes ? formatMessageTime(message.createdAt, locale) : "";
 
   if (isSystem) {
     return (
@@ -100,6 +103,7 @@ function MediationChatBubble({
             "mt-1 text-right text-[11px] leading-none",
             message.isOwn ? "text-white/75" : "text-on-surface-variant/80",
           )}
+          suppressHydrationWarning
         >
           {time}
         </p>
@@ -119,6 +123,11 @@ export function MediationChat({
   const { locale } = useLocale();
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const [showTimes, setShowTimes] = useState(false);
+
+  useEffect(() => {
+    setShowTimes(true);
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -142,7 +151,13 @@ export function MediationChat({
           <p className="px-4 py-8 text-center text-body-md text-on-surface-variant">{labels.preparing}</p>
         ) : (
           messages.map((message) => (
-            <MediationChatBubble key={message.id} labels={labels} locale={locale} message={message} />
+            <MediationChatBubble
+              key={message.id}
+              labels={labels}
+              locale={locale}
+              message={message}
+              showTimes={showTimes}
+            />
           ))
         )}
         <div ref={endRef} />
