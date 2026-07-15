@@ -133,7 +133,14 @@ async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
 
   mediationAgentWork.add(room.id);
   try {
-    await beginTurn(room.id, addressee);
+    await db
+      .update(rooms)
+      .set({
+        mediationActiveParty: addressee,
+        mediationTurnDeadlineAt: null,
+        mediationTurnNudged: false,
+      })
+      .where(eq(rooms.id, room.id));
 
     const { partyA, partyB } = await getRoomPartiesForPipeline(room.id);
     const addresseeUserId =
@@ -154,6 +161,11 @@ async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
       messageKind: "mediation_question",
       addresseeUserId,
     });
+
+    await db
+      .update(rooms)
+      .set({ mediationTurnDeadlineAt: new Date(Date.now() + REPLY_TIMEOUT_MS) })
+      .where(eq(rooms.id, room.id));
   } finally {
     mediationAgentWork.delete(room.id);
   }
