@@ -1,7 +1,9 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useLocale } from "@/components/locale-provider";
 import type { MediationOptionView } from "@/components/portal/room/mediation-options-panel";
+import { fadeInUp, scaleIn } from "@/lib/motion";
 import type { MediationPhase } from "@/lib/mediation/types";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +47,11 @@ function compromiseVoteLabel(
   return vote ? accepted : rejected;
 }
 
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+};
+
 export function MediationCompromisePanel({
   compromise,
   options,
@@ -69,8 +76,16 @@ export function MediationCompromisePanel({
     review || phase === "agreement" || phase === "completed" || selfCompromiseVote !== null;
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-med-line bg-med-fill/25 p-4">
+    <motion.div
+      className="space-y-4"
+      variants={stagger}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="rounded-xl border border-med-line bg-med-fill/25 p-4"
+        variants={fadeInUp}
+      >
         <p className="text-body-sm text-on-surface-variant">{t.mediationVotesDiscrepancy}</p>
         <div className="mt-2 flex flex-wrap gap-2 text-body-sm text-on-surface">
           <span className="rounded-full border border-party-a/30 bg-party-a-fill/40 px-2.5 py-1">
@@ -80,20 +95,26 @@ export function MediationCompromisePanel({
             {t.roles.party_b}: {resolveOptionLabel(options, partyBVoteOptionId, t.mediationOptionLabel)}
           </span>
         </div>
-      </div>
+      </motion.div>
 
-      <article
+      <motion.article
         className={cn(
           "space-y-3 rounded-xl border p-4",
           isAgreedResolution ? "border-law bg-law-fill/20" : "border-med-line bg-paper",
         )}
+        variants={scaleIn}
       >
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-display text-headline-md text-on-surface">{t.mediationCompromiseTitle}</h2>
           {isAgreedResolution ? (
-            <span className="rounded-full border border-law bg-law-fill/40 px-2.5 py-0.5 text-label-sm uppercase text-on-surface">
+            <motion.span
+              className="rounded-full border border-law bg-law-fill/40 px-2.5 py-0.5 text-label-sm uppercase text-on-surface"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            >
               {t.mediationAgreedResolution}
-            </span>
+            </motion.span>
           ) : null}
         </div>
 
@@ -113,22 +134,26 @@ export function MediationCompromisePanel({
 
         {canVote ? (
           <div className="flex flex-wrap gap-2 pt-1">
-            <button
+            <motion.button
               className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
               disabled={pending}
               onClick={onAccept}
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
             >
               {t.mediationAcceptCompromise}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               className="btn-secondary px-4 py-2 text-body-sm disabled:opacity-60"
               disabled={pending}
               onClick={onReject}
               type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
             >
               {t.mediationRejectCompromise}
-            </button>
+            </motion.button>
           </div>
         ) : null}
 
@@ -137,7 +162,12 @@ export function MediationCompromisePanel({
         ) : null}
 
         {showCompromiseVotes ? (
-          <div className="grid gap-3 border-t border-hair pt-3 sm:grid-cols-2">
+          <motion.div
+            className="grid gap-3 border-t border-hair pt-3 sm:grid-cols-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <p className="text-body-sm text-on-surface-variant">
               <strong className="text-on-surface">{t.roles.party_a}:</strong>{" "}
               {compromiseVoteLabel(
@@ -156,9 +186,9 @@ export function MediationCompromisePanel({
                 t.mediationCompromiseNoVote,
               )}
             </p>
-          </div>
+          </motion.div>
         ) : null}
-      </article>
-    </div>
+      </motion.article>
+    </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   clickStartMediation,
   getMediationHandshakeStatus,
@@ -12,6 +13,7 @@ import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { useRoomRealtime } from "@/hooks/use-room-realtime";
+import { fadeInUp, scaleIn } from "@/lib/motion";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
 import type { MediationLobbyStatus } from "@/lib/dispute-intake";
 import type { PartyRole } from "@/lib/participant-roles";
@@ -33,18 +35,49 @@ type MediationLobbyProps = {
 
 function StatusBadge({ ready, readyLabel, notReadyLabel }: { ready: boolean; readyLabel: string; notReadyLabel: string }) {
   return (
-    <div
+    <motion.div
       className={
         ready
           ? "flex items-center gap-2 rounded border border-success bg-success/10 px-3 py-2 text-success"
           : "flex items-center gap-2 rounded border border-error bg-error/10 px-3 py-2 text-error"
       }
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      key={ready ? "ready" : "not-ready"}
     >
       <span className="material-symbols-outlined text-sm">{ready ? "check_circle" : "pending"}</span>
       <span className="font-display text-label-md uppercase">{ready ? readyLabel : notReadyLabel}</span>
+    </motion.div>
+  );
+}
+
+function HandshakeIndicator() {
+  return (
+    <div className="flex items-center justify-center gap-3 py-2">
+      <motion.div
+        className="h-3 w-3 rounded-full bg-party-a"
+        animate={{ x: [0, 12, 0] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="h-px w-8 bg-hair"
+        animate={{ scaleX: [1, 0.3, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="h-3 w-3 rounded-full bg-party-b"
+        animate={{ x: [0, -12, 0] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      />
     </div>
   );
 }
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+};
 
 export function MediationLobby({
   roomId,
@@ -178,7 +211,6 @@ export function MediationLobby({
     refreshHandshake();
   }, [lobby.canStartMediation, refreshHandshake]);
 
-  // Keep rare kickers for long-running server work (not status polling).
   useEffect(() => {
     if (!lobby.preparingMediationRoom || !roomId) return;
 
@@ -242,86 +274,155 @@ export function MediationLobby({
   return (
     <PortalPageShell flowStep={flowStep}>
       <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col px-margin-mobile py-stack-lg md:px-margin-desktop">
-        <div className="mb-8 text-center">
+        <motion.div
+          className="mb-8 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
           <h1 className="mb-2 font-display text-display-lg text-on-surface">{t.mediationLobbyTitle}</h1>
           <p className="font-sans text-body-lg text-on-surface-variant">{roomTitle}</p>
           <p className="mt-2 font-sans text-body-sm text-on-surface-variant">{t.mediationLobbySubtitle}</p>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col gap-stack-sm">
-          <div className="rounded border border-hair border-t-[3px] border-t-party-a bg-surface-container p-6">
+        <motion.div
+          className="flex flex-col gap-stack-sm"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div
+            className="card-lift rounded border border-hair border-t-[3px] border-t-party-a bg-surface-container p-6"
+            variants={scaleIn}
+          >
             <h2 className="mb-4 font-display text-headline-md text-ink">{t.mediationYourStatus}</h2>
             <p className="mb-3 font-sans text-body-sm text-on-surface-variant">{t.roles[viewerRole]}</p>
-            <StatusBadge
-              notReadyLabel={t.mediationStatusNotReady}
-              ready={lobby.self.mediationReady}
-              readyLabel={t.mediationStatusReady}
-            />
-          </div>
+            <AnimatePresence mode="wait">
+              <StatusBadge
+                notReadyLabel={t.mediationStatusNotReady}
+                ready={lobby.self.mediationReady}
+                readyLabel={t.mediationStatusReady}
+              />
+            </AnimatePresence>
+          </motion.div>
 
-          <div className="rounded border border-hair border-t-[3px] border-t-party-b bg-surface-container p-6">
+          <motion.div
+            className="card-lift rounded border border-hair border-t-[3px] border-t-party-b bg-surface-container p-6"
+            variants={scaleIn}
+          >
             <h2 className="mb-4 font-display text-headline-md text-ink">{t.mediationOppositeSide}</h2>
             <p className="mb-3 font-sans text-body-sm text-on-surface-variant">{t.roles[oppositeRole]}</p>
             {lobby.opposite ? (
-              <StatusBadge
-                notReadyLabel={t.mediationStatusNotReady}
-                ready={oppositeReady}
-                readyLabel={t.mediationStatusReady}
-              />
+              <AnimatePresence mode="wait">
+                <StatusBadge
+                  notReadyLabel={t.mediationStatusNotReady}
+                  ready={oppositeReady}
+                  readyLabel={t.mediationStatusReady}
+                />
+              </AnimatePresence>
             ) : (
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationOppositeNotReady}</p>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="mt-stack-md flex flex-col items-center gap-stack-sm">
-          {!lobby.bothReady ? (
-            <div className="flex w-full items-start gap-3 rounded-lg border border-outline-variant/20 bg-surface-container p-4">
-              <span className="material-symbols-outlined mt-1 text-tertiary">info</span>
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationOppositeNotReady}</p>
-            </div>
-          ) : null}
+        <motion.div
+          className="mt-stack-md flex flex-col items-center gap-stack-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+        >
+          <AnimatePresence mode="popLayout">
+            {!lobby.bothReady ? (
+              <motion.div
+                key="not-ready-hint"
+                className="flex w-full items-start gap-3 rounded-lg border border-outline-variant/20 bg-surface-container p-4"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className="material-symbols-outlined mt-1 text-tertiary">info</span>
+                <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationOppositeNotReady}</p>
+              </motion.div>
+            ) : null}
 
-          {lobby.pipelineRunning ? (
-            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <Spinner size="sm" className="mt-1" />
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
-            </div>
-          ) : null}
+            {lobby.pipelineRunning ? (
+              <motion.div
+                key="pipeline"
+                className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                <Spinner size="sm" className="mt-1" />
+                <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
+              </motion.div>
+            ) : null}
 
-          {lobby.preparingMediationRoom ? (
-            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <Spinner size="sm" className="mt-1" />
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationRoomPreparing}</p>
-            </div>
-          ) : null}
+            {lobby.preparingMediationRoom ? (
+              <motion.div
+                key="preparing"
+                className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                <Spinner size="sm" className="mt-1" />
+                <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationRoomPreparing}</p>
+              </motion.div>
+            ) : null}
 
-          {waitingForOpposite ? (
-            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <Spinner size="sm" className="mt-1 animate-pulse" />
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeWaiting}</p>
-            </div>
-          ) : null}
+            {waitingForOpposite ? (
+              <motion.div
+                key="waiting"
+                className="flex w-full flex-col items-center gap-3 rounded border border-law-line bg-law-fill p-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                <HandshakeIndicator />
+                <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeWaiting}</p>
+              </motion.div>
+            ) : null}
 
-          {oppositeReadyToStart ? (
-            <div className="flex w-full items-start gap-3 rounded-lg border border-success/30 bg-success/10 p-4">
-              <span className="material-symbols-outlined mt-1 text-success">person_check</span>
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeOppositeReady}</p>
-            </div>
-          ) : null}
+            {oppositeReadyToStart ? (
+              <motion.div
+                key="opposite-ready"
+                className="flex w-full items-start gap-3 rounded-lg border border-success/30 bg-success/10 p-4"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <span className="material-symbols-outlined mt-1 text-success">person_check</span>
+                <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeOppositeReady}</p>
+              </motion.div>
+            ) : null}
 
-          {handshakeStarting ? (
-            <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <Spinner size="sm" className="mt-1" />
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeStarting}</p>
-            </div>
-          ) : null}
+            {handshakeStarting ? (
+              <motion.div
+                key="starting"
+                className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                <Spinner size="sm" className="mt-1" />
+                <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeStarting}</p>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
-          <button
-            className="btn-primary flex w-full items-center justify-center gap-2 px-8 py-4 font-display text-label-md disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
+          <motion.button
+            className={`btn-primary flex w-full items-center justify-center gap-2 px-8 py-4 font-display text-label-md disabled:cursor-not-allowed disabled:opacity-50 md:w-auto ${
+              lobby.canStartMediation && !startDisabled ? "glow-ring" : ""
+            }`}
             disabled={startDisabled}
             onClick={handleStart}
             type="button"
+            whileHover={!startDisabled ? { scale: 1.02 } : undefined}
+            whileTap={!startDisabled ? { scale: 0.98 } : undefined}
           >
             {isPending ? (
               <Spinner size="sm" className="text-white" />
@@ -329,8 +430,8 @@ export function MediationLobby({
               <span className="material-symbols-outlined text-xl">gavel</span>
             )}
             {t.mediationStart}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </main>
     </PortalPageShell>
   );

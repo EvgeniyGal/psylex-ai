@@ -1,16 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { markWelcomeSeen } from "@/app/onboarding/actions";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
+import { fadeInUp } from "@/lib/motion";
 import type { ParticipantRole } from "@/lib/participant-roles";
 
 type WelcomeScreenProps = {
   role: ParticipantRole;
   review?: boolean;
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
 };
 
 export function WelcomeScreen({ role, review = false }: WelcomeScreenProps) {
@@ -20,25 +27,41 @@ export function WelcomeScreen({ role, review = false }: WelcomeScreenProps) {
   return (
     <PortalPageShell flowStep={0} showStepRail={review}>
       <main className="relative flex flex-grow items-center justify-center px-margin-mobile pb-12 md:px-margin-desktop">
-        <div className="relative z-10 max-w-2xl space-y-stack-lg text-center">
+        <div className="pointer-events-none absolute inset-0 gradient-hero" aria-hidden="true" />
+
+        <motion.div
+          className="relative z-10 max-w-2xl space-y-stack-lg text-center"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="space-y-stack-md">
-            <div className="mb-3 flex items-center justify-center gap-2.5 text-eyebrow uppercase text-ink-soft">
-              <span className="h-[7px] w-[7px] rounded-full bg-law" />
-              <span>PsyLex</span>
-            </div>
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-md border border-hair bg-surface-container">
+            <motion.div
+              className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-md border border-hair bg-surface-container"
+              variants={fadeInUp}
+            >
               <span
-                className="material-symbols-outlined text-3xl text-law"
+                className="material-symbols-outlined breathe text-3xl text-law"
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
                 psychology
               </span>
-            </div>
-            <h1 className="font-display text-display-lg text-ink">{roleCopy.welcomeTitle}</h1>
-            <p className="mx-auto max-w-xl text-body-lg text-ink-soft">{roleCopy.welcomeBody}</p>
+            </motion.div>
+            <motion.h1
+              className="font-display text-display-lg text-ink"
+              variants={fadeInUp}
+            >
+              {roleCopy.welcomeTitle}
+            </motion.h1>
+            <motion.p
+              className="mx-auto max-w-xl text-body-lg text-ink-soft"
+              variants={fadeInUp}
+            >
+              {roleCopy.welcomeBody}
+            </motion.p>
           </div>
 
-          <div className="pt-8">
+          <motion.div className="pt-8" variants={fadeInUp}>
             {review ? (
               <FlowReviewNext step={0} />
             ) : (
@@ -63,8 +86,8 @@ export function WelcomeScreen({ role, review = false }: WelcomeScreenProps) {
                 </Link>
               </p>
             ) : null}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
     </PortalPageShell>
   );

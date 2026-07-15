@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { MediationRoom } from "@/components/portal/room/mediation-room";
@@ -59,11 +60,16 @@ export function RoomExperience({
       <PortalPageShell flowStep={flowStep}>
         <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col items-center justify-center gap-4 px-margin-mobile py-stack-lg md:px-margin-desktop">
           <Spinner size="xl" />
-          <div className="text-center">
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
             <h1 className="mb-2 font-display text-display-lg text-on-surface">{t.roomTitle}</h1>
             <p className="font-sans text-body-lg text-on-surface-variant">{roomTitle}</p>
             <p className="mt-4 font-sans text-body-sm text-on-surface-variant">{t.mediationPreparing}</p>
-          </div>
+          </motion.div>
         </main>
       </PortalPageShell>
     );
@@ -80,10 +86,14 @@ export function RoomExperience({
           isTreatyView ? "max-w-container-max" : "max-w-3xl",
         )}
       >
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
           <h1 className="font-display text-display-lg text-on-surface">{t.roomTitle}</h1>
           <p className="text-body-md text-on-surface-variant">{mediationState.room.title}</p>
-        </div>
+        </motion.div>
 
         <MediationRoom
           initialState={mediationState}

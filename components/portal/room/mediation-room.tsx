@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   clickReadyForOptions,
@@ -25,6 +26,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { TypingIndicator } from "@/components/ui/typing-indicator";
 import { useLocale } from "@/components/locale-provider";
 import { useDeadlineRefresh, useRoomRealtime } from "@/hooks/use-room-realtime";
+import { fadeInUp } from "@/lib/motion";
 import type { MediationPhase } from "@/lib/mediation/types";
 
 type MediationRoomState = NonNullable<Awaited<ReturnType<typeof fetchMediationRoomState>>>;
@@ -45,6 +47,13 @@ function formatReplyRemaining(deadlineIso: string | null) {
   const s = total % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
+
+const panelTransition = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -12 },
+  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+};
 
 export function MediationRoom({ initialState, viewerRole, onPhaseChange, review = false }: MediationRoomProps) {
   const { portal: t } = useLocale();
@@ -219,6 +228,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
 
   const showOptionsPanel = state.options.length > 0 && (review || votesDiffer || state.room.phase === "voting");
   const showCompromisePanel = votesDiffer && !!state.compromise;
+  const isCompromiseGenerating = votesDiffer && !state.compromise && !review;
 
   const optionsPanel = showOptionsPanel ? (
     <MediationOptionsPanel
@@ -330,7 +340,12 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
 
   if (review) {
     return (
-      <div className="space-y-6">
+      <motion.div
+        className="space-y-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
         <MediationChat
           header={chatStatusHeader}
           labels={chatLabels}
@@ -340,122 +355,235 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
         {reviewOptionsPanel}
         {reviewCompromisePanel}
         <FlowReviewNext step={4} />
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {isSessionComplete && resultsSummary ? (
-        <>
-          <p className="font-display text-headline-md text-success">{t.mediationSessionCompleted}</p>
-          {optionsPanel}
-          {compromisePanel}
-          <MediationResultsPanel summary={resultsSummary} />
-          <div className="space-y-3 border-t border-hair pt-4">
-            <button className="btn-secondary px-4 py-2 text-body-sm" disabled={pending} onClick={onDownload} type="button">
-              {t.mediationDownloadResults}
-            </button>
-            <div className="flex flex-wrap gap-2">
-              <input
-                className="min-w-[200px] flex-1 rounded-lg border border-hair bg-paper px-3 py-2 text-body-sm"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder={t.mediationEmailPlaceholder}
-                type="email"
-                value={email}
-              />
-              <button className="btn-secondary px-4 py-2 text-body-sm" onClick={onEmailPlaceholder} type="button">
-                {t.mediationEmailSend}
+      <AnimatePresence mode="wait">
+        {isSessionComplete && resultsSummary ? (
+          <motion.div key="completed" className="space-y-6" {...panelTransition}>
+            <motion.p
+              className="font-display text-headline-md text-success"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              {t.mediationSessionCompleted}
+            </motion.p>
+            {optionsPanel}
+            {compromisePanel}
+            <MediationResultsPanel summary={resultsSummary} />
+            <motion.div
+              className="space-y-3 border-t border-hair pt-4"
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+            >
+              <button className="btn-secondary px-4 py-2 text-body-sm" disabled={pending} onClick={onDownload} type="button">
+                {t.mediationDownloadResults}
               </button>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          {!isSessionComplete ? (
-            <MediationCountdown
-              durationMinutes={state.room.mediationDurationMinutes}
-              onEnded={refresh}
-              sessionComplete={isSessionComplete}
-              startedAt={state.room.mediationStartedAt}
-            />
-          ) : null}
-
-          {isAwaitingAgent ? (
-            <div className="flex items-start gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
-              <TypingIndicator />
-              <p className="text-body-sm text-on-surface-variant">{t.mediationAwaitingAgent}</p>
-            </div>
-          ) : null}
-
-          {showReadyButton ? (
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
-              <button
-                className="btn-secondary px-4 py-2 text-body-sm disabled:opacity-60"
-                disabled={pending || state.room.selfReady}
-                onClick={onReady}
-                type="button"
-              >
-                {state.room.selfReady ? t.mediationReadyConfirmed : t.mediationReadyForOptions}
-              </button>
-              {state.room.selfReady && state.room.otherReady ? (
-                <span className="text-body-sm text-on-surface-variant">{t.mediationOtherReady}</span>
-              ) : state.room.selfReady ? (
-                <span className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherReady}</span>
-              ) : (
-                <span className="text-body-sm text-on-surface-variant">{t.mediationReadyForOptionsHint}</span>
-              )}
-            </div>
-          ) : null}
-
-          <MediationChat
-            footer={chatComposer ?? undefined}
-            header={chatStatusHeader}
-            labels={chatLabels}
-            messages={state.messages}
-            subheader={chatStatusSubheader ?? undefined}
-          />
-
-          {optionsPanel}
-          {compromisePanel}
-
-          {state.room.phase === "agreement" && draft ? (
-            <div className="space-y-4">
-              <h2 className="font-display text-headline-md text-on-surface">
-                {draft.title ?? t.mediationAgreementTitle}
-              </h2>
-              <div className="glass-panel whitespace-pre-wrap rounded-xl p-4 text-body-md text-on-surface">
-                {draft.body}
+              <div className="flex flex-wrap gap-2">
+                <input
+                  className="min-w-[200px] flex-1 rounded-lg border border-hair bg-paper px-3 py-2 text-body-sm"
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={t.mediationEmailPlaceholder}
+                  type="email"
+                  value={email}
+                />
+                <button className="btn-secondary px-4 py-2 text-body-sm" onClick={onEmailPlaceholder} type="button">
+                  {t.mediationEmailSend}
+                </button>
               </div>
-              {draft.terms?.length ? (
-                <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
-                  {draft.terms.map((term, index) => (
-                    <li key={`${term}-${index}`}>{term}</li>
-                  ))}
-                </ul>
-              ) : null}
-              <p className="rounded-lg border border-hair bg-surface-container p-3 text-body-sm text-on-surface-variant">
-                {t.mediationUplDisclaimer}
-              </p>
-              <button
-                className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
-                disabled={pending || state.room.selfAccepted}
-                onClick={onAccept}
-                type="button"
-              >
-                {state.room.selfAccepted ? t.mediationAccepted : t.mediationIAccept}
-              </button>
-              {!state.room.selfAccepted && state.room.otherAccepted ? (
-                <p className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherAccept}</p>
-              ) : null}
-            </div>
-          ) : null}
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div key="active" className="space-y-6" {...panelTransition}>
+            {!isSessionComplete ? (
+              <MediationCountdown
+                durationMinutes={state.room.mediationDurationMinutes}
+                onEnded={refresh}
+                sessionComplete={isSessionComplete}
+                startedAt={state.room.mediationStartedAt}
+              />
+            ) : null}
 
-          {isSessionComplete && !resultsSummary ? (
-            <p className="text-body-md text-on-surface-variant">{t.mediationNoAgreementOutcome}</p>
-          ) : null}
-        </>
-      )}
+            <AnimatePresence>
+              {isAwaitingAgent ? (
+                <motion.div
+                  key="awaiting-agent"
+                  className="flex items-start gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <TypingIndicator />
+                  <p className="text-body-sm text-on-surface-variant">{t.mediationAwaitingAgent}</p>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showReadyButton ? (
+                <motion.div
+                  key="ready-button"
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0, padding: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <motion.button
+                    className="btn-secondary px-4 py-2 text-body-sm disabled:opacity-60"
+                    disabled={pending || state.room.selfReady}
+                    onClick={onReady}
+                    type="button"
+                    whileHover={!state.room.selfReady ? { scale: 1.02 } : undefined}
+                    whileTap={!state.room.selfReady ? { scale: 0.97 } : undefined}
+                  >
+                    {state.room.selfReady ? t.mediationReadyConfirmed : t.mediationReadyForOptions}
+                  </motion.button>
+                  {state.room.selfReady && state.room.otherReady ? (
+                    <motion.span
+                      className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-3 py-1.5 text-body-sm font-semibold text-success"
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 18 }}
+                    >
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      {t.mediationOtherReady}
+                    </motion.span>
+                  ) : state.room.selfReady ? (
+                    <span className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherReady}</span>
+                  ) : state.room.otherReady ? (
+                    <motion.span
+                      className="inline-flex items-center gap-1.5 text-body-sm font-semibold text-party-a"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <span className="material-symbols-outlined text-base">check_circle</span>
+                      {t.mediationOtherPartyReadyForOptions ?? t.mediationOtherReady}
+                    </motion.span>
+                  ) : (
+                    <span className="text-body-sm text-on-surface-variant">{t.mediationReadyForOptionsHint}</span>
+                  )}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <MediationChat
+              footer={chatComposer ?? undefined}
+              header={chatStatusHeader}
+              labels={chatLabels}
+              messages={state.messages}
+              subheader={chatStatusSubheader ?? undefined}
+            />
+
+            <AnimatePresence>
+              {optionsPanel ? (
+                <motion.div
+                  key="options"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {optionsPanel}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {isCompromiseGenerating ? (
+                <motion.div
+                  key="compromise-generating"
+                  className="flex items-center gap-3 rounded-xl border border-med-line bg-med-fill/25 p-4"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <TypingIndicator />
+                  <p className="text-body-sm font-medium text-on-surface-variant">
+                    {t.mediationCompromiseGenerating}
+                  </p>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {compromisePanel ? (
+                <motion.div
+                  key="compromise"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {compromisePanel}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {state.room.phase === "agreement" && draft ? (
+                <motion.div
+                  key="agreement"
+                  className="space-y-4"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <h2 className="font-display text-headline-md text-on-surface">
+                    {draft.title ?? t.mediationAgreementTitle}
+                  </h2>
+                  <div className="glass-panel whitespace-pre-wrap rounded-xl p-4 text-body-md text-on-surface">
+                    {draft.body}
+                  </div>
+                  {draft.terms?.length ? (
+                    <ul className="list-disc space-y-1 pl-5 text-body-md text-on-surface">
+                      {draft.terms.map((term, index) => (
+                        <li key={`${term}-${index}`}>{term}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <p className="rounded-lg border border-hair bg-surface-container p-3 text-body-sm text-on-surface-variant">
+                    {t.mediationUplDisclaimer}
+                  </p>
+                  <motion.button
+                    className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
+                    disabled={pending || state.room.selfAccepted}
+                    onClick={onAccept}
+                    type="button"
+                    whileHover={!state.room.selfAccepted ? { scale: 1.02 } : undefined}
+                    whileTap={!state.room.selfAccepted ? { scale: 0.97 } : undefined}
+                  >
+                    {state.room.selfAccepted ? t.mediationAccepted : t.mediationIAccept}
+                  </motion.button>
+                  {!state.room.selfAccepted && state.room.otherAccepted ? (
+                    <p className="text-body-sm text-on-surface-variant">{t.mediationWaitingOtherAccept}</p>
+                  ) : null}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            {isSessionComplete && !resultsSummary ? (
+              <motion.p
+                className="text-body-md text-on-surface-variant"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                {t.mediationNoAgreementOutcome}
+              </motion.p>
+            ) : null}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

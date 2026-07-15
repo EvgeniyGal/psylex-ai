@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { motion } from "framer-motion";
 import { completeOnboarding, updateTestStatus } from "@/app/onboarding/actions";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
@@ -10,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { useUserRealtime } from "@/hooks/use-room-realtime";
 import { getRoleCopy } from "@/lib/portal-i18n";
+import { fadeInUp, scaleIn } from "@/lib/motion";
 import type { ParticipantFlowStepId } from "@/lib/participant-flow";
 import type { ParticipantRole } from "@/lib/participant-roles";
 import { buildTestUrl } from "@/lib/test-links";
@@ -44,6 +46,11 @@ type TestingDashboardProps = {
   canProceed: boolean;
   flowStep: ParticipantFlowStepId;
   review?: boolean;
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
 
 export function TestingDashboard({
@@ -97,24 +104,47 @@ export function TestingDashboard({
 
   const showUpdateTestButton = !review && !testsComplete;
   const showUpdateBotButton = !review && testsComplete && !personalBotReady;
+  const completedCount = tests.filter((t) => t.completed).length;
 
   return (
     <PortalPageShell flowStep={flowStep}>
       <main className="mx-auto flex w-full max-w-container-max flex-grow flex-col items-center justify-center px-margin-mobile py-stack-lg md:px-margin-desktop">
-        <div className="flex w-full max-w-4xl flex-col gap-stack-md">
-          <div className="mb-4 text-center">
+        <motion.div
+          className="flex w-full max-w-4xl flex-col gap-stack-md"
+          initial="hidden"
+          animate="visible"
+          variants={stagger}
+        >
+          <motion.div className="mb-4 text-center" variants={fadeInUp}>
             <h1 className="mb-2 font-display text-display-lg">{roleCopy.testsTitle}</h1>
             <p className="font-sans text-body-lg text-on-surface-variant">{roleCopy.testsSubtitle}</p>
-          </div>
+            <div className="mx-auto mt-4 flex max-w-xs items-center gap-3">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-hair">
+                <motion.div
+                  className="h-full rounded-full bg-party-a"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(completedCount / tests.length) * 100}%` }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+                />
+              </div>
+              <span className="text-body-sm font-medium text-ink-soft">
+                {completedCount}/{tests.length}
+              </span>
+            </div>
+          </motion.div>
 
           <div className="flex w-full flex-col gap-stack-sm">
-            {tests.map((test) => {
+            {tests.map((test, i) => {
               const meta = t.testMeta[test.key];
               const testUrl = buildTestUrl(test.url, login);
               const showOpenTest = !review && !test.completed && !!testUrl;
 
               return (
-                <div key={test.key} className={testCardClass}>
+                <motion.div
+                  key={test.key}
+                  className={testCardClass}
+                  variants={scaleIn}
+                >
                   <div
                     className={`absolute bottom-0 left-0 top-0 w-1 ${
                       test.completed ? "bg-success" : "bg-error"
@@ -156,10 +186,15 @@ export function TestingDashboard({
                       </button>
                     ) : null}
                     {test.completed ? (
-                      <div className={passedBadgeClass}>
+                      <motion.div
+                        className={passedBadgeClass}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
                         <span className="material-symbols-outlined text-sm">check_circle</span>
                         <span className="font-display text-label-md uppercase">{t.passed}</span>
-                      </div>
+                      </motion.div>
                     ) : (
                       <div className={failedBadgeClass}>
                         <span className="material-symbols-outlined text-sm">pending</span>
@@ -167,11 +202,11 @@ export function TestingDashboard({
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
 
-            <div className={testCardClass}>
+            <motion.div className={testCardClass} variants={scaleIn}>
               <div
                 className={`absolute bottom-0 left-0 top-0 w-1 ${
                   personalBotReady ? "bg-success" : "bg-error"
@@ -183,7 +218,7 @@ export function TestingDashboard({
                     personalBotReady
                       ? "bg-success/15 text-success"
                       : "bg-error/15 text-error"
-                  }`}
+                  } ${testsComplete && !personalBotReady ? "glow-ring" : ""}`}
                 >
                   <span className="material-symbols-outlined">smart_toy</span>
                 </div>
@@ -211,10 +246,15 @@ export function TestingDashboard({
 
               <div className={testActionsEndClass}>
                 {personalBotReady ? (
-                  <div className={passedBadgeClass}>
+                  <motion.div
+                    className={passedBadgeClass}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  >
                     <span className="material-symbols-outlined text-sm">check_circle</span>
                     <span className="font-display text-label-md uppercase">{t.personalBoardReady}</span>
-                  </div>
+                  </motion.div>
                 ) : (
                   <div className={failedBadgeClass}>
                     <span className="material-symbols-outlined text-sm">
@@ -224,10 +264,13 @@ export function TestingDashboard({
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
 
-          <div className="mt-stack-md flex w-full flex-col items-center gap-stack-sm">
+          <motion.div
+            className="mt-stack-md flex w-full flex-col items-center gap-stack-sm"
+            variants={fadeInUp}
+          >
             {!review ? (
               <div className="flex w-full items-start gap-3 rounded-lg border border-outline-variant/20 bg-surface-container p-4">
                 <span className="material-symbols-outlined mt-1 text-tertiary">info</span>
@@ -292,8 +335,8 @@ export function TestingDashboard({
                 )}
               </button>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
     </PortalPageShell>
   );

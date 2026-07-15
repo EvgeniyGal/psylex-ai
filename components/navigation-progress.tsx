@@ -13,36 +13,34 @@ export function NavigationProgress() {
     if (pathname !== prevPathname.current) {
       prevPathname.current = pathname;
       setIsNavigating(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   }, [pathname]);
 
   useEffect(() => {
-    const originalPushState = window.history.pushState.bind(window.history);
-    const originalReplaceState = window.history.replaceState.bind(window.history);
+    const handleClick = (event: MouseEvent) => {
+      const anchor = (event.target as HTMLElement).closest("a");
+      if (!anchor) return;
 
-    window.history.pushState = function (...args: Parameters<typeof originalPushState>) {
-      setIsNavigating(true);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => setIsNavigating(false), 8000);
-      return originalPushState(...args);
-    };
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:")) return;
+      if (anchor.target === "_blank") return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (href === pathname) return;
 
-    window.history.replaceState = function (...args: Parameters<typeof originalReplaceState>) {
-      const url = args[2];
-      if (url && typeof url === "string" && url !== window.location.pathname) {
+      requestAnimationFrame(() => {
         setIsNavigating(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => setIsNavigating(false), 8000);
-      }
-      return originalReplaceState(...args);
+      });
     };
 
-    return () => {
-      window.history.pushState = originalPushState;
-      window.history.replaceState = originalReplaceState;
-    };
-  }, []);
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [pathname]);
 
   if (!isNavigating) return null;
 

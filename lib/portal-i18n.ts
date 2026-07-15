@@ -106,6 +106,7 @@ type PortalCopy = {
   mediationOtherChose: string;
   mediationVotesDiscrepancy: string;
   mediationCompromiseTitle: string;
+  mediationCompromiseGenerating: string;
   mediationAcceptCompromise: string;
   mediationRejectCompromise: string;
   mediationCompromiseVoteRecorded: string;
@@ -304,6 +305,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationOtherChose: "The other party selected option",
     mediationVotesDiscrepancy: "The parties selected different options. Review the compromise proposal below.",
     mediationCompromiseTitle: "Compromise option",
+    mediationCompromiseGenerating: "Votes differ — the AI mediator is generating a compromise option...",
     mediationAcceptCompromise: "Accept compromise",
     mediationRejectCompromise: "Reject compromise",
     mediationCompromiseVoteRecorded: "Your compromise vote has been recorded.",
@@ -489,7 +491,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationReplyTimer: "Час відповіді",
     mediationReadyForOptions: "Я готовий до варіантів рішення",
     mediationReadyConfirmed: "Ви позначили готовність до варіантів",
-    mediationOtherReady: "Інша сторона теж готова.",
+    mediationOtherReady: "Інша сторона готова до вибору варіантів рішення.",
     mediationWaitingOtherReady: "Очікуємо, поки інша сторона натисне «готово».",
     mediationReadyForOptionsHint:
       "Обидві сторони можуть натиснути це під час діалогу, щоб достроково перейти до варіантів рішення.",
@@ -518,6 +520,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationOtherChose: "Інша сторона обрала варіант",
     mediationVotesDiscrepancy: "Сторони обрали різні варіанти. Перегляньте компромісну пропозицію нижче.",
     mediationCompromiseTitle: "Компромісний варіант",
+    mediationCompromiseGenerating: "Голоси розійшлися — AI-медіатор формує компромісний варіант...",
     mediationAcceptCompromise: "Прийняти компроміс",
     mediationRejectCompromise: "Відхилити компроміс",
     mediationCompromiseVoteRecorded: "Ваш голос щодо компромісу зафіксовано.",

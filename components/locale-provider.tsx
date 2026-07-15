@@ -45,8 +45,15 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 
+const fallback: LocaleContextValue = {
+  locale: "en",
+  setLocale: () => {},
+  landing: copy.en,
+  admin: adminCopy.en,
+  portal: portalCopy.en,
+};
+
 export function useLocale() {
   const ctx = useContext(LocaleContext);
-  if (!ctx) throw new Error("useLocale must be used within LocaleProvider");
-  return ctx;
+  return ctx ?? fallback;
 }

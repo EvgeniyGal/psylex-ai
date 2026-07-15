@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { motion } from "framer-motion";
 import { useLocale } from "@/components/locale-provider";
+import { fadeInUp } from "@/lib/motion";
 import type { LegislationContentSection } from "@/lib/mediation/legislation-summary";
 import type { MediationResultsSummary } from "@/lib/mediation/results-summary";
 
 type MediationResultsPanelProps = {
   summary: MediationResultsSummary;
+};
+
+const chapterStagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
 };
 
 function ChapterSection({
@@ -19,7 +26,10 @@ function ChapterSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-hair bg-surface-container/40 p-5 md:p-6">
+    <motion.section
+      className="rounded-xl border border-hair bg-surface-container/40 p-5 md:p-6"
+      variants={fadeInUp}
+    >
       <div className="mb-4 flex items-center gap-3 border-b border-hair pb-3">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-law/40 bg-law-fill/40 text-label-sm font-semibold text-on-surface">
           {index}
@@ -27,7 +37,7 @@ function ChapterSection({
         <h3 className="font-display text-headline-sm text-on-surface">{heading}</h3>
       </div>
       <div className="space-y-4">{children}</div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -140,7 +150,6 @@ function formatDocumentDate(locale: string) {
 
 export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
   const { locale, portal: t } = useLocale();
-  // Defer locale date until after mount to avoid SSR/client timezone hydration mismatch.
   const [documentDate, setDocumentDate] = useState("");
 
   useEffect(() => {
@@ -148,18 +157,31 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
   }, [locale]);
 
   return (
-    <article className="overflow-hidden rounded-xl border border-hair bg-paper shadow-sm">
-      <div className="space-y-6 px-6 py-6 md:px-8">
-        <p className="rounded-lg border border-law/50 bg-[#F7F5F0] p-4 text-body-sm leading-relaxed text-on-surface-variant">
+    <motion.article
+      className="overflow-hidden rounded-xl border border-hair bg-paper shadow-sm"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <motion.div
+        className="space-y-6 px-6 py-6 md:px-8"
+        variants={chapterStagger}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.p
+          className="rounded-lg border border-law/50 bg-[#F7F5F0] p-4 text-body-sm leading-relaxed text-on-surface-variant"
+          variants={fadeInUp}
+        >
           {t.mediationPdfTopDisclaimer}
-        </p>
+        </motion.p>
 
-        <div className="space-y-1 border-b border-hair pb-5">
+        <motion.div className="space-y-1 border-b border-hair pb-5" variants={fadeInUp}>
           <h2 className="font-display text-headline-lg text-on-surface">{summary.agreementTitle}</h2>
           <p className="text-body-sm text-on-surface-variant" suppressHydrationWarning>
             {documentDate}
           </p>
-        </div>
+        </motion.div>
 
         <ChapterSection heading={t.mediationPdfPsychodynamicProfile} index={1}>
           <p className="whitespace-pre-wrap text-body-md leading-relaxed text-on-surface">
@@ -214,10 +236,13 @@ export function MediationResultsPanel({ summary }: MediationResultsPanelProps) {
           )}
         </ChapterSection>
 
-        <p className="rounded-lg border border-hair bg-surface-container p-4 text-body-sm leading-relaxed text-on-surface-variant">
+        <motion.p
+          className="rounded-lg border border-hair bg-surface-container p-4 text-body-sm leading-relaxed text-on-surface-variant"
+          variants={fadeInUp}
+        >
           {t.mediationUplDisclaimer}
-        </p>
-      </div>
-    </article>
+        </motion.p>
+      </motion.div>
+    </motion.article>
   );
 }

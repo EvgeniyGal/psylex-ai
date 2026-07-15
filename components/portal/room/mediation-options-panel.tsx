@@ -1,6 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useLocale } from "@/components/locale-provider";
+import { fadeInUp, scaleIn } from "@/lib/motion";
 import type { MediationPhase } from "@/lib/mediation/types";
 import type { PartyRole } from "@/lib/participant-roles";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,11 @@ function partySelectedLabel(template: string, party: string) {
   return template.replace("{party}", party);
 }
 
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
+};
+
 export function MediationOptionsPanel({
   options,
   viewerRole,
@@ -64,9 +71,19 @@ export function MediationOptionsPanel({
   const partyBVote = showAllVotes ? partyBVoteOptionId : viewerRole === "party_b" ? selfVote : null;
 
   return (
-    <div className="space-y-4">
+    <motion.div
+      className="space-y-4"
+      variants={stagger}
+      initial="hidden"
+      animate="visible"
+    >
       {showHeading ? (
-        <h2 className="font-display text-headline-md text-on-surface">{t.mediationOptionsTitle}</h2>
+        <motion.h2
+          className="font-display text-headline-md text-on-surface"
+          variants={fadeInUp}
+        >
+          {t.mediationOptionsTitle}
+        </motion.h2>
       ) : null}
       {options.map((option, index) => {
         const isSelfSelection = selfVote === option.id;
@@ -75,7 +92,7 @@ export function MediationOptionsPanel({
         const isAgreedResolution = selectedOptionId === option.id;
 
         return (
-          <article
+          <motion.article
             className={cn(
               "space-y-3 rounded-xl border p-4",
               isAgreedResolution
@@ -85,20 +102,31 @@ export function MediationOptionsPanel({
                   : "border-hair bg-paper",
             )}
             key={option.id}
+            variants={scaleIn}
           >
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-display text-headline-sm text-on-surface">
                 {optionLabel(t.mediationOptionLabel, index)}
               </h3>
               {isAgreedResolution ? (
-                <span className="rounded-full border border-law bg-law-fill/40 px-2.5 py-0.5 text-label-sm uppercase text-on-surface">
+                <motion.span
+                  className="rounded-full border border-law bg-law-fill/40 px-2.5 py-0.5 text-label-sm uppercase text-on-surface"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                >
                   {t.mediationAgreedResolution}
-                </span>
+                </motion.span>
               ) : null}
               {isSelfSelection && phase === "voting" ? (
-                <span className="rounded-full border border-hair bg-surface-container px-2.5 py-0.5 text-label-sm uppercase text-on-surface-variant">
+                <motion.span
+                  className="rounded-full border border-hair bg-surface-container px-2.5 py-0.5 text-label-sm uppercase text-on-surface-variant"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                >
                   {t.mediationYourSelection}
-                </span>
+                </motion.span>
               ) : null}
               {showAllVotes && isPartyASelection ? (
                 <span className="rounded-full border border-party-a/30 bg-party-a-fill/30 px-2.5 py-0.5 text-label-sm uppercase text-on-surface-variant">
@@ -127,22 +155,31 @@ export function MediationOptionsPanel({
             </p>
 
             {canVote && !selfVote && onVote ? (
-              <button
+              <motion.button
                 className="btn-primary px-4 py-2 text-body-sm disabled:opacity-60"
                 disabled={pending}
                 onClick={() => onVote(option.id)}
                 type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
               >
                 {t.mediationSelectOption}
-              </button>
+              </motion.button>
             ) : null}
-          </article>
+          </motion.article>
         );
       })}
 
       {phase === "voting" && selfVote ? (
-        <p className="text-body-sm text-on-surface-variant">{t.mediationVoteRecorded}</p>
+        <motion.p
+          className="text-body-sm text-on-surface-variant"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          {t.mediationVoteRecorded}
+        </motion.p>
       ) : null}
-    </div>
+    </motion.div>
   );
 }

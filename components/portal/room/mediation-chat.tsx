@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocale } from "@/components/locale-provider";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,35 @@ function formatMessageTime(iso: string, locale: Locale) {
   });
 }
 
+const bubbleVariants = {
+  own: {
+    hidden: { opacity: 0, x: 24, scale: 0.96 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+      transition: { type: "spring", stiffness: 340, damping: 22 },
+    },
+  },
+  other: {
+    hidden: { opacity: 0, x: -24, scale: 0.96 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+      transition: { type: "spring", stiffness: 340, damping: 22 },
+    },
+  },
+  system: {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+  },
+} as const;
+
 function MediationChatBubble({
   message,
   labels,
@@ -53,23 +83,36 @@ function MediationChatBubble({
 }) {
   const isAgent = message.senderType === "agent";
   const isSystem = message.senderType === "system";
-  // Defer locale time until after mount — SSR (UTC) vs browser timezone otherwise mismatches.
   const time = showTimes ? formatMessageTime(message.createdAt, locale) : "";
+
+  const variant = isSystem ? "system" : message.isOwn ? "own" : "other";
 
   if (isSystem) {
     return (
-      <div className="flex justify-center px-2 py-1">
+      <motion.div
+        className="flex justify-center px-2 py-1"
+        variants={bubbleVariants.system}
+        initial="hidden"
+        animate="visible"
+        layout
+      >
         <span className="max-w-[90%] rounded-full bg-black/[0.06] px-3 py-1 text-center text-[12px] leading-snug text-on-surface-variant">
           {message.content}
         </span>
-      </div>
+      </motion.div>
     );
   }
 
   const senderLabel = message.isOwn ? labels.you : isAgent ? labels.agent : labels.system;
 
   return (
-    <div className={cn("flex px-2 py-0.5", message.isOwn ? "justify-end" : "justify-start")}>
+    <motion.div
+      className={cn("flex px-2 py-0.5", message.isOwn ? "justify-end" : "justify-start")}
+      variants={bubbleVariants[variant]}
+      initial="hidden"
+      animate="visible"
+      layout
+    >
       <div
         className={cn(
           "relative max-w-[min(85%,28rem)] px-3 pb-1.5 pt-2 shadow-sm",
@@ -108,7 +151,7 @@ function MediationChatBubble({
           {time}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -148,17 +191,26 @@ export function MediationChat({
         ref={scrollRef}
       >
         {messages.length === 0 ? (
-          <p className="px-4 py-8 text-center text-body-md text-on-surface-variant">{labels.preparing}</p>
+          <motion.p
+            className="px-4 py-8 text-center text-body-md text-on-surface-variant"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
+            {labels.preparing}
+          </motion.p>
         ) : (
-          messages.map((message) => (
-            <MediationChatBubble
-              key={message.id}
-              labels={labels}
-              locale={locale}
-              message={message}
-              showTimes={showTimes}
-            />
-          ))
+          <AnimatePresence initial={false}>
+            {messages.map((message) => (
+              <MediationChatBubble
+                key={message.id}
+                labels={labels}
+                locale={locale}
+                message={message}
+                showTimes={showTimes}
+              />
+            ))}
+          </AnimatePresence>
         )}
         <div ref={endRef} />
       </div>
@@ -205,15 +257,17 @@ export function MediationChatComposer({
         rows={1}
         value={value}
       />
-      <button
+      <motion.button
         aria-label={sendLabel}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-party-a text-white transition-all hover:bg-party-a/90 disabled:cursor-not-allowed disabled:opacity-40"
         disabled={!canSend}
         onClick={onSend}
         type="button"
+        whileHover={canSend ? { scale: 1.08 } : undefined}
+        whileTap={canSend ? { scale: 0.92 } : undefined}
       >
         <span className="material-symbols-outlined text-[22px]">send</span>
-      </button>
+      </motion.button>
     </div>
   );
 }
