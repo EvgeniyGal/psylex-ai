@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { mediationFilingReceipts, rooms } from "@/drizzle/schema";
 import {
@@ -43,6 +43,7 @@ import type { PartyRole } from "@/lib/participant-roles";
 
 type RoomRow = typeof rooms.$inferSelect;
 
+/** Same-instance optimization; primary guards are DB-level CAS operations. */
 const mediationAgentWork = new Set<string>();
 
 function sessionEndsAt(room: RoomRow) {
@@ -131,17 +132,26 @@ async function askDialogueQuestion(room: RoomRow, addressee: PartyRole) {
   if (await transitionIfBothReady(room.id, room)) return;
   if (mediationAgentWork.has(room.id)) return;
 
+  // Atomic DB-level claim: set activeParty only if no one else is generating.
+  const [claimed] = await db
+    .update(rooms)
+    .set({
+      mediationActiveParty: addressee,
+      mediationTurnDeadlineAt: null,
+      mediationTurnNudged: false,
+    })
+    .where(
+      and(
+        eq(rooms.id, room.id),
+        eq(rooms.mediationPhase, "dialogue"),
+        or(isNull(rooms.mediationActiveParty), isNull(rooms.mediationTurnDeadlineAt)),
+      ),
+    )
+    .returning({ id: rooms.id });
+  if (!claimed) return;
+
   mediationAgentWork.add(room.id);
   try {
-    await db
-      .update(rooms)
-      .set({
-        mediationActiveParty: addressee,
-        mediationTurnDeadlineAt: null,
-        mediationTurnNudged: false,
-      })
-      .where(eq(rooms.id, room.id));
-
     const { partyA, partyB } = await getRoomPartiesForPipeline(room.id);
     const addresseeUserId =
       addressee === "party_a" ? partyA?.id ?? null : partyB?.id ?? null;
@@ -241,20 +251,20 @@ async function generateAndPublishOptions(roomId: string) {
   if (!room) return;
 
   if (mediationAgentWork.has(roomId)) return;
-  mediationAgentWork.add(roomId);
 
-  try {
-    const existing = (room.mediationOptions as MediationOption[] | null) ?? [];
-    if (existing.length > 0) {
-      if (room.mediationPhase !== "voting") {
-        await db
-          .update(rooms)
-          .set({ mediationPhase: "voting" })
-          .where(eq(rooms.id, roomId));
-      }
-      return;
+  const existing = (room.mediationOptions as MediationOption[] | null) ?? [];
+  if (existing.length > 0) {
+    if (room.mediationPhase !== "voting") {
+      await db
+        .update(rooms)
+        .set({ mediationPhase: "voting" })
+        .where(eq(rooms.id, roomId));
     }
+    return;
+  }
 
+  mediationAgentWork.add(roomId);
+  try {
     const { ctx } = await buildContext(room);
     const result = await runMediationAgent({
       mode: "options",
@@ -271,6 +281,11 @@ async function generateAndPublishOptions(roomId: string) {
       partyA: option.partyA,
       partyB: option.partyB,
     }));
+
+    // Atomic write: only set options if still empty (another instance may have finished first)
+    const fresh = await loadRoom(roomId);
+    const freshOptions = (fresh?.mediationOptions as MediationOption[] | null) ?? [];
+    if (freshOptions.length > 0) return;
 
     await db
       .update(rooms)
@@ -361,10 +376,17 @@ async function afterPartyReply(room: RoomRow, party: PartyRole) {
 }
 
 async function activatePreparedSession(roomId: string) {
-  await db
+  const [claimed] = await db
     .update(rooms)
     .set({ mediationPhase: "dialogue", mediationRound: 1 })
-    .where(eq(rooms.id, roomId));
+    .where(
+      and(
+        eq(rooms.id, roomId),
+        or(isNull(rooms.mediationPhase), eq(rooms.mediationPhase, "opening")),
+      ),
+    )
+    .returning({ id: rooms.id });
+  if (!claimed) return;
 
   await logPipelineEvent({
     roomId,
@@ -379,6 +401,24 @@ async function activatePreparedSession(roomId: string) {
 async function hasMessageKindInRoom(roomId: string, messageKind: string) {
   const messages = await listRoomMessages(roomId);
   return messages.some((message) => message.messageKind === messageKind);
+}
+
+/**
+ * Atomically claim the right to start a mediation session by setting
+ * mediationPhase from NULL to `targetPhase`. Returns true if this
+ * request won the race; false if another request already claimed it.
+ */
+async function claimMediationPhase(
+  roomId: string,
+  targetPhase: MediationPhase,
+  extra?: Record<string, unknown>,
+): Promise<boolean> {
+  const [claimed] = await db
+    .update(rooms)
+    .set({ mediationPhase: targetPhase, ...extra })
+    .where(and(eq(rooms.id, roomId), isNull(rooms.mediationPhase)))
+    .returning({ id: rooms.id });
+  return !!claimed;
 }
 
 export async function startMediationSession(roomId: string) {
@@ -400,10 +440,8 @@ export async function startMediationSession(roomId: string) {
     return;
   }
 
-  await db
-    .update(rooms)
-    .set({ mediationPhase: "opening", mediationRound: 0 })
-    .where(eq(rooms.id, roomId));
+  const claimed = await claimMediationPhase(roomId, "opening", { mediationRound: 0 });
+  if (!claimed) return;
 
   await logPipelineEvent({
     roomId,
@@ -431,6 +469,8 @@ async function runOpeningPhase(room: RoomRow) {
       schema: mediationOpeningSchema,
     });
 
+    if (await hasMessageKindInRoom(room.id, "mediation_opening")) return;
+
     await insertAgentMessage({
       roomId: room.id,
       canonicalContent: opening.canonicalContent,
@@ -440,10 +480,13 @@ async function runOpeningPhase(room: RoomRow) {
   }
 
   const hasQuestion = await hasMessageKindInRoom(room.id, "mediation_question");
-  await db
+
+  const [claimed] = await db
     .update(rooms)
     .set({ mediationRound: 1, mediationPhase: "dialogue" })
-    .where(eq(rooms.id, room.id));
+    .where(and(eq(rooms.id, room.id), eq(rooms.mediationPhase, "opening")))
+    .returning({ id: rooms.id });
+  if (!claimed) return;
 
   if (hasQuestion) {
     await beginTurn(room.id, "party_a");
@@ -483,6 +526,9 @@ async function ensureCompromiseOption(room: RoomRow) {
       partyB: compromise.option.partyB,
     };
 
+    const afterLlm = await loadRoom(room.id);
+    if (afterLlm?.compromiseOption) return;
+
     await db
       .update(rooms)
       .set({ compromiseOption })
@@ -495,6 +541,9 @@ async function ensureCompromiseOption(room: RoomRow) {
 async function ensureDraftAgreement(room: RoomRow) {
   if (room.mediationPhase !== "agreement" || room.draftAgreement || !room.selectedOptionId) return;
   if (mediationAgentWork.has(room.id)) return;
+
+  const fresh = await loadRoom(room.id);
+  if (fresh?.draftAgreement) return;
 
   mediationAgentWork.add(room.id);
   try {
@@ -775,6 +824,9 @@ async function generateDraftAgreement(roomId: string, optionId: string) {
     extraInstruction: `Selected option id: ${optionId}`,
   });
 
+  const afterLlm = await loadRoom(roomId);
+  if (afterLlm?.draftAgreement) return;
+
   await db
     .update(rooms)
     .set({
@@ -850,7 +902,7 @@ export async function getMediationRoomState(userId: string) {
           mediationPhase: "completed",
           mediationCompletedAt: new Date(),
         })
-        .where(eq(rooms.id, room.id));
+        .where(and(eq(rooms.id, room.id), isNull(rooms.mediationPhase)));
       room = (await loadRoom(room.id)) ?? room;
     } else {
       try {

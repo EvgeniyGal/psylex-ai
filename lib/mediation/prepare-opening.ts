@@ -80,6 +80,8 @@ async function generateOpeningMessage(roomId: string) {
     schema: mediationOpeningSchema,
   });
 
+  if (await hasMessageKind(roomId, "mediation_opening")) return;
+
   await insertAgentMessage({
     roomId,
     canonicalContent: opening.canonicalContent,
@@ -89,7 +91,7 @@ async function generateOpeningMessage(roomId: string) {
 }
 
 async function generateFirstQuestion(roomId: string) {
-  const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
+  const { partyA } = await getRoomPartiesForPipeline(roomId);
   const { ctx } = await buildPreparationContext(roomId);
   const result = await runMediationAgent({
     mode: "dialogue_question",
@@ -97,6 +99,8 @@ async function generateFirstQuestion(roomId: string) {
     schema: mediationDialogueQuestionSchema,
     extraInstruction: 'Set addressee to "party_a". Round 1.',
   });
+
+  if (await hasMessageKind(roomId, "mediation_question")) return;
 
   await insertAgentMessage({
     roomId,
