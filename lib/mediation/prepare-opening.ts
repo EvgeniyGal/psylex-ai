@@ -116,7 +116,7 @@ export async function prepareMediationOpening(roomId: string) {
   if (await isMediationOpeningPrepared(roomId)) return;
 
   const room = await loadRoom(roomId);
-  if (!room || room.mediationStartedAt) return;
+  if (!room) return;
 
   const complete = await isPostIntakePipelineComplete(roomId);
   if (!complete) return;

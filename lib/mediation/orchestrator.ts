@@ -213,21 +213,13 @@ export async function transitionToGeneratingOptions(roomId: string, reason: stri
   if (!room || room.mediationPhase === "voting") return;
 
   if (room.mediationPhase === "generating_options") {
-    // Keep completing in-progress generation when something polls/ticks,
-    // but do not make one party wait here for the full LLM response.
-    void ensureOptionsPublished(roomId).catch((error) => {
-      console.error("Failed to ensure mediation options published", error);
-    });
+    await ensureOptionsPublished(roomId);
     return;
   }
 
   await clearTurn(roomId);
   await setPhase(roomId, "generating_options", { reason });
-  // Publish asynchronously so both parties enter "awaiting options" together
-  // via realtime, then both unlock voting when options are written.
-  void generateAndPublishOptions(roomId).catch((error) => {
-    console.error("Failed to generate mediation options", error);
-  });
+  await generateAndPublishOptions(roomId);
 }
 
 async function ensureOptionsPublished(roomId: string) {
@@ -565,32 +557,23 @@ export async function tickMediationTimers(roomId: string) {
     if (room.mediationPhase !== "generating_options") {
       await transitionToGeneratingOptions(roomId, "timer_expired");
     } else {
-      void ensureOptionsPublished(roomId).catch((error) => {
-        console.error("Failed to ensure mediation options published", error);
-      });
+      await ensureOptionsPublished(roomId);
     }
     return loadRoom(roomId);
   }
 
   if (room.mediationPhase === "generating_options") {
-    // Kick generation without awaiting so one side's refresh does not "win" voting alone.
-    void ensureOptionsPublished(roomId).catch((error) => {
-      console.error("Failed to ensure mediation options published", error);
-    });
+    await ensureOptionsPublished(roomId);
     return loadRoom(roomId);
   }
 
   if (room.mediationPhase === "voting_discrepancy") {
-    void ensureCompromiseOption(room).catch((error) => {
-      console.error("Failed to ensure compromise option", error);
-    });
+    await ensureCompromiseOption(room);
     return loadRoom(roomId);
   }
 
   if (room.mediationPhase === "agreement") {
-    void ensureDraftAgreement(room).catch((error) => {
-      console.error("Failed to ensure draft agreement", error);
-    });
+    await ensureDraftAgreement(room);
     return loadRoom(roomId);
   }
 
@@ -671,7 +654,14 @@ export async function markReadyForOptions(userId: string) {
   if (!participant) throw new Error("Not in a room.");
 
   const room = await loadRoom(participant.roomId);
-  if (!room || !isNegotiationPhase(room.mediationPhase)) {
+  if (!room) throw new Error("Room not found.");
+
+  if (room.mediationPhase === "generating_options") {
+    await ensureOptionsPublished(participant.roomId);
+    return;
+  }
+
+  if (!isNegotiationPhase(room.mediationPhase)) {
     throw new Error("Ready for options is only available during mediation.");
   }
 
@@ -722,19 +712,14 @@ export async function castVote(userId: string, optionId: string) {
         mediationPhase: "agreement",
       })
       .where(eq(rooms.id, room.id));
-    // Draft generation continues in the background so both parties unlock together.
-    void ensureDraftAgreement({
+    await ensureDraftAgreement({
       ...updated,
       selectedOptionId: updated.partyAVoteOptionId,
       mediationPhase: "agreement",
-    }).catch((error) => {
-      console.error("Failed to generate draft agreement after matching votes", error);
     });
     return loadRoom(room.id);
   }
 
-  // Enter discrepancy immediately; generate compromise asynchronously so both
-  // parties see awaiting → compromise buttons at the same time via realtime.
   await setPhase(room.id, "voting_discrepancy");
   await db
     .update(rooms)
@@ -747,9 +732,7 @@ export async function castVote(userId: string, optionId: string) {
 
   const discrepancyRoom = await loadRoom(room.id);
   if (discrepancyRoom) {
-    void ensureCompromiseOption(discrepancyRoom).catch((error) => {
-      console.error("Failed to generate compromise option", error);
-    });
+    await ensureCompromiseOption(discrepancyRoom);
   }
 
   return discrepancyRoom;
@@ -791,12 +774,10 @@ export async function castCompromiseVote(userId: string, accepted: boolean) {
       })
       .where(eq(rooms.id, room.id));
 
-    void ensureDraftAgreement({
+    await ensureDraftAgreement({
       ...updated,
       selectedOptionId: compromise.id,
       mediationPhase: "agreement",
-    }).catch((error) => {
-      console.error("Failed to generate draft agreement after compromise accept", error);
     });
     return loadRoom(room.id);
   }

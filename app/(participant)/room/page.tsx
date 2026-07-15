@@ -9,6 +9,7 @@ import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { isFlowReviewMode, requireParticipantSession } from "@/lib/portal-auth";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 type RoomPageProps = {
   searchParams: Promise<{ review?: string }>;
