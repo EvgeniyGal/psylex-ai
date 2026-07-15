@@ -10,7 +10,7 @@ import {
 } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { useLocale } from "@/components/locale-provider";
-import { useDeadlineRefresh, useRoomRealtime } from "@/hooks/use-room-realtime";
+import { useRoomRealtime } from "@/hooks/use-room-realtime";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
 import type { MediationLobbyStatus } from "@/lib/dispute-intake";
 import type { PartyRole } from "@/lib/participant-roles";
@@ -45,28 +45,6 @@ function StatusBadge({ ready, readyLabel, notReadyLabel }: { ready: boolean; rea
   );
 }
 
-function useWindowSecondsRemaining(windowExpiresAt: string | null) {
-  const [seconds, setSeconds] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!windowExpiresAt) {
-      setSeconds(null);
-      return;
-    }
-
-    const tick = () => {
-      const remaining = Math.max(0, Math.ceil((new Date(windowExpiresAt).getTime() - Date.now()) / 1000));
-      setSeconds(remaining);
-    };
-
-    tick();
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, [windowExpiresAt]);
-
-  return seconds;
-}
-
 export function MediationLobby({
   roomId,
   roomTitle,
@@ -92,9 +70,6 @@ export function MediationLobby({
   });
   const [handshake, setHandshake] = useState<HandshakeStatusResponse | null>(null);
   const redirectingRef = useRef(false);
-  const windowSeconds = useWindowSecondsRemaining(
-    handshake?.status === "waiting" && handshake.selfClicked ? handshake.windowExpiresAt : null,
-  );
 
   const redirectToRoom = useCallback(() => {
     if (redirectingRef.current) return;
@@ -138,8 +113,7 @@ export function MediationLobby({
         prev &&
         prev.status === result.status &&
         prev.selfClicked === result.selfClicked &&
-        prev.oppositeClicked === result.oppositeClicked &&
-        prev.windowExpiresAt === result.windowExpiresAt
+        prev.oppositeClicked === result.oppositeClicked
       ) {
         return prev;
       }
@@ -191,14 +165,6 @@ export function MediationLobby({
       enabled: !redirectingRef.current,
       watchUsers: true,
       partyUserIds,
-    },
-  );
-
-  useDeadlineRefresh(
-    handshake?.status === "waiting" && handshake.selfClicked ? handshake.windowExpiresAt : null,
-    () => {
-      refreshHandshake();
-      refreshLobby();
     },
   );
 
@@ -265,7 +231,6 @@ export function MediationLobby({
   const handshakeStarting =
     handshake?.status === "waiting" && handshake.selfClicked && handshake.oppositeClicked;
   const oppositeReadyToStart = !!handshake?.oppositeClicked && !handshake?.selfClicked;
-  const handshakeExpired = handshake?.status === "expired";
   const startDisabled =
     !lobby.canStartMediation ||
     isPending ||
@@ -333,14 +298,7 @@ export function MediationLobby({
           {waitingForOpposite ? (
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
               <span className="material-symbols-outlined mt-1 animate-pulse text-tertiary">hourglass_top</span>
-              <div className="font-sans text-body-sm text-on-surface-variant">
-                <p>{t.mediationHandshakeWaiting}</p>
-                {windowSeconds !== null ? (
-                  <p className="mt-1 font-display text-label-md text-tertiary">
-                    {t.mediationHandshakeWindowRemaining.replace("{seconds}", String(windowSeconds))}
-                  </p>
-                ) : null}
-              </div>
+              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeWaiting}</p>
             </div>
           ) : null}
 
@@ -355,13 +313,6 @@ export function MediationLobby({
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
               <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeStarting}</p>
-            </div>
-          ) : null}
-
-          {handshakeExpired ? (
-            <div className="flex w-full items-start gap-3 rounded-lg border border-error/30 bg-error/10 p-4">
-              <span className="material-symbols-outlined mt-1 text-error">timer_off</span>
-              <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeExpired}</p>
             </div>
           ) : null}
 

@@ -64,8 +64,6 @@ type PortalCopy = {
   mediationHandshakeWaiting: string;
   mediationHandshakeOppositeReady: string;
   mediationHandshakeStarting: string;
-  mediationHandshakeExpired: string;
-  mediationHandshakeWindowRemaining: string;
   mediationCountdownLabel: string;
   mediationSessionEnded: string;
   backToStart: string;
@@ -260,11 +258,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationHandshakeWaiting:
       "You clicked Start Mediation. Waiting for the opposite side to click as well.",
     mediationHandshakeOppositeReady:
-      "The opposite side is ready to start. Click Start Mediation within the next minute to join the session together.",
+      "The opposite side is ready to start. Click Start Mediation to join the session together.",
     mediationHandshakeStarting: "Both sides are ready. Starting mediation…",
-    mediationHandshakeExpired:
-      "The one-minute start window expired. Both sides need to click Start Mediation again.",
-    mediationHandshakeWindowRemaining: "Time remaining for the opposite side to join: {seconds}s",
     mediationCountdownLabel: "Session time remaining",
     mediationSessionEnded: "The 20-minute mediation session has ended.",
     backToStart: "Back to start",
@@ -477,11 +472,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationHandshakeWaiting:
       "Ви натиснули «Почати медіацію». Очікуємо, поки інша сторона також натисне кнопку.",
     mediationHandshakeOppositeReady:
-      "Інша сторона готова почати. Натисніть «Почати медіацію» протягом наступної хвилини, щоб разом увійти в сесію.",
+      "Інша сторона готова почати. Натисніть «Почати медіацію», щоб разом увійти в сесію.",
     mediationHandshakeStarting: "Обидві сторони готові. Запускаємо медіацію…",
-    mediationHandshakeExpired:
-      "Хвилинне вікно для старту минуло. Обидві сторони мають знову натиснути «Почати медіацію».",
-    mediationHandshakeWindowRemaining: "Час для приєднання іншої сторони: {seconds} с",
     mediationCountdownLabel: "Час сесії",
     mediationSessionEnded: "20-хвилинна сесія медіації завершилася.",
     backToStart: "На головну",

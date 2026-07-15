@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Synchronized two-party mediation start from the lobby — mutual click handshake, session gate, and countdown timer.
+Synchronized two-party mediation start from the lobby — persistent mutual-click handshake, session gate, and session countdown timer.
 
 ## Requirements
 
@@ -21,34 +21,30 @@ The mediation lobby SHALL enable the **Start Mediation** button only when `canSt
 - **WHEN** both sides are ready and post-intake pipeline is complete
 - **THEN** the Start Mediation button is enabled
 
-### Requirement: Mutual handshake within 60 seconds
+### Requirement: Mutual click without expiry
 
-Mediation SHALL NOT begin until both Side 1 and Side 2 click **Start Mediation** with clicks occurring within **60 seconds** of each other (measured from the first click to the second).
+Mediation SHALL NOT begin until both Side 1 and Side 2 click **Start Mediation**. Clicks do not expire — once a party clicks, their intent persists until the other party also clicks.
 
 #### Scenario: First side clicks
 
 - **WHEN** one side clicks Start Mediation and the opposite side has not clicked
 - **THEN** that side's click timestamp is recorded on the room
 - **AND** the clicking participant sees a waiting state
+- **AND** the opposite side is notified via realtime that the first side is waiting
 - **AND** mediation does not start yet
 
-#### Scenario: Second side clicks within window
+#### Scenario: Second side clicks
 
-- **WHEN** the opposite side clicks Start Mediation within 60 seconds of the first click
+- **WHEN** the opposite side clicks Start Mediation (at any point after the first click)
 - **THEN** `mediation_started_at` is set on the room
 - **AND** both participants are directed to `/room`
 
-#### Scenario: Solo click expires
+#### Scenario: Simultaneous clicks (race safety)
 
-- **WHEN** only one side has clicked and 60 seconds elapse without the opposite side clicking
-- **THEN** the recorded click is cleared
-- **AND** both sides must click Start Mediation again
-
-#### Scenario: Clicks too far apart
-
-- **WHEN** both sides have clicked but the second click is more than 60 seconds after the first
-- **THEN** both click timestamps are cleared
-- **AND** both sides must click Start Mediation again
+- **WHEN** both sides click Start Mediation at nearly the same time
+- **THEN** both click timestamps are recorded
+- **AND** exactly one finalization occurs (atomic `SET mediation_started_at WHERE IS NULL` guard)
+- **AND** both participants see the `started` status and are redirected to `/room`
 
 ### Requirement: Opposite-side handshake status in lobby
 
@@ -58,26 +54,20 @@ While waiting for the handshake, the mediation lobby SHALL show the participant 
 
 - **WHEN** the participant has clicked Start Mediation and the opposite side has not
 - **THEN** a localized message indicates the opposite side has not clicked yet
-- **AND** remaining time in the 60-second window is shown when applicable
 
 #### Scenario: Opposite side already clicked
 
-- **WHEN** the participant has not clicked but the opposite side has clicked within the active window
+- **WHEN** the participant has not clicked but the opposite side has already clicked
 - **THEN** a localized message indicates the opposite side is ready and prompts this participant to click Start Mediation
 
-#### Scenario: Window expired message
+### Requirement: Lobby realtime updates for handshake completion
 
-- **WHEN** the handshake window expires
-- **THEN** a localized message instructs the participant to click Start Mediation again
-
-### Requirement: Lobby polling for handshake completion
-
-The mediation lobby SHALL poll server state while a handshake is in progress so participants are redirected without manual refresh when mediation starts.
+The mediation lobby SHALL receive realtime updates while a handshake is in progress so participants are redirected without manual refresh when mediation starts.
 
 #### Scenario: Automatic redirect on start
 
 - **WHEN** a participant is in the waiting state and the opposite side completes the handshake
-- **THEN** the browser detects `mediation_started_at` via polling within 5 seconds
+- **THEN** the browser detects `mediation_started_at` via realtime within 5 seconds
 - **AND** the participant is redirected to `/room`
 
 ### Requirement: Room access gated on mediation start

@@ -93,14 +93,14 @@ export async function clickStartMediation(): Promise<HandshakeStatusResponse> {
   const { user, role } = await requireSideParticipant();
 
   if (!hasSubmittedDisputeIntake(user)) {
-    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
   const { getMediationLobbyData } = await import("@/lib/dispute-intake");
   const lobby = await getMediationLobbyData(user.id);
 
   if (!lobby?.canStartMediation || !user.roomId) {
-    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
   const result = await recordStartClick(

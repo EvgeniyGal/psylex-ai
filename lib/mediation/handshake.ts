@@ -1,24 +1,20 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rooms, users, type rooms as roomsTable } from "@/drizzle/schema";
 import { isPartyRole, type PartyRole } from "@/lib/participant-roles";
 
-export const HANDSHAKE_WINDOW_MS = 60_000;
-
-export type HandshakeStatus = "idle" | "waiting" | "started" | "expired" | "ineligible";
+export type HandshakeStatus = "idle" | "waiting" | "started" | "ineligible";
 
 export type HandshakeState = {
   status: HandshakeStatus;
   selfClicked: boolean;
   oppositeClicked: boolean;
-  windowExpiresAt: Date | null;
 };
 
 export type HandshakeStatusResponse = {
   status: HandshakeStatus;
   selfClicked: boolean;
   oppositeClicked: boolean;
-  windowExpiresAt: string | null;
 };
 
 type RoomHandshakeRow = Pick<
@@ -37,61 +33,21 @@ function oppositeClickForRole(room: RoomHandshakeRow, role: PartyRole) {
   return role === "party_a" ? room.partyBMediationStartClickedAt : room.partyAMediationStartClickedAt;
 }
 
-function bothClicksWithinWindow(room: RoomHandshakeRow) {
-  const partyA = room.partyAMediationStartClickedAt;
-  const partyB = room.partyBMediationStartClickedAt;
-  if (!partyA || !partyB) return false;
-
-  const delta = Math.abs(partyA.getTime() - partyB.getTime());
-  return delta <= HANDSHAKE_WINDOW_MS;
-}
-
-function soloClickExpired(clickAt: Date, now: Date) {
-  return now.getTime() - clickAt.getTime() > HANDSHAKE_WINDOW_MS;
-}
-
-export function evaluateHandshake(
-  room: RoomHandshakeRow,
-  viewerRole: PartyRole,
-  now: Date = new Date(),
-): HandshakeState {
+export function evaluateHandshake(room: RoomHandshakeRow, viewerRole: PartyRole): HandshakeState {
   if (room.mediationStartedAt) {
-    return {
-      status: "started",
-      selfClicked: true,
-      oppositeClicked: true,
-      windowExpiresAt: null,
-    };
+    return { status: "started", selfClicked: true, oppositeClicked: true };
   }
 
-  const selfClick = clickForRole(room, viewerRole);
-  const oppositeClick = oppositeClickForRole(room, viewerRole);
-  const selfClicked = !!selfClick;
-  const oppositeClicked = !!oppositeClick;
+  const selfClicked = !!clickForRole(room, viewerRole);
+  const oppositeClicked = !!oppositeClickForRole(room, viewerRole);
 
-  if (selfClick && oppositeClick) {
-    if (bothClicksWithinWindow(room)) {
-      return {
-        status: "waiting",
-        selfClicked: true,
-        oppositeClicked: true,
-        windowExpiresAt: null,
-      };
-    }
-    return { status: "expired", selfClicked, oppositeClicked, windowExpiresAt: null };
+  if (selfClicked && oppositeClicked) {
+    return { status: "waiting", selfClicked: true, oppositeClicked: true };
   }
-
-  const activeClick = selfClick ?? oppositeClick;
-  if (!activeClick) {
-    return { status: "idle", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+  if (selfClicked || oppositeClicked) {
+    return { status: "waiting", selfClicked, oppositeClicked };
   }
-
-  const expiresAt = new Date(activeClick.getTime() + HANDSHAKE_WINDOW_MS);
-  if (soloClickExpired(activeClick, now)) {
-    return { status: "expired", selfClicked, oppositeClicked, windowExpiresAt: expiresAt };
-  }
-
-  return { status: "waiting", selfClicked, oppositeClicked, windowExpiresAt: expiresAt };
+  return { status: "idle", selfClicked: false, oppositeClicked: false };
 }
 
 function toResponse(state: HandshakeState): HandshakeStatusResponse {
@@ -99,32 +55,24 @@ function toResponse(state: HandshakeState): HandshakeStatusResponse {
     status: state.status,
     selfClicked: state.selfClicked,
     oppositeClicked: state.oppositeClicked,
-    windowExpiresAt: state.windowExpiresAt?.toISOString() ?? null,
   };
 }
 
-async function clearHandshakeClicks(roomId: string) {
-  await db
+async function finalizeMediationStart(roomId: string): Promise<Date | null> {
+  const [updated] = await db
     .update(rooms)
-    .set({
-      partyAMediationStartClickedAt: null,
-      partyBMediationStartClickedAt: null,
-    })
-    .where(eq(rooms.id, roomId));
-}
+    .set({ mediationStartedAt: new Date() })
+    .where(and(eq(rooms.id, roomId), isNull(rooms.mediationStartedAt)))
+    .returning({ mediationStartedAt: rooms.mediationStartedAt });
 
-async function finalizeMediationStart(roomId: string, room: RoomHandshakeRow) {
-  if (room.mediationStartedAt) return room.mediationStartedAt;
-
-  const partyA = room.partyAMediationStartClickedAt;
-  const partyB = room.partyBMediationStartClickedAt;
-  if (!partyA || !partyB || !bothClicksWithinWindow(room)) return null;
-
-  const startedAt = new Date(Math.max(partyA.getTime(), partyB.getTime()));
-  await db
-    .update(rooms)
-    .set({ mediationStartedAt: startedAt })
-    .where(eq(rooms.id, roomId));
+  if (!updated) {
+    const [room] = await db
+      .select({ mediationStartedAt: rooms.mediationStartedAt })
+      .from(rooms)
+      .where(eq(rooms.id, roomId))
+      .limit(1);
+    return room?.mediationStartedAt ?? null;
+  }
 
   const { startMediationSession } = await import("@/lib/mediation/orchestrator");
   try {
@@ -133,7 +81,7 @@ async function finalizeMediationStart(roomId: string, room: RoomHandshakeRow) {
     console.error("Failed to start mediation session", error);
   }
 
-  return startedAt;
+  return updated.mediationStartedAt;
 }
 
 async function loadRoomHandshake(roomId: string) {
@@ -150,56 +98,18 @@ async function loadRoomHandshake(roomId: string) {
   return room ?? null;
 }
 
-async function resolveHandshakeState(
-  roomId: string,
-  room: RoomHandshakeRow,
-  role: PartyRole,
-  now: Date,
-): Promise<HandshakeState> {
-  if (room.mediationStartedAt) {
-    return evaluateHandshake(room, role, now);
-  }
-
-  let state = evaluateHandshake(room, role, now);
-
-  if (state.status === "expired") {
-    await clearHandshakeClicks(roomId);
-    return { status: "idle", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
-  }
-
-  const latestRoom = (await loadRoomHandshake(roomId)) ?? room;
-  if (bothClicksWithinWindow(latestRoom) && !latestRoom.mediationStartedAt) {
-    await finalizeMediationStart(roomId, latestRoom);
-  }
-
-  const fresh = await loadRoomHandshake(roomId);
-  if (fresh?.mediationStartedAt) {
-    return evaluateHandshake(fresh, role, now);
-  }
-
-  return evaluateHandshake(latestRoom, role, now);
-}
-
 export async function recordStartClick(roomId: string, role: PartyRole): Promise<HandshakeStatusResponse> {
-  const now = new Date();
   const room = await loadRoomHandshake(roomId);
   if (!room) {
-    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
   if (room.mediationStartedAt) {
-    return toResponse(evaluateHandshake(room, role, now));
+    return toResponse(evaluateHandshake(room, role));
   }
 
-  let current = room;
-  const before = evaluateHandshake(current, role, now);
-  if (before.status === "expired") {
-    await clearHandshakeClicks(roomId);
-    current = (await loadRoomHandshake(roomId)) ?? current;
-  }
-
-  const existingClick = clickForRole(current, role);
-  const clickAt = existingClick ?? now;
+  const existingClick = clickForRole(room, role);
+  const clickAt = existingClick ?? new Date();
 
   await db
     .update(rooms)
@@ -212,11 +122,21 @@ export async function recordStartClick(roomId: string, role: PartyRole): Promise
 
   const updated = await loadRoomHandshake(roomId);
   if (!updated) {
-    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
-  const state = await resolveHandshakeState(roomId, updated, role, now);
-  return toResponse(state);
+  if (updated.mediationStartedAt) {
+    return toResponse(evaluateHandshake(updated, role));
+  }
+
+  const bothClicked = !!updated.partyAMediationStartClickedAt && !!updated.partyBMediationStartClickedAt;
+  if (bothClicked) {
+    await finalizeMediationStart(roomId);
+    const fresh = await loadRoomHandshake(roomId);
+    if (fresh) return toResponse(evaluateHandshake(fresh, role));
+  }
+
+  return toResponse(evaluateHandshake(updated, role));
 }
 
 export async function getHandshakeStatusForUser(userId: string): Promise<HandshakeStatusResponse> {
@@ -231,16 +151,25 @@ export async function getHandshakeStatusForUser(userId: string): Promise<Handsha
     .limit(1);
 
   if (!viewer?.roomId || !isPartyRole(viewer.role) || !viewer.disputeIntakeSubmittedAt) {
-    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
   const role = viewer.role;
-  const now = new Date();
   const room = await loadRoomHandshake(viewer.roomId);
   if (!room) {
-    return { status: "ineligible", selfClicked: false, oppositeClicked: false, windowExpiresAt: null };
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
-  const state = await resolveHandshakeState(viewer.roomId, room, role, now);
-  return toResponse(state);
+  if (room.mediationStartedAt) {
+    return toResponse(evaluateHandshake(room, role));
+  }
+
+  const bothClicked = !!room.partyAMediationStartClickedAt && !!room.partyBMediationStartClickedAt;
+  if (bothClicked) {
+    await finalizeMediationStart(viewer.roomId);
+    const fresh = await loadRoomHandshake(viewer.roomId);
+    if (fresh) return toResponse(evaluateHandshake(fresh, role));
+  }
+
+  return toResponse(evaluateHandshake(room, role));
 }
