@@ -32,7 +32,7 @@ export function ParticipantStepRail({ currentStep }: ParticipantStepRailProps) {
         {Array.from({ length: PARTICIPANT_FLOW_STEP_COUNT }, (_, index) => {
           const stepId = index as ParticipantFlowStepId;
           const isCurrent = stepId === currentStep;
-          const allDone = maxReachedStep >= (PARTICIPANT_FLOW_STEP_COUNT - 1) as ParticipantFlowStepId;
+          const allDone = maxReachedStep >= ((PARTICIPANT_FLOW_STEP_COUNT - 1) as ParticipantFlowStepId);
           const isCompleted = stepId < maxReachedStep || (allDone && stepId <= maxReachedStep);
           const isReachable = stepId <= maxReachedStep;
           const canNavigate = canNavigateToFlowStep(stepId, currentStep, maxReachedStep);

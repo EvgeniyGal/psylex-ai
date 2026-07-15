@@ -465,7 +465,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
                       <span className="material-symbols-outlined text-base">check_circle</span>
-                      {t.mediationOtherPartyReadyForOptions ?? t.mediationOtherReady}
+                      {t.mediationOtherReady}
                     </motion.span>
                   ) : (
                     <span className="text-body-sm text-on-surface-variant">{t.mediationReadyForOptionsHint}</span>
