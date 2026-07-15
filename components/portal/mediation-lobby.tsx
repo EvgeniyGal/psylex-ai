@@ -9,6 +9,7 @@ import {
   runPostIntakePipelineForRoom,
 } from "@/app/dispute-intake/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { useRoomRealtime } from "@/hooks/use-room-realtime";
 import type { HandshakeStatusResponse } from "@/lib/mediation/handshake";
@@ -283,21 +284,21 @@ export function MediationLobby({
 
           {lobby.pipelineRunning ? (
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
+              <Spinner size="sm" className="mt-1" />
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationAgentsWorking}</p>
             </div>
           ) : null}
 
           {lobby.preparingMediationRoom ? (
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
+              <Spinner size="sm" className="mt-1" />
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationRoomPreparing}</p>
             </div>
           ) : null}
 
           {waitingForOpposite ? (
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <span className="material-symbols-outlined mt-1 animate-pulse text-tertiary">hourglass_top</span>
+              <Spinner size="sm" className="mt-1 animate-pulse" />
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeWaiting}</p>
             </div>
           ) : null}
@@ -311,7 +312,7 @@ export function MediationLobby({
 
           {handshakeStarting ? (
             <div className="flex w-full items-start gap-3 rounded border border-law-line bg-law-fill p-4">
-              <span className="material-symbols-outlined mt-1 animate-spin text-tertiary">progress_activity</span>
+              <Spinner size="sm" className="mt-1" />
               <p className="font-sans text-body-sm text-on-surface-variant">{t.mediationHandshakeStarting}</p>
             </div>
           ) : null}
@@ -323,7 +324,7 @@ export function MediationLobby({
             type="button"
           >
             {isPending ? (
-              <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+              <Spinner size="sm" className="text-white" />
             ) : (
               <span className="material-symbols-outlined text-xl">gavel</span>
             )}

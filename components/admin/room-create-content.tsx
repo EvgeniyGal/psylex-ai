@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { createRoom } from "@/app/admin/rooms/actions";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import {
   USA_SUB_JURISDICTIONS_SORTED,
@@ -168,8 +169,8 @@ export function RoomCreateContent({ basePath = "/admin/rooms" }: { basePath?: st
             disabled={pending}
             type="submit"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            {pending ? "..." : admin.createRoom}
+            {pending ? <Spinner size="sm" className="text-white" /> : <span className="material-symbols-outlined text-[18px]">add</span>}
+            {admin.createRoom}
           </button>
         </div>
       </form>

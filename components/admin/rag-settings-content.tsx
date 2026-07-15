@@ -11,6 +11,7 @@ import {
 } from "@/app/admin/settings/rag-actions";
 import { useLocale } from "@/components/locale-provider";
 import { ModalOverlay } from "@/components/ui/modal";
+import { Spinner } from "@/components/ui/spinner";
 import { LEGAL_DOCUMENT_CATEGORIES, getCategoryLabel } from "@/lib/rag/categories";
 import type { LegalDocumentCategory, LegalDocumentRow, RoomJurisdiction } from "@/lib/rag/types";
 import type { RagInquiryResult } from "@/lib/rag/types";
@@ -472,12 +473,13 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
           </div>
         </div>
         <button
-          className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
+          className="btn-primary flex items-center gap-1.5 px-6 py-2.5 text-body-sm disabled:opacity-60"
           disabled={pending || !testQuestion.trim()}
           onClick={onTestInquiry}
           type="button"
         >
-          {pending ? "..." : admin.ragTestSubmit}
+          {pending ? <Spinner size="sm" className="text-white" /> : null}
+          {admin.ragTestSubmit}
         </button>
 
         {testResult ? (
@@ -526,7 +528,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
           >
             {isUploading ? (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl bg-surface-container/90 p-6 text-center backdrop-blur-[1px]">
-                <span className="material-symbols-outlined animate-spin text-4xl text-tertiary">progress_activity</span>
+                <Spinner size="xl" />
                 <p className="font-display text-body-md font-semibold text-on-surface">{admin.ragUploading}</p>
                 <p className="text-body-sm text-on-surface-variant">{admin.ragUploadingHint}</p>
               </div>
@@ -620,7 +622,7 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
               >
                 {isUploading ? (
                   <>
-                    <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                    <Spinner size="sm" className="text-white" />
                     {admin.ragUploading}
                   </>
                 ) : (
@@ -731,12 +733,13 @@ export function RagSettingsContent({ documents }: RagSettingsContentProps) {
                 {admin.cancel}
               </button>
               <button
-                className="rounded-lg bg-error px-4 py-2 font-bold text-white disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-lg bg-error px-4 py-2 font-bold text-white disabled:opacity-60"
                 disabled={pending}
                 onClick={onDelete}
                 type="button"
               >
-                {pending ? "..." : admin.ragDeleteDocument}
+                {pending ? <Spinner size="sm" className="text-white" /> : null}
+                {admin.ragDeleteDocument}
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { createMediator } from "@/app/admin/mediators/actions";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 
 const inputClass =
@@ -69,8 +70,8 @@ export function MediatorCreateContent() {
             disabled={pending}
             type="submit"
           >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
-            {pending ? "..." : admin.addMediator}
+            {pending ? <Spinner size="sm" className="text-white" /> : <span className="material-symbols-outlined text-[18px]">person_add</span>}
+            {admin.addMediator}
           </button>
         </div>
       </form>

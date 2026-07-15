@@ -21,6 +21,8 @@ import {
   MediationChatComposer,
   MediationChatStatusBar,
 } from "@/components/portal/room/mediation-chat";
+import { Spinner } from "@/components/ui/spinner";
+import { TypingIndicator } from "@/components/ui/typing-indicator";
 import { useLocale } from "@/components/locale-provider";
 import { useDeadlineRefresh, useRoomRealtime } from "@/hooks/use-room-realtime";
 import type { MediationPhase } from "@/lib/mediation/types";
@@ -284,7 +286,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
           ) : null}
           {isOtherPartyAnswering ? (
             <span className="inline-flex items-center gap-1 text-body-sm font-semibold text-party-a">
-              <span className="material-symbols-outlined animate-pulse text-[18px]">hourglass_top</span>
+              <Spinner size="sm" className="text-party-a" />
               {t.mediationOtherPartyAnswering}
             </span>
           ) : null}
@@ -310,7 +312,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
     !review && isMyTurn ? (
       !questionReady ? (
         <div className="flex items-center gap-2 px-4 py-3 text-body-sm text-on-surface-variant">
-          <span className="material-symbols-outlined animate-spin text-tertiary">progress_activity</span>
+          <Spinner size="sm" />
           {t.mediationQuestionIncoming}
         </div>
       ) : (
@@ -381,7 +383,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
 
           {isAwaitingAgent ? (
             <div className="flex items-start gap-3 rounded-xl border border-law-line bg-law-fill/40 p-4">
-              <span className="material-symbols-outlined animate-spin text-tertiary">progress_activity</span>
+              <TypingIndicator />
               <p className="text-body-sm text-on-surface-variant">{t.mediationAwaitingAgent}</p>
             </div>
           ) : null}

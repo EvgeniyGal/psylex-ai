@@ -196,6 +196,39 @@ html::-webkit-scrollbar-corner {
   background: var(--paper);
 }
 
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: typing-bounce 1s ease-in-out infinite;
+}
+
+@keyframes nav-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.nav-progress-bar {
+  animation: nav-progress 1.2s ease-in-out infinite;
+}
+
 @layer utilities {
   .custom-scrollbar {
     scrollbar-width: thin;

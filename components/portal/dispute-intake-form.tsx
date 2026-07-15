@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { submitDisputeIntake } from "@/app/dispute-intake/actions";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 
 const textareaClass =
@@ -24,7 +25,7 @@ function SubmitButton({ label, loadingLabel }: { label: string; loadingLabel: st
     >
       {pending ? (
         <>
-          <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+          <Spinner size="sm" className="text-white" />
           {loadingLabel}
         </>
       ) : (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { deleteMediator, updateMediatorMeta } from "@/app/admin/mediators/actions";
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 
 export type MediatorRow = {
@@ -86,11 +87,12 @@ export function MediatorDetailContent({ mediator }: { mediator: MediatorRow }) {
           />
         </div>
         <button
-          className="btn-primary px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-primary flex items-center gap-1.5 px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
           disabled={pending || !isDirty}
           type="submit"
         >
-          {pending ? "..." : admin.saveMediator}
+          {pending ? <Spinner size="sm" className="text-white" /> : null}
+          {admin.saveMediator}
         </button>
       </form>
 
@@ -131,11 +133,12 @@ export function MediatorDetailContent({ mediator }: { mediator: MediatorRow }) {
               <form action={onDelete}>
                 <input name="mediatorId" type="hidden" value={mediator.id} />
                 <button
-                  className="rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
+                  className="flex items-center gap-1.5 rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
                   disabled={deletePending}
                   type="submit"
                 >
-                  {deletePending ? "..." : admin.deleteMediator}
+                  {deletePending ? <Spinner size="sm" className="text-white" /> : null}
+                  {admin.deleteMediator}
                 </button>
               </form>
             </div>

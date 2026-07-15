@@ -10,6 +10,7 @@ import {
 } from "@/app/admin/rooms/actions";
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
 import { RoomMediationDetailsModal } from "@/components/admin/room-mediation-details-modal";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { formatDateTime } from "@/lib/format-datetime";
 import { formatRoomActivityEntry } from "@/lib/pipeline/format-room-activity-log";
@@ -141,11 +142,11 @@ function ParticipantSection({
         </div>
         {!readOnly ? (
           <button
-            className="btn-secondary px-4 py-1.5 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-secondary flex items-center gap-1.5 px-4 py-1.5 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={pending || !isDirty}
             type="submit"
           >
-            {pending ? "..." : admin.saveChanges}
+            {pending ? <Spinner size="sm" /> : admin.saveChanges}
           </button>
         ) : null}
       </form>
@@ -388,11 +389,11 @@ export function RoomDetailContent({
             <p className="text-body-md text-on-surface">{jurisdictionDisplay}</p>
           </div>
           <button
-            className="btn-primary px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-primary flex items-center gap-1.5 px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={roomPending || !isRoomDirty}
             type="submit"
           >
-            {roomPending ? "..." : admin.saveChanges}
+            {roomPending ? <Spinner size="sm" className="text-white" /> : admin.saveChanges}
           </button>
         </form>
       )}
@@ -437,11 +438,11 @@ export function RoomDetailContent({
                 <form action={onDelete}>
                   <input name="roomId" type="hidden" value={room.id} />
                   <button
-                    className="rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
+                    className="flex items-center gap-1.5 rounded-lg bg-error px-4 py-2 text-body-sm font-semibold text-white disabled:opacity-60"
                     disabled={deletePending}
                     type="submit"
                   >
-                    {deletePending ? "..." : admin.deleteRoom}
+                    {deletePending ? <Spinner size="sm" className="text-white" /> : admin.deleteRoom}
                   </button>
                 </form>
               </div>

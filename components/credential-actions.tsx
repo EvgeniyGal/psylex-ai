@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { generateMagicLinkAction } from "@/app/admin/magic-link/actions";
 import { useLocale } from "@/components/locale-provider";
+import { Spinner } from "@/components/ui/spinner";
 import { formatCredentials } from "@/lib/credentials";
 
 export function CredentialActions({
@@ -66,8 +67,8 @@ export function CredentialActions({
         onClick={onMagicLink}
         type="button"
       >
-        <span className="material-symbols-outlined text-[18px]">auto_fix_high</span>
-        {pending ? "..." : admin.magicLink}
+        {pending ? <Spinner size="sm" /> : <span className="material-symbols-outlined text-[18px]">auto_fix_high</span>}
+        {admin.magicLink}
       </button>
     </div>
   );

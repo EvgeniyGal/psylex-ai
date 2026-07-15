@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SiteHeader } from "@/components/site-header";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { credentialsSchema, type CredentialsInput } from "@/lib/login-schema";
 
@@ -139,7 +140,7 @@ export function LoginForm() {
             >
               {isSubmitting ? (
                 <>
-                  <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                  <Spinner size="sm" className="text-white" />
                   {t.signInLoading}
                 </>
               ) : (

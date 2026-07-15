@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { completeOnboarding, updateTestStatus } from "@/app/onboarding/actions";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { useUserRealtime } from "@/hooks/use-room-realtime";
 import { getRoleCopy } from "@/lib/portal-i18n";
@@ -243,7 +244,7 @@ export function TestingDashboard({
                 type="button"
               >
                 {isUpdatePending ? (
-                  <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                  <Spinner size="sm" />
                 ) : (
                   <span className="material-symbols-outlined text-base">sync</span>
                 )}
@@ -258,7 +259,7 @@ export function TestingDashboard({
                 type="button"
               >
                 {isUpdatePending ? (
-                  <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                  <Spinner size="sm" />
                 ) : (
                   <span className="material-symbols-outlined text-base">smart_toy</span>
                 )}
@@ -283,7 +284,7 @@ export function TestingDashboard({
               >
                 {isNextStepPending ? (
                   <>
-                    <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                    <Spinner size="sm" className="text-white" />
                     {t.proceedLoading}
                   </>
                 ) : (

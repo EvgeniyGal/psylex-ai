@@ -6,6 +6,7 @@ import { useState } from "react";
 import { acceptDisclaimer } from "@/app/onboarding/actions";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { getRoleCopy } from "@/lib/portal-i18n";
 import type { ParticipantRole } from "@/lib/participant-roles";
@@ -27,7 +28,7 @@ function ProceedButton({ consented, label, loadingLabel }: ProceedButtonProps) {
     >
       {pending ? (
         <>
-          <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+          <Spinner size="sm" className="text-white" />
           {loadingLabel}
         </>
       ) : (

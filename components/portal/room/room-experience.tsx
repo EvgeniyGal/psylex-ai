@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { MediationRoom } from "@/components/portal/room/mediation-room";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { useRoomRealtime } from "@/hooks/use-room-realtime";
 import { resolveRoomFlowStep } from "@/lib/participant-flow";
@@ -57,7 +58,7 @@ export function RoomExperience({
     return (
       <PortalPageShell flowStep={flowStep}>
         <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col items-center justify-center gap-4 px-margin-mobile py-stack-lg md:px-margin-desktop">
-          <span className="material-symbols-outlined animate-spin text-4xl text-tertiary">progress_activity</span>
+          <Spinner size="xl" />
           <div className="text-center">
             <h1 className="mb-2 font-display text-display-lg text-on-surface">{t.roomTitle}</h1>
             <p className="font-sans text-body-lg text-on-surface-variant">{roomTitle}</p>

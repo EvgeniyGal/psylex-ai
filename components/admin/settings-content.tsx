@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { saveApiCredentials, saveTestLinks } from "@/app/admin/settings/actions";
 import { AgentPromptsSettingsContent } from "@/components/admin/agent-prompts-settings-content";
 import { RagSettingsContent } from "@/components/admin/rag-settings-content";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import type { LegalDocumentRow } from "@/lib/rag/types";
 import type { AgentKey } from "@/lib/pipeline/agent-keys";
@@ -121,11 +122,12 @@ export function SettingsContent({ settings, documents, prompts }: SettingsConten
               </div>
             </div>
             <button
-              className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
+              className="btn-primary flex items-center gap-1.5 px-6 py-2.5 text-body-sm disabled:opacity-60"
               disabled={credentialsPending}
               type="submit"
             >
-              {credentialsPending ? "..." : admin.save}
+              {credentialsPending ? <Spinner size="sm" className="text-white" /> : null}
+              {admin.save}
             </button>
           </form>
         ) : activeTab === "tests" ? (
@@ -147,11 +149,12 @@ export function SettingsContent({ settings, documents, prompts }: SettingsConten
               ))}
             </div>
             <button
-              className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
+              className="btn-primary flex items-center gap-1.5 px-6 py-2.5 text-body-sm disabled:opacity-60"
               disabled={testsPending}
               type="submit"
             >
-              {testsPending ? "..." : admin.save}
+              {testsPending ? <Spinner size="sm" className="text-white" /> : null}
+              {admin.save}
             </button>
           </form>
         ) : activeTab === "prompts" ? (

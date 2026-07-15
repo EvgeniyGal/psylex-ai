@@ -8,6 +8,7 @@ import {
   saveAgentPromptAction,
   testAgentPromptAction,
 } from "@/app/admin/settings/agent-prompt-actions";
+import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { AGENT_KEYS, type AgentKey } from "@/lib/pipeline/agent-keys";
 import { isLegalAnalysisNotFound } from "@/lib/pipeline/legal-analysis-not-found";
@@ -189,12 +190,13 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
           value={currentDraft}
         />
         <button
-          className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
+          className="btn-primary flex items-center gap-1.5 px-6 py-2.5 text-body-sm disabled:opacity-60"
           disabled={savePending || !currentDraft.trim()}
           onClick={onSave}
           type="button"
         >
-          {savePending ? "..." : admin.save}
+          {savePending ? <Spinner size="sm" className="text-white" /> : null}
+          {admin.save}
         </button>
       </div>
 
@@ -288,12 +290,13 @@ export function AgentPromptsSettingsContent({ prompts }: AgentPromptsSettingsCon
         )}
 
         <button
-          className="btn-primary px-6 py-2.5 text-body-sm disabled:opacity-60"
+          className="btn-primary flex items-center gap-1.5 px-6 py-2.5 text-body-sm disabled:opacity-60"
           disabled={testPending || (isUserAgent ? !selectedUserId : !selectedRoomId)}
           onClick={onTest}
           type="button"
         >
-          {testPending ? "..." : admin.agentTestRun}
+          {testPending ? <Spinner size="sm" className="text-white" /> : null}
+          {admin.agentTestRun}
         </button>
 
         {testResult ? (

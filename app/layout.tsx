@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans, Newsreader } from "next/font/google";
 import { AppProviders } from "@/components/app-providers";
 import { ConditionalSiteFooter } from "@/components/conditional-site-footer";
+import { NavigationProgress } from "@/components/navigation-progress";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
         className={`${ibmPlexSans.variable} ${newsreader.variable} min-h-screen bg-paper font-sans text-body-md text-ink antialiased`}
       >
         <AppProviders>
+          <NavigationProgress />
           <div className="flex min-h-screen flex-col">
             <div className="flex-grow">{children}</div>
             <ConditionalSiteFooter />
