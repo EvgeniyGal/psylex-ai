@@ -37,6 +37,32 @@ export function validateUploadFile(filename: string, size: number) {
   };
 }
 
+async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+  });
+  const document = await loadingTask.promise;
+
+  try {
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const pageText = content.items
+        .map((item) => ("str" in item && typeof item.str === "string" ? item.str : ""))
+        .join(" ")
+        .trim();
+      if (pageText) pages.push(pageText);
+    }
+    return pages.join("\n\n").trim();
+  } finally {
+    await document.destroy();
+  }
+}
+
 export async function extractTextFromBuffer(buffer: Buffer, filename: string): Promise<string> {
   const { extension } = validateUploadFile(filename, buffer.length);
 
@@ -47,16 +73,9 @@ export async function extractTextFromBuffer(buffer: Buffer, filename: string): P
   }
 
   if (extension === ".pdf") {
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: buffer });
-    try {
-      const parsed = await parser.getText();
-      const text = parsed.text?.trim() ?? "";
-      if (!text) throw new DocumentExtractError("PDF contains no extractable text.");
-      return text;
-    } finally {
-      await parser.destroy();
-    }
+    const text = await extractTextFromPdfBuffer(buffer);
+    if (!text) throw new DocumentExtractError("PDF contains no extractable text.");
+    return text;
   }
 
   const mammoth = await import("mammoth");
