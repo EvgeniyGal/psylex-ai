@@ -38,29 +38,9 @@ export function validateUploadFile(filename: string, size: number) {
 }
 
 async function extractTextFromPdfBuffer(buffer: Buffer): Promise<string> {
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(buffer),
-    useWorkerFetch: false,
-    isEvalSupported: false,
-  });
-  const document = await loadingTask.promise;
-
-  try {
-    const pages: string[] = [];
-    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-      const page = await document.getPage(pageNumber);
-      const content = await page.getTextContent();
-      const pageText = content.items
-        .map((item) => ("str" in item && typeof item.str === "string" ? item.str : ""))
-        .join(" ")
-        .trim();
-      if (pageText) pages.push(pageText);
-    }
-    return pages.join("\n\n").trim();
-  } finally {
-    await document.destroy();
-  }
+  const { extractText } = await import("unpdf");
+  const { text } = await extractText(new Uint8Array(buffer), { mergePages: true });
+  return text.trim();
 }
 
 export async function extractTextFromBuffer(buffer: Buffer, filename: string): Promise<string> {
