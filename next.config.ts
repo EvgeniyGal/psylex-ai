@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
-  serverExternalPackages: ["pdf-parse", "pdfkit"],
+  serverExternalPackages: ["pdfkit"],
 };
 
 export default nextConfig;
