@@ -13,8 +13,9 @@ function escapeFormulaValue(value: string) {
   return value.replace(/'/g, "''");
 }
 
-function buildFilterFormula(fieldName: string, value: string) {
-  return `{${fieldName}}='${escapeFormulaValue(value)}'`;
+/** Match when the email field contains the bare portal login (e.g. finds `psylex_x@test.com`). */
+function buildFilterFormula(fieldName: string, login: string) {
+  return `FIND('${escapeFormulaValue(login)}', {${fieldName}})`;
 }
 
 export async function findAirtableRecordByLogin(
