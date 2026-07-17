@@ -21,9 +21,9 @@ Each room with active mediation SHALL track a `mediation_phase` enum: `opening`,
 - **WHEN** solution options are published
 - **THEN** `mediation_phase` is set to `voting`
 
-### Requirement: Twenty-minute session timer
+### Requirement: Sixty-minute session timer
 
-The mediation session SHALL enforce a total duration of **20 minutes** from `mediation_started_at` (or `rooms.mediation_duration_minutes` when overridden), governing dialogue and option-generation phases.
+The mediation session SHALL enforce a total duration of **60 minutes** from `mediation_started_at` (or `rooms.mediation_duration_minutes` when overridden), governing dialogue and option-generation phases.
 
 #### Scenario: Timer visible throughout session
 
@@ -48,18 +48,18 @@ The system SHALL run up to **3** dialogue rounds. Each round consists of structu
 - **WHEN** round 3 summary is posted
 - **THEN** the system transitions to `generating_options` unless already transitioned earlier
 
-### Requirement: Two-minute reply timer
+### Requirement: Five-minute reply timer
 
-Each participant SHALL have **2 minutes** to submit a reply when it is their turn in dialogue.
+Each participant SHALL have **5 minutes** to submit a reply when it is their turn in dialogue.
 
 #### Scenario: Reply timer shown
 
 - **WHEN** it is a participant's turn to reply
-- **THEN** a 2:00 countdown is displayed for that participant
+- **THEN** a 5:00 countdown is displayed for that participant
 
 #### Scenario: Reply timer expires
 
-- **WHEN** the 2-minute reply timer expires without a submission
+- **WHEN** the 5-minute reply timer expires without a submission
 - **THEN** the turn is marked timed out
 - **AND** the dialogue state advances to the next turn or round summary
 - **AND** no nudge message is posted
@@ -88,7 +88,7 @@ A button labeled **"I am ready for solution options"** (localized) SHALL be visi
 
 ### Requirement: Transition to solution options
 
-The system SHALL transition from dialogue to solution-option generation when **any** of the following occurs: (1) 3 dialogue rounds completed, (2) both parties clicked ready for solutions, (3) 20-minute session timer expired, (4) AI data sufficiency determined.
+The system SHALL transition from dialogue to solution-option generation when **any** of the following occurs: (1) 3 dialogue rounds completed, (2) both parties clicked ready for solutions, (3) 60-minute session timer expired.
 
 #### Scenario: Three rounds complete
 

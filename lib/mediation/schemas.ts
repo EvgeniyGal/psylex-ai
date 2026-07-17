@@ -16,11 +16,6 @@ export const mediationRoundSummarySchema = adaptedMessageSchema;
 export const mediationModerationSchema = adaptedMessageSchema;
 export const mediationNudgeSchema = adaptedMessageSchema;
 
-export const mediationDataSufficiencySchema = z.object({
-  sufficient: z.boolean(),
-  reason: z.string(),
-});
-
 const mediationOptionSchema = z.object({
   id: z.string(),
   canonicalDescription: z.string(),
@@ -48,7 +43,6 @@ export const mediationAgreementDraftSchema = z.object({
 export type MediationOpening = z.infer<typeof mediationOpeningSchema>;
 export type MediationDialogueQuestion = z.infer<typeof mediationDialogueQuestionSchema>;
 export type MediationRoundSummary = z.infer<typeof mediationRoundSummarySchema>;
-export type MediationDataSufficiency = z.infer<typeof mediationDataSufficiencySchema>;
 export type MediationOptionsOutput = z.infer<typeof mediationOptionsSchema>;
 export type MediationCompromiseOutput = z.infer<typeof mediationCompromiseSchema>;
 export type MediationAgreementDraft = z.infer<typeof mediationAgreementDraftSchema>;
@@ -59,7 +53,6 @@ export type MediationAgentMode =
   | "round_summary"
   | "moderation_redirect"
   | "nudge"
-  | "data_sufficiency"
   | "options"
   | "compromise"
   | "agreement_draft";
@@ -74,8 +67,6 @@ export const mediationModeInstructions: Record<MediationAgentMode, string> = {
   moderation_redirect:
     'Run mode "moderation_redirect". Redirect the party away from personal attacks toward substance.',
   nudge: 'Run mode "nudge". Gently prompt the party to respond to the current question.',
-  data_sufficiency:
-    'Run mode "data_sufficiency". Assess if enough information exists to propose solution options.',
   options:
     'Run mode "options". Generate 2-3 solution options with legal information (not advice), fulfillment probability, refusal risks, and per-party presentations.',
   compromise:

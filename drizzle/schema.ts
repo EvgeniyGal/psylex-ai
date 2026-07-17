@@ -98,7 +98,7 @@ export const rooms = pgTable("rooms", {
   partyAMediationStartClickedAt: timestamp("party_a_mediation_start_clicked_at", { withTimezone: true }),
   partyBMediationStartClickedAt: timestamp("party_b_mediation_start_clicked_at", { withTimezone: true }),
   mediationStartedAt: timestamp("mediation_started_at", { withTimezone: true }),
-  mediationDurationMinutes: integer("mediation_duration_minutes").notNull().default(20),
+  mediationDurationMinutes: integer("mediation_duration_minutes").notNull().default(60),
   mediationPhase: mediationPhase("mediation_phase"),
   mediationRound: integer("mediation_round").notNull().default(0),
   mediationActiveParty: text("mediation_active_party"),

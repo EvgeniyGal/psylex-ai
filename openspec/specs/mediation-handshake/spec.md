@@ -89,14 +89,14 @@ The `/room` route SHALL be accessible to side participants only when `rooms.medi
 - **WHEN** a participant visits `/mediation` and `mediation_started_at` is already set
 - **THEN** they are redirected to `/room`
 
-### Requirement: 20-minute mediation countdown
+### Requirement: 60-minute mediation countdown
 
-The mediation room SHALL display a countdown timer showing remaining session time, defaulting to **20 minutes** from `mediation_started_at`. When the timer reaches zero during an active mediation session, the system SHALL apply mediation session flow transition rules (advance to solution-option generation or close the current phase per `mediation-session-flow`) rather than showing only a placeholder message.
+The mediation room SHALL display a countdown timer showing remaining session time, defaulting to **60 minutes** from `mediation_started_at`. When the timer reaches zero during an active mediation session, the system SHALL apply mediation session flow transition rules (advance to solution-option generation or close the current phase per `mediation-session-flow`) rather than showing only a placeholder message.
 
 #### Scenario: Countdown visible at start
 
 - **WHEN** a participant enters `/room` immediately after mediation starts
-- **THEN** the countdown shows approximately 20:00 remaining
+- **THEN** the countdown shows approximately 60:00 remaining
 
 #### Scenario: Countdown decrements
 

@@ -19,7 +19,7 @@ export const MEDIATION_PHASES: MediationPhase[] = [
   "completed",
 ];
 
-export const REPLY_TIMEOUT_MS = 2 * 60_000;
+export const REPLY_TIMEOUT_MS = 5 * 60_000;
 export const MAX_DIALOGUE_ROUNDS = 3;
 
 export type MediationMessageKind =

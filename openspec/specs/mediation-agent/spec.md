@@ -73,16 +73,6 @@ After each dialogue round completes, the Mediation Agent SHALL post a summary of
 - **AND** the summary reflects both parties' substantive contributions
 - **AND** `mediation_round` increments or is marked complete for that round
 
-### Requirement: Data sufficiency assessment
-
-The Mediation Agent SHALL assess whether enough information has been gathered to proceed to solution options before three rounds complete.
-
-#### Scenario: Early sufficiency transition
-
-- **WHEN** the agent determines data sufficiency during an active dialogue round
-- **THEN** the room mediation phase transitions to `generating_options`
-- **AND** a system event is logged with reason `ai_data_sufficiency`
-
 ### Requirement: Solution option generation
 
 The Mediation Agent SHALL generate **2–3** solution options. Each option SHALL include: brief description (what each party gets), applicable legal norms (legal information, not advice), fulfillment-probability assessment informed by psychoprofiles, risks if the option is refused, and per-party presentation adaptations with identical substantive content. Each per-party presentation SHALL use that party's `preferred_locale` and psychodynamic profile.

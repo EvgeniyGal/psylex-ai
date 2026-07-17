@@ -23,7 +23,6 @@ import { portalCopy } from "@/lib/portal-i18n";
 import {
   mediationAgreementDraftSchema,
   mediationCompromiseSchema,
-  mediationDataSufficiencySchema,
   mediationDialogueQuestionSchema,
   mediationModerationSchema,
   mediationOpeningSchema,
@@ -198,16 +197,6 @@ async function postRoundSummary(room: RoomRow) {
   });
 }
 
-async function checkDataSufficiency(room: RoomRow) {
-  const { ctx } = await buildContext(room);
-  const result = await runMediationAgent({
-    mode: "data_sufficiency",
-    context: ctx,
-    schema: mediationDataSufficiencySchema,
-  });
-  return result.sufficient;
-}
-
 export async function transitionToGeneratingOptions(roomId: string, reason: string) {
   const room = await loadRoom(roomId);
   if (!room || room.mediationPhase === "voting") return;
@@ -344,12 +333,6 @@ async function afterPartyReply(room: RoomRow, party: PartyRole) {
 
   if (isSessionExpired(afterSummary)) {
     await transitionToGeneratingOptions(room.id, "timer_expired");
-    return;
-  }
-
-  const sufficient = await checkDataSufficiency(afterSummary);
-  if (sufficient) {
-    await transitionToGeneratingOptions(room.id, "ai_data_sufficiency");
     return;
   }
 
