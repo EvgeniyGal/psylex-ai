@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
-import { formatCredentials } from "@/lib/credentials";
+import { formatCredentials, localizeRole } from "@/lib/credentials";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
 import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
 import { compareStringsStable } from "@/lib/utils";
@@ -216,7 +216,10 @@ export function RoomsContent({
 
   const onCopyCredentials = async (participant: UserRow) => {
     const text = formatCredentials({
-      role: participant.role,
+      roleLabel: admin.roleLabel,
+      loginLabel: admin.loginLabel,
+      passwordLabel: admin.passwordLabel,
+      role: localizeRole(admin.roles, participant.role),
       login: participant.login,
       password: participant.password,
     });

@@ -49,6 +49,7 @@ export type AdminCopy = {
   save: string;
   saveParticipant: string;
   saveChanges: string;
+  roleLabel: string;
   loginLabel: string;
   passwordLabel: string;
   copyCredentials: string;
@@ -236,6 +237,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     save: "Save",
     saveParticipant: "Save participant",
     saveChanges: "Save Changes",
+    roleLabel: "Role",
     loginLabel: "Login",
     passwordLabel: "Password",
     copyCredentials: "Copy Credentials",
@@ -488,6 +490,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     save: "Зберегти",
     saveParticipant: "Зберегти учасника",
     saveChanges: "Зберегти зміни",
+    roleLabel: "Роль",
     loginLabel: "Логін",
     passwordLabel: "Пароль",
     copyCredentials: "Копіювати дані",

@@ -61,16 +61,27 @@ For every participant in a session, the Sessions tab SHALL display role, login, 
 
 ### Requirement: Copy credentials
 
-Each participant entry SHALL include a "Copy Credentials" button that copies a formatted credential block to the clipboard.
+Each participant entry SHALL include a "Copy Credentials" button that copies a formatted credential block to the clipboard. Field labels and the role display name SHALL use the active UI locale (English or Ukrainian). Role values SHALL be human-readable (e.g. `Party A` / `Сторона А`), not raw keys like `party_a`.
 
-#### Scenario: Copy credentials action
+#### Scenario: Copy credentials action (English)
 
-- **WHEN** an admin clicks "Copy Credentials" for a participant
+- **WHEN** an admin or mediator with English locale clicks "Copy Credentials" for a Party A participant
 - **THEN** the clipboard contains text in the format:
   ```
-  Role: <role>
+  Role: Party A
   Login: <login>
   Password: <password>
+  ```
+- **AND** a success toast confirms the copy
+
+#### Scenario: Copy credentials action (Ukrainian)
+
+- **WHEN** an admin or mediator with Ukrainian locale clicks "Копіювати дані" for a Party A participant
+- **THEN** the clipboard contains text in the format:
+  ```
+  Роль: Сторона А
+  Логін: <login>
+  Пароль: <password>
   ```
 - **AND** a success toast confirms the copy
 

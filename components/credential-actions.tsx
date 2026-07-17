@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { generateMagicLinkAction } from "@/app/admin/magic-link/actions";
 import { useLocale } from "@/components/locale-provider";
 import { Spinner } from "@/components/ui/spinner";
-import { formatCredentials } from "@/lib/credentials";
+import { formatCredentials, localizeRole } from "@/lib/credentials";
 
 export function CredentialActions({
   userId,
@@ -20,7 +20,14 @@ export function CredentialActions({
 }) {
   const { admin } = useLocale();
   const [pending, setPending] = useState(false);
-  const text = formatCredentials({ role, login, password });
+  const text = formatCredentials({
+    roleLabel: admin.roleLabel,
+    loginLabel: admin.loginLabel,
+    passwordLabel: admin.passwordLabel,
+    role: localizeRole(admin.roles, role),
+    login,
+    password,
+  });
 
   const onCopy = async () => {
     await navigator.clipboard.writeText(text);

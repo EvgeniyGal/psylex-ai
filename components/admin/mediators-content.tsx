@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
-import { formatCredentials } from "@/lib/credentials";
+import { formatCredentials, localizeRole } from "@/lib/credentials";
 import { compareStringsStable } from "@/lib/utils";
 
 type MediatorRow = {
@@ -76,7 +76,10 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
 
   const onCopyCredentials = async (mediator: MediatorRow) => {
     const text = formatCredentials({
-      role: mediator.role,
+      roleLabel: admin.roleLabel,
+      loginLabel: admin.loginLabel,
+      passwordLabel: admin.passwordLabel,
+      role: localizeRole(admin.roles, mediator.role),
       login: mediator.login,
       password: mediator.password,
     });
