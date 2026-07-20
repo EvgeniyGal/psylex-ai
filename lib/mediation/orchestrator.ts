@@ -36,6 +36,7 @@ import {
   type MediationPhase,
 } from "@/lib/mediation/types";
 import { isMediationOpeningPrepared } from "@/lib/mediation/prepare-opening";
+import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { getRoomPartiesForPipeline, isPostIntakePipelineComplete } from "@/lib/pipeline/gate";
 import type { PartyRole } from "@/lib/participant-roles";
@@ -200,6 +201,7 @@ async function postRoundSummary(room: RoomRow) {
 export async function transitionToGeneratingOptions(roomId: string, reason: string) {
   const room = await loadRoom(roomId);
   if (!room || room.mediationPhase === "voting") return;
+  if (isMediatorFacilitatedRoom(room)) return;
 
   if (room.mediationPhase === "generating_options") {
     await ensureOptionsPublished(roomId);
@@ -399,6 +401,7 @@ async function claimMediationPhase(
 export async function startMediationSession(roomId: string) {
   const room = await loadRoom(roomId);
   if (!room?.mediationStartedAt) return;
+  if (isMediatorFacilitatedRoom(room)) return;
 
   if (room.mediationPhase) return;
 
@@ -531,6 +534,7 @@ async function ensureDraftAgreement(room: RoomRow) {
 export async function tickMediationTimers(roomId: string) {
   const room = await loadRoom(roomId);
   if (!room?.mediationStartedAt || room.mediationPhase === "completed") return room;
+  if (isMediatorFacilitatedRoom(room)) return room;
 
   if (
     isSessionExpired(room) &&
@@ -587,6 +591,9 @@ export async function submitDialogueReply(userId: string, content: string) {
 
   const room = await loadRoom(participant.roomId);
   if (!room || room.mediationPhase !== "dialogue") throw new Error("Dialogue is not active.");
+  if (isMediatorFacilitatedRoom(room)) {
+    throw new Error("Use mediator session reply for this room.");
+  }
 
   const role = partyRoleFromUser(participant.user);
   if (room.mediationActiveParty !== role) throw new Error("Not your turn.");
@@ -638,6 +645,9 @@ export async function markReadyForOptions(userId: string) {
 
   const room = await loadRoom(participant.roomId);
   if (!room) throw new Error("Room not found.");
+  if (isMediatorFacilitatedRoom(room)) {
+    throw new Error("Ready for options is not available in mediator-facilitated rooms.");
+  }
 
   if (room.mediationPhase === "generating_options") {
     await ensureOptionsPublished(participant.roomId);
@@ -672,6 +682,10 @@ export async function castVote(userId: string, optionId: string) {
 
   const room = await loadRoom(participant.roomId);
   if (!room || room.mediationPhase !== "voting") throw new Error("Voting is not open.");
+  if (isMediatorFacilitatedRoom(room)) {
+    const { castMediatorPartyVote } = await import("@/lib/mediator-session/orchestrator");
+    return castMediatorPartyVote(userId, optionId);
+  }
 
   const options = (room.mediationOptions as MediationOption[] | null) ?? [];
   if (!options.some((option) => option.id === optionId)) throw new Error("Invalid option.");
@@ -729,6 +743,10 @@ export async function castCompromiseVote(userId: string, accepted: boolean) {
   const room = await loadRoom(participant.roomId);
   if (!room || room.mediationPhase !== "voting_discrepancy") {
     throw new Error("Compromise vote is not open.");
+  }
+  if (isMediatorFacilitatedRoom(room)) {
+    const { castMediatorCompromiseVote } = await import("@/lib/mediator-session/orchestrator");
+    return castMediatorCompromiseVote(userId, accepted);
   }
 
   const role = partyRoleFromUser(participant.user);
@@ -847,6 +865,15 @@ export async function acceptAgreement(userId: string) {
     partyBAcceptedAt: updated.partyBAgreementAcceptedAt,
   });
 
+  if (isMediatorFacilitatedRoom(updated)) {
+    const { setPartyNotification } = await import("@/lib/mediator-session/notifications");
+    await setPartyNotification({
+      roomId: room.id,
+      type: "session_completed",
+      targetRole: "all",
+    });
+  }
+
   return loadRoom(room.id);
 }
 
@@ -857,6 +884,7 @@ export async function getMediationRoomState(userId: string) {
 
   let room = await loadRoom(participant.roomId);
   if (!room?.mediationStartedAt) return null;
+  if (isMediatorFacilitatedRoom(room)) return null;
 
   if (!room.mediationPhase) {
     if (room.mediationStartedAt && isSessionExpired(room)) {

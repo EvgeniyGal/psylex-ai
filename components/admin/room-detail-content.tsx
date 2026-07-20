@@ -10,6 +10,7 @@ import {
 } from "@/app/admin/rooms/actions";
 import { CredentialActions, CredentialField } from "@/components/credential-actions";
 import { RoomMediationDetailsModal } from "@/components/admin/room-mediation-details-modal";
+import { SessionSchedulingSection } from "@/components/mediator/session-scheduling-section";
 import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { formatDateTime } from "@/lib/format-datetime";
@@ -36,6 +37,8 @@ export type RoomDetailRow = {
   jurisdiction: RoomJurisdiction;
   usaSubJurisdiction: string | null;
   createdAt: Date;
+  createdByUserId?: string | null;
+  scheduledStartAt?: Date | null;
   mediationStartedAt: Date | null;
   mediationPhase: string | null;
   mediationRound: number;
@@ -176,6 +179,7 @@ export function RoomDetailContent({
   mediationDetails = null,
   basePath = "/admin/rooms",
   readOnly = false,
+  allowDelete,
   showCredentials,
 }: {
   room: RoomDetailRow;
@@ -184,9 +188,12 @@ export function RoomDetailContent({
   mediationDetails?: AdminMediationDetails | null;
   basePath?: string;
   readOnly?: boolean;
+  /** Defaults to !readOnly. Mediators can delete owned rooms while keeping detail read-only. */
+  allowDelete?: boolean;
   showCredentials?: boolean;
 }) {
   const credentialsVisible = showCredentials ?? !readOnly;
+  const canDelete = allowDelete ?? !readOnly;
   const { admin, locale } = useLocale();
   const router = useRouter();
   const jurisdictionDisplay = formatRoomJurisdiction(room, locale);
@@ -269,6 +276,16 @@ export function RoomDetailContent({
           details={mediationDetails}
           onClose={() => setMediationDetailsOpen(false)}
           open={mediationDetailsOpen}
+          roomId={room.id}
+        />
+      ) : null}
+
+      {room.createdByUserId ? (
+        <SessionSchedulingSection
+          initialScheduledStartAt={room.scheduledStartAt?.toISOString() ?? null}
+          mediationStarted={!!room.mediationStartedAt}
+          partyUserIds={[partyA?.id, partyB?.id].filter((id): id is string => Boolean(id))}
+          readOnly={readOnly && basePath.startsWith("/admin")}
           roomId={room.id}
         />
       ) : null}
@@ -412,7 +429,7 @@ export function RoomDetailContent({
         </div>
       </div>
 
-      {!readOnly ? (
+      {canDelete ? (
         <div className="glass-panel rounded-xl border border-error/20 p-6">
           {!confirmDelete ? (
             <button

@@ -118,6 +118,15 @@ export const rooms = pgTable("rooms", {
   partyBAgreementAcceptedAt: timestamp("party_b_agreement_accepted_at", { withTimezone: true }),
   agreementFinalizedAt: timestamp("agreement_finalized_at", { withTimezone: true }),
   mediationCompletedAt: timestamp("mediation_completed_at", { withTimezone: true }),
+  /** Mode B (mediator-facilitated) fields — unused when createdByUserId is null. */
+  scheduledStartAt: timestamp("scheduled_start_at", { withTimezone: true }),
+  mediatorMediationStartClickedAt: timestamp("mediator_mediation_start_clicked_at", {
+    withTimezone: true,
+  }),
+  mediatorSessionStartedAt: timestamp("mediator_session_started_at", { withTimezone: true }),
+  mediatorQuestionCandidates: jsonb("mediator_question_candidates"),
+  mediatorCompromiseDraft: jsonb("mediator_compromise_draft"),
+  partyNotification: jsonb("party_notification"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

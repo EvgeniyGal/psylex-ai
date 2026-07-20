@@ -1,12 +1,16 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { RoomExperience } from "@/components/portal/room/room-experience";
+import { MediatorPartyRoom } from "@/components/portal/room/mediator-party-room";
 import { fetchMediationRoomState } from "@/app/(participant)/room/actions";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
 import { getMediationLobbyData, hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { isFlowReviewMode, requireParticipantSession } from "@/lib/portal-auth";
+import { isPartyRole } from "@/lib/participant-roles";
+import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
+import { getMediatorSessionRoomState } from "@/lib/mediator-session/orchestrator";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -39,6 +43,20 @@ export default async function RoomPage({ searchParams }: RoomPageProps) {
   const lobby = await getMediationLobbyData(userId);
   if (!lobby?.room.mediationStartedAt) {
     redirect("/mediation");
+  }
+
+  if (isMediatorFacilitatedRoom(lobby.room) && isPartyRole(role)) {
+    const mediationState = await getMediatorSessionRoomState(userId);
+    if (!mediationState) {
+      redirect("/mediation");
+    }
+    return (
+      <MediatorPartyRoom
+        initialState={mediationState}
+        review={review}
+        viewerRole={role}
+      />
+    );
   }
 
   const mediationState = await fetchMediationRoomState();

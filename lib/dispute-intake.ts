@@ -13,6 +13,9 @@ import {
   isPostIntakePipelineComplete,
 } from "@/lib/pipeline/gate";
 import { isMediationOpeningPrepared } from "@/lib/mediation/prepare-opening";
+import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
+import { START_BUTTON_LEAD_MS } from "@/lib/mediator-session/constants";
+import { tryFinalizeMediatorSession } from "@/lib/mediator-session/handshake";
 
 export type SideReadiness = {
   userId: string;
@@ -73,6 +76,9 @@ export type MediationLobbyStatus = {
   preparingMediationRoom: boolean;
   canStartMediation: boolean;
   mediationStarted: boolean;
+  isMediatorFacilitated: boolean;
+  scheduledStartAt: string | null;
+  startWindowOpen: boolean;
 };
 
 export async function getMediationLobbyStatusForUser(userId: string): Promise<MediationLobbyStatus | null> {
@@ -87,6 +93,9 @@ export async function getMediationLobbyStatusForUser(userId: string): Promise<Me
     preparingMediationRoom: lobby.preparingMediationRoom,
     canStartMediation: lobby.canStartMediation,
     mediationStarted: !!lobby.room.mediationStartedAt,
+    isMediatorFacilitated: lobby.isMediatorFacilitated,
+    scheduledStartAt: lobby.scheduledStartAt,
+    startWindowOpen: lobby.startWindowOpen,
   };
 }
 
@@ -107,15 +116,37 @@ export async function getMediationLobbyData(userId: string) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, user.roomId)).limit(1);
   if (!room) return null;
 
+  const modeB = isMediatorFacilitatedRoom(room);
+  if (modeB && !room.mediationStartedAt) {
+    await tryFinalizeMediatorSession(room.id);
+  }
+
+  const [freshRoom] = modeB
+    ? await db.select().from(rooms).where(eq(rooms.id, user.roomId)).limit(1)
+    : [room];
+  const activeRoom = freshRoom ?? room;
+
   const bothReady = selfReadiness.mediationReady && !!oppositeReadiness?.mediationReady;
-  const pipelineComplete = await isPostIntakePipelineComplete(room.id);
-  const pipelineRunning = bothReady && !pipelineComplete && (await canTriggerPostIntakePipeline(room.id));
-  const openingPrepared = pipelineComplete ? await isMediationOpeningPrepared(room.id) : false;
-  const preparingMediationRoom = bothReady && pipelineComplete && !openingPrepared;
-  const canStartMediation = bothReady && pipelineComplete && openingPrepared;
+  const pipelineComplete = await isPostIntakePipelineComplete(activeRoom.id);
+  const pipelineRunning = bothReady && !pipelineComplete && (await canTriggerPostIntakePipeline(activeRoom.id));
+
+  let preparingMediationRoom = false;
+  let canStartMediation = false;
+  let startWindowOpen = false;
+
+  if (modeB) {
+    preparingMediationRoom = false;
+    const scheduled = activeRoom.scheduledStartAt;
+    startWindowOpen = !!scheduled && Date.now() >= scheduled.getTime() - START_BUTTON_LEAD_MS;
+    canStartMediation = bothReady && pipelineComplete && !!scheduled && startWindowOpen;
+  } else {
+    const openingPrepared = pipelineComplete ? await isMediationOpeningPrepared(activeRoom.id) : false;
+    preparingMediationRoom = bothReady && pipelineComplete && !openingPrepared;
+    canStartMediation = bothReady && pipelineComplete && openingPrepared;
+  }
 
   return {
-    room,
+    room: activeRoom,
     self: selfReadiness,
     opposite: oppositeReadiness,
     oppositeRole,
@@ -124,5 +155,8 @@ export async function getMediationLobbyData(userId: string) {
     pipelineRunning,
     preparingMediationRoom,
     canStartMediation,
+    isMediatorFacilitated: modeB,
+    scheduledStartAt: activeRoom.scheduledStartAt?.toISOString() ?? null,
+    startWindowOpen,
   };
 }

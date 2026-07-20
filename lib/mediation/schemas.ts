@@ -16,6 +16,22 @@ export const mediationRoundSummarySchema = adaptedMessageSchema;
 export const mediationModerationSchema = adaptedMessageSchema;
 export const mediationNudgeSchema = adaptedMessageSchema;
 
+const questionCandidateSchema = z.object({
+  id: z.string(),
+  canonicalContent: z.string(),
+  partyA: z.string(),
+  partyB: z.string(),
+});
+
+export const mediationQuestionCandidatesSchema = z.object({
+  partyA: z.object({
+    candidates: z.array(questionCandidateSchema).length(3),
+  }),
+  partyB: z.object({
+    candidates: z.array(questionCandidateSchema).length(3),
+  }),
+});
+
 const mediationOptionSchema = z.object({
   id: z.string(),
   canonicalDescription: z.string(),
@@ -43,6 +59,7 @@ export const mediationAgreementDraftSchema = z.object({
 export type MediationOpening = z.infer<typeof mediationOpeningSchema>;
 export type MediationDialogueQuestion = z.infer<typeof mediationDialogueQuestionSchema>;
 export type MediationRoundSummary = z.infer<typeof mediationRoundSummarySchema>;
+export type MediationQuestionCandidates = z.infer<typeof mediationQuestionCandidatesSchema>;
 export type MediationOptionsOutput = z.infer<typeof mediationOptionsSchema>;
 export type MediationCompromiseOutput = z.infer<typeof mediationCompromiseSchema>;
 export type MediationAgreementDraft = z.infer<typeof mediationAgreementDraftSchema>;
@@ -50,6 +67,7 @@ export type MediationAgreementDraft = z.infer<typeof mediationAgreementDraftSche
 export type MediationAgentMode =
   | "opening"
   | "dialogue_question"
+  | "question_candidates"
   | "round_summary"
   | "moderation_redirect"
   | "nudge"
@@ -62,6 +80,8 @@ export const mediationModeInstructions: Record<MediationAgentMode, string> = {
     'Run mode "opening". Present the dispute situation to both parties with identical substance and per-party adapted text.',
   dialogue_question:
     'Run mode "dialogue_question". Ask one structured question to the addressee party. Include "addressee": "party_a" | "party_b".',
+  question_candidates:
+    'Run mode "question_candidates". Generate exactly three candidate questions for party_a and exactly three for party_b. Tailor each candidate using psychodynamic profiles, emotional triggers, interests, and legal analysis. Each candidate must include canonicalContent, partyA, and partyB adapted text plus a stable id string.',
   round_summary:
     'Run mode "round_summary". Summarize what was heard from both parties this round.',
   moderation_redirect:

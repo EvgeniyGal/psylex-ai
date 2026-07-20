@@ -66,6 +66,27 @@ type PortalCopy = {
   mediationHandshakeStarting: string;
   mediationCountdownLabel: string;
   mediationSessionEnded: string;
+  mediationElapsedLabel: string;
+  modeBScheduledAt: string;
+  modeBWaitingSchedule: string;
+  modeBStartWindowOpens: string;
+  modeBStartAvailableHint: string;
+  modeBCountdownToStart: string;
+  modeBWaitingMediator: string;
+  modeBWaitingPartyA: string;
+  modeBWaitingPartyB: string;
+  modeBAllReadyCountdown: string;
+  modeBActionRequired: string;
+  modeBNotifyScheduled: string;
+  modeBNotifyStartWindow: string;
+  modeBNotifyPeerReady: string;
+  modeBNotifySessionStarted: string;
+  modeBNotifyQuestion: string;
+  modeBNotifyOptions: string;
+  modeBNotifyCompromise: string;
+  modeBNotifyAgreement: string;
+  modeBNotifyCompleted: string;
+  modeBWaitingCompromisePublish: string;
   backToStart: string;
   logout: string;
   roomTitle: string;
@@ -263,6 +284,28 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationHandshakeStarting: "Both sides are ready. Starting mediation…",
     mediationCountdownLabel: "Session time remaining",
     mediationSessionEnded: "The 60-minute mediation session has ended.",
+    mediationElapsedLabel: "Session time",
+    modeBScheduledAt: "Scheduled session",
+    modeBWaitingSchedule: "Waiting for the mediator to schedule the session.",
+    modeBStartWindowOpens: "Start becomes available in",
+    modeBStartAvailableHint:
+      "Start Mediation becomes available 10 minutes before the scheduled time.",
+    modeBCountdownToStart: "Session starts in",
+    modeBWaitingMediator: "Waiting for the mediator",
+    modeBWaitingPartyA: "Waiting for Party A",
+    modeBWaitingPartyB: "Waiting for Party B",
+    modeBAllReadyCountdown: "Everyone is ready. Session starts at the scheduled time.",
+    modeBActionRequired: "Action required",
+    modeBNotifyScheduled: "A mediation session has been scheduled.",
+    modeBNotifyStartWindow: "You can now click Start Mediation.",
+    modeBNotifyPeerReady: "Another participant is ready to start.",
+    modeBNotifySessionStarted: "The mediation session has started.",
+    modeBNotifyQuestion: "You have a new question from the mediator.",
+    modeBNotifyOptions: "Solution options are ready to review.",
+    modeBNotifyCompromise: "A compromise option is ready for your vote.",
+    modeBNotifyAgreement: "A draft agreement is ready for review.",
+    modeBNotifyCompleted: "The mediation session has completed.",
+    modeBWaitingCompromisePublish: "Waiting for the mediator to publish a compromise option.",
     backToStart: "Back to start",
     logout: "Logout",
     roomTitle: "Mediation room",
@@ -478,6 +521,28 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationHandshakeStarting: "Обидві сторони готові. Запускаємо медіацію…",
     mediationCountdownLabel: "Час сесії",
     mediationSessionEnded: "60-хвилинна сесія медіації завершилася.",
+    mediationElapsedLabel: "Час сесії",
+    modeBScheduledAt: "Запланована сесія",
+    modeBWaitingSchedule: "Очікуємо, поки медіатор призначить час сесії.",
+    modeBStartWindowOpens: "Кнопка старту стане доступною через",
+    modeBStartAvailableHint:
+      "Кнопка «Почати медіацію» стане доступною за 10 хвилин до запланованого часу.",
+    modeBCountdownToStart: "Сесія почнеться через",
+    modeBWaitingMediator: "Очікуємо медіатора",
+    modeBWaitingPartyA: "Очікуємо сторону A",
+    modeBWaitingPartyB: "Очікуємо сторону B",
+    modeBAllReadyCountdown: "Усі готові. Сесія почнеться у запланований час.",
+    modeBActionRequired: "Потрібна дія",
+    modeBNotifyScheduled: "Сесію медіації заплановано.",
+    modeBNotifyStartWindow: "Тепер можна натиснути «Почати медіацію».",
+    modeBNotifyPeerReady: "Інший учасник готовий почати.",
+    modeBNotifySessionStarted: "Сесія медіації розпочалася.",
+    modeBNotifyQuestion: "У вас нове запитання від медіатора.",
+    modeBNotifyOptions: "Варіанти рішення готові до перегляду.",
+    modeBNotifyCompromise: "Компромісний варіант готовий до голосування.",
+    modeBNotifyAgreement: "Чернетка угоди готова до перегляду.",
+    modeBNotifyCompleted: "Сесію медіації завершено.",
+    modeBWaitingCompromisePublish: "Очікуємо, поки медіатор опублікує компромісний варіант.",
     backToStart: "На головну",
     logout: "Вийти",
     roomTitle: "Кімната медіації",

@@ -139,11 +139,14 @@ export async function updateParticipantMeta(formData: FormData) {
 
 export async function deleteRoom(formData: FormData) {
   const roomId = String(formData.get("roomId"));
+  const { role } = await assertCanManageRooms();
+  await assertCanAccessRoom(roomId);
 
   await db.delete(users).where(eq(users.roomId, roomId));
   await db.delete(rooms).where(eq(rooms.id, roomId));
 
   revalidatePath("/admin/rooms");
   revalidatePath("/admin/mediators");
-  redirect("/admin/rooms");
+  revalidatePath("/mediator/rooms");
+  redirect(role === "mediator" ? "/mediator/rooms" : "/admin/rooms");
 }

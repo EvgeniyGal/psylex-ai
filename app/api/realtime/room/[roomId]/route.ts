@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import postgres from "postgres";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { postgresSslOption } from "@/lib/db-ssl";
-import { users } from "@/drizzle/schema";
+import { rooms, users } from "@/drizzle/schema";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,12 +42,31 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const [viewer] = await db
-    .select({ roomId: users.roomId })
+    .select({
+      id: users.id,
+      role: users.role,
+      roomId: users.roomId,
+    })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  if (!viewer?.roomId || viewer.roomId !== roomId) {
+  if (!viewer) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const isPartyInRoom = viewer.roomId === roomId;
+  let isMediatorOwner = false;
+  if (viewer.role === "mediator") {
+    const [owned] = await db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(and(eq(rooms.id, roomId), eq(rooms.createdByUserId, userId)))
+      .limit(1);
+    isMediatorOwner = !!owned;
+  }
+
+  if (!isPartyInRoom && !isMediatorOwner) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

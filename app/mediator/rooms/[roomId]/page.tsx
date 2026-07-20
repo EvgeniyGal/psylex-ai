@@ -31,6 +31,7 @@ export default async function MediatorRoomDetailPage({
   return (
     <RoomDetailContent
       activityLog={activityLog}
+      allowDelete
       basePath="/mediator/rooms"
       mediationDetails={mediationDetails}
       participants={participants}

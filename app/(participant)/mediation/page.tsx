@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { PartyMediatorLobby } from "@/components/portal/party-mediator-lobby";
 import { MediationLobby } from "@/components/portal/mediation-lobby";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
@@ -8,6 +9,8 @@ import { getUserOnboardingStatus } from "@/lib/onboarding";
 import { resolveMediationLobbyFlowStep } from "@/lib/participant-flow";
 import { requireParticipantSession } from "@/lib/portal-auth";
 import { isPartyRole } from "@/lib/participant-roles";
+import { getMediatorHandshakeForParty } from "@/lib/mediator-session/handshake";
+import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +43,28 @@ export default async function MediationPage() {
   }
 
   const flowStep = resolveMediationLobbyFlowStep();
+
+  if (isMediatorFacilitatedRoom(lobby.room)) {
+    const handshake = await getMediatorHandshakeForParty(userId);
+    if (!handshake) {
+      redirect("/onboarding/tests");
+    }
+
+    return (
+      <PartyMediatorLobby
+        bothReady={lobby.bothReady}
+        flowStep={flowStep}
+        initialHandshake={handshake}
+        partyUserIds={[lobby.self.userId, lobby.opposite?.userId].filter(
+          (id): id is string => Boolean(id),
+        )}
+        pipelineRunning={lobby.pipelineRunning}
+        roomId={lobby.room.id}
+        roomTitle={lobby.room.title}
+        viewerRole={role}
+      />
+    );
+  }
 
   return (
     <MediationLobby

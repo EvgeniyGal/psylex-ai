@@ -14,6 +14,7 @@ import {
   mediationDialogueQuestionSchema,
   mediationOpeningSchema,
 } from "@/lib/mediation/schemas";
+import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { getRoomPartiesForPipeline, isPostIntakePipelineComplete } from "@/lib/pipeline/gate";
 
@@ -117,6 +118,7 @@ export async function prepareMediationOpening(roomId: string) {
 
   const room = await loadRoom(roomId);
   if (!room) return;
+  if (isMediatorFacilitatedRoom(room)) return;
 
   const complete = await isPostIntakePipelineComplete(roomId);
   if (!complete) return;

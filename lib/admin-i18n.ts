@@ -168,6 +168,30 @@ export type AdminCopy = {
   mediationDetailsRejected: string;
   mediationDetailsActionFailed: string;
   activityLogEmpty: string;
+  scheduleSectionTitle: string;
+  scheduleDateTimeLabel: string;
+  scheduleSave: string;
+  scheduleSaved: string;
+  scheduleNotSet: string;
+  scheduleReadinessPartyA: string;
+  scheduleReadinessPartyB: string;
+  scheduleReadinessPipeline: string;
+  scheduleReady: string;
+  scheduleNotReady: string;
+  scheduleDisabledHint: string;
+  scheduleStartRequiresReadyHint: string;
+  scheduleOpenLobby: string;
+  scheduleOpenSession: string;
+  scheduleError: string;
+  mediatorGenerateQuestions: string;
+  mediatorSendQuestion: string;
+  mediatorEditQuestion: string;
+  mediatorGenerateOptions: string;
+  mediatorPublishCompromise: string;
+  mediatorQuestionCandidates: string;
+  mediatorSelectCandidate: string;
+  mediatorCompromiseDraft: string;
+  mediatorProfilesTitle: string;
   activityLogSourcePipeline: string;
   activityLogSourceMilestone: string;
   activityLogEvents: Record<string, string>;
@@ -358,6 +382,31 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediationDetailsRejected: "Rejected",
     mediationDetailsActionFailed: "Action failed",
     activityLogEmpty: "No activity recorded yet.",
+    scheduleSectionTitle: "Session schedule",
+    scheduleDateTimeLabel: "Scheduled start",
+    scheduleSave: "Save schedule",
+    scheduleSaved: "Schedule saved",
+    scheduleNotSet: "Not scheduled yet",
+    scheduleReadinessPartyA: "Party A ready",
+    scheduleReadinessPartyB: "Party B ready",
+    scheduleReadinessPipeline: "AI analysis complete",
+    scheduleReady: "Ready",
+    scheduleNotReady: "Not ready",
+    scheduleDisabledHint: "Both parties must finish tests, conflict questions, and AI analysis before scheduling.",
+    scheduleStartRequiresReadyHint:
+      "You can schedule now. Parties still need to finish tests, conflict questions, and AI analysis before the session can start.",
+    scheduleOpenLobby: "Open pre-session lobby",
+    scheduleOpenSession: "Open live session",
+    scheduleError: "Could not save schedule",
+    mediatorGenerateQuestions: "Generate question options",
+    mediatorSendQuestion: "Send to party",
+    mediatorEditQuestion: "Edit question",
+    mediatorGenerateOptions: "Generate solution options",
+    mediatorPublishCompromise: "Publish compromise",
+    mediatorQuestionCandidates: "Question candidates",
+    mediatorSelectCandidate: "Select a question",
+    mediatorCompromiseDraft: "Compromise draft",
+    mediatorProfilesTitle: "Party profiles",
     activityLogSourcePipeline: "Pipeline",
     activityLogSourceMilestone: "Milestone",
     activityLogEvents: {
@@ -612,6 +661,31 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediationDetailsRejected: "Відхилено",
     mediationDetailsActionFailed: "Не вдалося виконати дію",
     activityLogEmpty: "Активність ще не зафіксована.",
+    scheduleSectionTitle: "Розклад сесії",
+    scheduleDateTimeLabel: "Запланований старт",
+    scheduleSave: "Зберегти розклад",
+    scheduleSaved: "Розклад збережено",
+    scheduleNotSet: "Ще не заплановано",
+    scheduleReadinessPartyA: "Сторона A готова",
+    scheduleReadinessPartyB: "Сторона B готова",
+    scheduleReadinessPipeline: "AI-аналіз завершено",
+    scheduleReady: "Готово",
+    scheduleNotReady: "Не готово",
+    scheduleDisabledHint: "Обидві сторони мають завершити тести, питання про конфлікт і AI-аналіз перед плануванням.",
+    scheduleStartRequiresReadyHint:
+      "Можна планувати зараз. Сторони все одно мають завершити тести, питання про конфлікт і AI-аналіз, перш ніж сесія зможе початися.",
+    scheduleOpenLobby: "Відкрити лобі перед сесією",
+    scheduleOpenSession: "Відкрити живу сесію",
+    scheduleError: "Не вдалося зберегти розклад",
+    mediatorGenerateQuestions: "Згенерувати варіанти запитань",
+    mediatorSendQuestion: "Надіслати стороні",
+    mediatorEditQuestion: "Редагувати запитання",
+    mediatorGenerateOptions: "Згенерувати варіанти рішення",
+    mediatorPublishCompromise: "Опублікувати компроміс",
+    mediatorQuestionCandidates: "Варіанти запитань",
+    mediatorSelectCandidate: "Оберіть запитання",
+    mediatorCompromiseDraft: "Чернетка компромісу",
+    mediatorProfilesTitle: "Профілі сторін",
     activityLogSourcePipeline: "Пайплайн",
     activityLogSourceMilestone: "Етап",
     activityLogEvents: {

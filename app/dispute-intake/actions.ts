@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users } from "@/drizzle/schema";
+import { rooms, users } from "@/drizzle/schema";
 import { hasSubmittedDisputeIntake } from "@/lib/dispute-intake";
 import {
   canTriggerPostIntakePipeline,
@@ -99,7 +99,32 @@ export async function clickStartMediation(): Promise<HandshakeStatusResponse> {
   const { getMediationLobbyData } = await import("@/lib/dispute-intake");
   const lobby = await getMediationLobbyData(user.id);
 
-  if (!lobby?.canStartMediation || !user.roomId) {
+  if (!lobby || !user.roomId) {
+    return { status: "ineligible", selfClicked: false, oppositeClicked: false };
+  }
+
+  if (lobby.isMediatorFacilitated) {
+    const { recordMediatorStartClick } = await import("@/lib/mediator-session/handshake");
+    const partyRole = isPartyRole(user.role) ? user.role : (role as "party_a" | "party_b");
+    const state = await recordMediatorStartClick(user.roomId, partyRole);
+    revalidatePath("/mediation");
+    revalidatePath("/room");
+    return {
+      status:
+        state.status === "started"
+          ? "started"
+          : state.status === "ineligible" || state.status === "not_scheduled" || state.status === "too_early"
+            ? "ineligible"
+            : state.selfClicked
+              ? "waiting"
+              : "idle",
+      selfClicked: state.selfClicked,
+      oppositeClicked:
+        partyRole === "party_a" ? state.partyBClicked : state.partyAClicked,
+    };
+  }
+
+  if (!lobby.canStartMediation) {
     return { status: "ineligible", selfClicked: false, oppositeClicked: false };
   }
 
@@ -138,9 +163,13 @@ export async function runPostIntakePipelineForRoom(
     return { status: "ineligible" };
   }
 
+  const { isMediatorFacilitatedRoom } = await import("@/lib/mediator-session/room-mode");
+  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  const skipOpening = room ? isMediatorFacilitatedRoom(room) : false;
+
   const complete = await isPostIntakePipelineComplete(roomId);
   if (complete) {
-    if (!(await isMediationOpeningPrepared(roomId))) {
+    if (!skipOpening && !(await isMediationOpeningPrepared(roomId))) {
       await ensureMediationOpeningPrepared(roomId);
     }
     revalidatePath("/mediation");
@@ -148,7 +177,7 @@ export async function runPostIntakePipelineForRoom(
   }
 
   await ensurePostIntakePipeline(roomId);
-  if (!(await isMediationOpeningPrepared(roomId))) {
+  if (!skipOpening && !(await isMediationOpeningPrepared(roomId))) {
     await ensureMediationOpeningPrepared(roomId);
   }
   revalidatePath("/mediation");
@@ -162,6 +191,12 @@ export async function prepareMediationOpeningForRoom(
 
   if (!roomId || !user.roomId || user.roomId !== roomId) {
     throw new Error("Unauthorized");
+  }
+
+  const { isMediatorFacilitatedRoom } = await import("@/lib/mediator-session/room-mode");
+  const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1);
+  if (room && isMediatorFacilitatedRoom(room)) {
+    return { status: "complete" };
   }
 
   const pipelineComplete = await isPostIntakePipelineComplete(roomId);
