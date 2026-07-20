@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
-import { formatCredentials, localizeRole } from "@/lib/credentials";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
 import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
 import { compareStringsStable } from "@/lib/utils";
@@ -31,13 +29,11 @@ type RoomRow = {
   mediatorTitle?: string | null;
 };
 
-type SortKey = "title" | "description" | "jurisdiction" | "sides" | "mediator";
+type SortKey = "title" | "description" | "jurisdiction" | "mediator";
 type SortDir = "asc" | "desc";
 type RoomListTab = "admin" | "mediator";
 
 type RoomTableRow = RoomRow & {
-  partyA: UserRow | null;
-  partyB: UserRow | null;
   partyATitle: string;
   partyBTitle: string;
   mediatorTitle: string;
@@ -56,79 +52,17 @@ function SortIcon({ active, direction }: { active: boolean; direction: SortDir }
   );
 }
 
-function SideRow({
-  participant,
-  title,
-  onCopy,
-  copyLabel,
-  showCredentialCopy,
-}: {
-  participant: UserRow | null;
-  title: string;
-  onCopy: (participant: UserRow) => void;
-  copyLabel: string;
-  showCredentialCopy: boolean;
-}) {
-  if (!title) {
-    return <div className="text-body-sm text-on-surface-variant">—</div>;
-  }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-body-sm text-on-surface">{title}</span>
-      {participant && showCredentialCopy ? (
-        <button
-          className="flex shrink-0 items-center justify-center rounded-lg border border-outline-variant/30 p-1.5 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
-          onClick={() => onCopy(participant)}
-          title={copyLabel}
-          type="button"
-        >
-          <span className="material-symbols-outlined text-[18px]">key</span>
-          <span className="sr-only">{copyLabel}</span>
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-function SidesCell({
-  partyA,
-  partyB,
-  partyATitle,
-  partyBTitle,
-  onCopy,
-  copyLabel,
-  showCredentialCopy,
-}: {
-  partyA: UserRow | null;
-  partyB: UserRow | null;
-  partyATitle: string;
-  partyBTitle: string;
-  onCopy: (participant: UserRow) => void;
-  copyLabel: string;
-  showCredentialCopy: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={partyA} showCredentialCopy={showCredentialCopy} title={partyATitle} />
-      <SideRow copyLabel={copyLabel} onCopy={onCopy} participant={partyB} showCredentialCopy={showCredentialCopy} title={partyBTitle} />
-    </div>
-  );
-}
-
 export function RoomsContent({
   roomRows,
   participantsByRoom,
   basePath = "/admin/rooms",
   showCreateButton = true,
-  showCredentialCopy = true,
   showRoomTabs = false,
 }: {
   roomRows: RoomRow[];
   participantsByRoom: { roomId: string; users: UserRow[] }[];
   basePath?: string;
   showCreateButton?: boolean;
-  showCredentialCopy?: boolean;
   showRoomTabs?: boolean;
 }) {
   const { admin, locale } = useLocale();
@@ -143,14 +77,12 @@ export function RoomsContent({
     return roomRows.map((room) => {
       const participants =
         participantsByRoom.find((item) => item.roomId === room.id)?.users ?? [];
-      const partyA = participants.find((p) => p.role === "party_a") ?? null;
-      const partyB = participants.find((p) => p.role === "party_b") ?? null;
+      const partyA = participants.find((p) => p.role === "party_a");
+      const partyB = participants.find((p) => p.role === "party_b");
 
       return {
         ...room,
         createdAt: new Date(room.createdAt),
-        partyA,
-        partyB,
         partyATitle: partyA?.title ?? "",
         partyBTitle: partyB?.title ?? "",
         mediatorTitle: room.mediatorTitle ?? admin.unknownMediator,
@@ -191,7 +123,6 @@ export function RoomsContent({
 
     rows.sort((a, b) => {
       const value = (row: RoomTableRow) => {
-        if (sortKey === "sides") return `${row.partyATitle} ${row.partyBTitle}`;
         if (sortKey === "jurisdiction") return formatJurisdiction(row);
         if (sortKey === "mediator") return row.mediatorTitle;
         return row[sortKey];
@@ -214,19 +145,6 @@ export function RoomsContent({
     setSortDir("asc");
   };
 
-  const onCopyCredentials = async (participant: UserRow) => {
-    const text = formatCredentials({
-      roleLabel: admin.roleLabel,
-      loginLabel: admin.loginLabel,
-      passwordLabel: admin.passwordLabel,
-      role: localizeRole(admin.roles, participant.role),
-      login: participant.login,
-      password: participant.password,
-    });
-    await navigator.clipboard.writeText(text);
-    toast.success(admin.copyCredentials);
-  };
-
   const showMediatorColumn = showRoomTabs && activeTab === "mediator";
 
   const columns: { key: SortKey; label: string }[] = [
@@ -236,7 +154,6 @@ export function RoomsContent({
     { key: "title", label: admin.roomTitleLabel },
     { key: "description", label: admin.roomDescriptionLabel },
     { key: "jurisdiction", label: admin.jurisdictionLabel },
-    { key: "sides", label: admin.tableSides },
   ];
 
   const emptyMessage = () => {
@@ -308,7 +225,7 @@ export function RoomsContent({
           </div>
 
           <div className="custom-scrollbar overflow-x-auto rounded-xl border border-outline-variant/10 bg-surface-container-low/30">
-            <table className="w-full min-w-[720px] border-collapse text-left">
+            <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-outline-variant/10 bg-surface-container-highest/40">
                   {columns.map((column) => (
@@ -352,17 +269,6 @@ export function RoomsContent({
                       </td>
                       <td className="px-4 py-3 text-body-sm text-on-surface">
                         {formatJurisdiction(room)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <SidesCell
-                          copyLabel={admin.copyCredentials}
-                          onCopy={onCopyCredentials}
-                          showCredentialCopy={showCredentialCopy}
-                          partyA={room.partyA}
-                          partyATitle={room.partyATitle}
-                          partyB={room.partyB}
-                          partyBTitle={room.partyBTitle}
-                        />
                       </td>
                       <td className="w-0 whitespace-nowrap px-4 py-3">
                         <button
