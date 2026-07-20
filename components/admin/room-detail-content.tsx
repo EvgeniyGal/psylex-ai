@@ -39,6 +39,7 @@ export type RoomDetailRow = {
   createdAt: Date;
   createdByUserId?: string | null;
   scheduledStartAt?: Date | null;
+  mediationDurationMinutes?: number;
   mediationStartedAt: Date | null;
   mediationPhase: string | null;
   mediationRound: number;
@@ -282,6 +283,7 @@ export function RoomDetailContent({
 
       {room.createdByUserId ? (
         <SessionSchedulingSection
+          initialDurationMinutes={room.mediationDurationMinutes}
           initialScheduledStartAt={room.scheduledStartAt?.toISOString() ?? null}
           mediationStarted={!!room.mediationStartedAt}
           partyUserIds={[partyA?.id, partyB?.id].filter((id): id is string => Boolean(id))}

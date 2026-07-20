@@ -1,49 +1,65 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
   fetchMediatorSchedulingReadiness,
   saveMediatorSchedule,
 } from "@/app/mediator/rooms/actions";
+import { ScheduleFields } from "@/components/mediator/schedule-fields";
 import { Spinner } from "@/components/ui/spinner";
 import { useLocale } from "@/components/locale-provider";
 import { useRoomRealtime } from "@/hooks/use-room-realtime";
 import { formatDateTime } from "@/lib/format-datetime";
+import {
+  normalizeDuration,
+  partsToIso,
+  toScheduleParts,
+} from "@/lib/mediator-session/schedule-form";
+import {
+  DEFAULT_SCHEDULE_DURATION_MINUTES,
+  type ScheduleDurationOption,
+  type ScheduleMinuteOption,
+} from "@/lib/mediator-session/schedule-options";
 
 type SessionSchedulingSectionProps = {
   roomId: string;
   readOnly?: boolean;
   initialScheduledStartAt?: string | null;
+  initialDurationMinutes?: number;
   mediationStarted?: boolean;
   partyUserIds?: string[];
 };
-
-function toLocalInputValue(iso: string | null | undefined) {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 export function SessionSchedulingSection({
   roomId,
   readOnly = false,
   initialScheduledStartAt = null,
+  initialDurationMinutes = DEFAULT_SCHEDULE_DURATION_MINUTES,
   mediationStarted = false,
   partyUserIds = [],
 }: SessionSchedulingSectionProps) {
   const { admin, locale } = useLocale();
   const [pending, startTransition] = useTransition();
-  const [localValue, setLocalValue] = useState(toLocalInputValue(initialScheduledStartAt));
+  const initialParts = useMemo(() => toScheduleParts(initialScheduledStartAt), [initialScheduledStartAt]);
+  const [date, setDate] = useState(initialParts?.date ?? "");
+  const [hour, setHour] = useState(initialParts?.hour ?? "");
+  const [minute, setMinute] = useState<ScheduleMinuteOption>(initialParts?.minute ?? 0);
+  const [durationMinutes, setDurationMinutes] = useState<ScheduleDurationOption>(
+    normalizeDuration(initialDurationMinutes),
+  );
   const [scheduledStartAt, setScheduledStartAt] = useState(initialScheduledStartAt);
   const [partyAReady, setPartyAReady] = useState(false);
   const [partyBReady, setPartyBReady] = useState(false);
   const [pipelineComplete, setPipelineComplete] = useState(false);
   const [canSchedule, setCanSchedule] = useState(false);
   const [started, setStarted] = useState(mediationStarted);
+
+  const scheduleIso = useMemo(
+    () => partsToIso({ date, hour, minute }),
+    [date, hour, minute],
+  );
 
   const refreshReadiness = useCallback(() => {
     if (readOnly) return;
@@ -55,9 +71,15 @@ export function SessionSchedulingSection({
         setPipelineComplete(data.pipelineComplete);
         setCanSchedule(data.canSchedule);
         setScheduledStartAt(data.scheduledStartAt);
-        setLocalValue((current) =>
-          data.scheduledStartAt ? toLocalInputValue(data.scheduledStartAt) : current,
-        );
+        setDurationMinutes(normalizeDuration(data.mediationDurationMinutes));
+        if (data.scheduledStartAt) {
+          const parts = toScheduleParts(data.scheduledStartAt);
+          if (parts) {
+            setDate(parts.date);
+            setHour(parts.hour);
+            setMinute(parts.minute);
+          }
+        }
         setStarted(data.mediationStarted);
       })
       .catch(() => {
@@ -78,12 +100,11 @@ export function SessionSchedulingSection({
   });
 
   const onSave = () => {
-    if (!localValue) return;
-    const iso = new Date(localValue).toISOString();
+    if (!scheduleIso) return;
     startTransition(async () => {
       try {
-        await saveMediatorSchedule(roomId, iso);
-        setScheduledStartAt(iso);
+        await saveMediatorSchedule(roomId, scheduleIso, durationMinutes);
+        setScheduledStartAt(scheduleIso);
         toast.success(admin.scheduleSaved);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : admin.scheduleError);
@@ -113,33 +134,42 @@ export function SessionSchedulingSection({
       )}
 
       {readOnly || started ? (
-        <div>
-          <p className="mb-1 text-body-sm text-on-surface-variant">{admin.scheduleDateTimeLabel}</p>
-          <p className="text-body-md text-on-surface">
-            {scheduledStartAt ? formatDateTime(new Date(scheduledStartAt), locale) : admin.scheduleNotSet}
-          </p>
+        <div className="space-y-2">
+          <div>
+            <p className="mb-1 text-body-sm text-on-surface-variant">{admin.scheduleDateTimeLabel}</p>
+            <p className="text-body-md text-on-surface">
+              {scheduledStartAt ? formatDateTime(new Date(scheduledStartAt), locale) : admin.scheduleNotSet}
+            </p>
+          </div>
+          <div>
+            <p className="mb-1 text-body-sm text-on-surface-variant">{admin.scheduleDurationLabel}</p>
+            <p className="text-body-md text-on-surface">
+              {admin.scheduleDurationOption(durationMinutes)}
+            </p>
+          </div>
         </div>
       ) : (
         <>
           {!(partyAReady && partyBReady && pipelineComplete) ? (
             <p className="text-body-sm text-on-surface-variant">{admin.scheduleStartRequiresReadyHint}</p>
           ) : null}
-          <div>
-            <label className="mb-1 block text-body-sm text-on-surface-variant" htmlFor="scheduled-start">
-              {admin.scheduleDateTimeLabel}
-            </label>
-            <input
-              className="w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
-              disabled={!canSchedule || pending}
-              id="scheduled-start"
-              onChange={(event) => setLocalValue(event.target.value)}
-              type="datetime-local"
-              value={localValue}
-            />
-          </div>
+
+          <ScheduleFields
+            date={date}
+            disabled={!canSchedule || pending}
+            durationMinutes={durationMinutes}
+            hour={hour}
+            idPrefix={`room-${roomId}`}
+            minute={minute}
+            onDateChange={setDate}
+            onDurationChange={setDurationMinutes}
+            onHourChange={setHour}
+            onMinuteChange={setMinute}
+          />
+
           <button
             className="btn-primary flex items-center gap-1.5 px-5 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={!canSchedule || !localValue || pending}
+            disabled={!canSchedule || !scheduleIso || pending}
             onClick={onSave}
             type="button"
           >

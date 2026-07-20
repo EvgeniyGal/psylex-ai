@@ -4,6 +4,7 @@ export type AdminCopy = {
   adminConsole: string;
   mediatorConsole: string;
   navRooms: string;
+  navCalendar: string;
   navMediators: string;
   navSettings: string;
   logout: string;
@@ -73,6 +74,10 @@ export type AdminCopy = {
   saveMediator: string;
   tableActions: string;
   openCard: string;
+  tableRowsPerPage: string;
+  tablePageOf: string;
+  tablePreviousPage: string;
+  tableNextPage: string;
   settingsTitle: string;
   settingsSubtitle: string;
   tabCredentials: string;
@@ -170,6 +175,11 @@ export type AdminCopy = {
   activityLogEmpty: string;
   scheduleSectionTitle: string;
   scheduleDateTimeLabel: string;
+  scheduleDateLabel: string;
+  scheduleHourLabel: string;
+  scheduleMinutesLabel: string;
+  scheduleDurationLabel: string;
+  scheduleDurationOption: (minutes: number) => string;
   scheduleSave: string;
   scheduleSaved: string;
   scheduleNotSet: string;
@@ -180,9 +190,30 @@ export type AdminCopy = {
   scheduleNotReady: string;
   scheduleDisabledHint: string;
   scheduleStartRequiresReadyHint: string;
+  tableScheduledTime: string;
+  tablePreparationStatus: string;
+  tableStatusReady: string;
+  tableStatusNotReady: string;
   scheduleOpenLobby: string;
   scheduleOpenSession: string;
   scheduleError: string;
+  calendarTitle: string;
+  calendarSubtitle: string;
+  calendarToday: string;
+  calendarViewDay: string;
+  calendarViewWeek: string;
+  calendarViewMonth: string;
+  calendarSelectSession: string;
+  calendarSelectSessionHint: string;
+  calendarEditSession: string;
+  calendarDragHint: string;
+  calendarSessionStartedHint: string;
+  calendarOpenRoom: string;
+  calendarUpcomingTitle: string;
+  calendarNoSessions: string;
+  calendarStartedBadge: string;
+  calendarUnscheduledTitle: string;
+  calendarScheduleAction: string;
   mediatorGenerateQuestions: string;
   mediatorSendQuestion: string;
   mediatorEditQuestion: string;
@@ -213,6 +244,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     adminConsole: "Admin Console",
     mediatorConsole: "Mediator Console",
     navRooms: "Rooms",
+    navCalendar: "Calendar",
     navMediators: "Mediators",
     navSettings: "Settings",
     logout: "Logout",
@@ -285,6 +317,10 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     saveMediator: "Save Changes",
     tableActions: "Actions",
     openCard: "Open card",
+    tableRowsPerPage: "Rows per page",
+    tablePageOf: "Page {page} of {pages}",
+    tablePreviousPage: "Previous",
+    tableNextPage: "Next",
     settingsTitle: "Settings",
     settingsSubtitle: "Configure platform preferences and administrative controls.",
     tabCredentials: "Credentials",
@@ -384,6 +420,16 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     activityLogEmpty: "No activity recorded yet.",
     scheduleSectionTitle: "Session schedule",
     scheduleDateTimeLabel: "Scheduled start",
+    scheduleDateLabel: "Date",
+    scheduleHourLabel: "Hour",
+    scheduleMinutesLabel: "Minutes",
+    scheduleDurationLabel: "Duration",
+    scheduleDurationOption: (minutes) => {
+      if (minutes === 30) return "30 minutes";
+      if (minutes === 60) return "1 hour";
+      if (minutes % 60 === 0) return `${minutes / 60} hours`;
+      return `${minutes / 60} hours`;
+    },
     scheduleSave: "Save schedule",
     scheduleSaved: "Schedule saved",
     scheduleNotSet: "Not scheduled yet",
@@ -395,9 +441,31 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     scheduleDisabledHint: "Both parties must finish tests, conflict questions, and AI analysis before scheduling.",
     scheduleStartRequiresReadyHint:
       "You can schedule now. Parties still need to finish tests, conflict questions, and AI analysis before the session can start.",
+    tableScheduledTime: "Scheduled time",
+    tablePreparationStatus: "Status",
+    tableStatusReady: "Ready",
+    tableStatusNotReady: "Not ready",
     scheduleOpenLobby: "Open pre-session lobby",
     scheduleOpenSession: "Open live session",
     scheduleError: "Could not save schedule",
+    calendarTitle: "Session calendar",
+    calendarSubtitle: "Review scheduled sessions and reschedule directly from the calendar.",
+    calendarToday: "Today",
+    calendarViewDay: "Day",
+    calendarViewWeek: "Week",
+    calendarViewMonth: "Month",
+    calendarSelectSession: "Select a session",
+    calendarSelectSessionHint: "Click a session on the calendar or in the list to view and edit its schedule.",
+    calendarEditSession: "Edit schedule",
+    calendarDragHint:
+      "Drag to move, resize to change duration, or click a slot/day to update the selected session, then save.",
+    calendarSessionStartedHint: "This session has already started, so the schedule can no longer be changed.",
+    calendarOpenRoom: "Open room",
+    calendarUpcomingTitle: "Upcoming sessions",
+    calendarNoSessions: "No scheduled sessions here.",
+    calendarStartedBadge: "Started",
+    calendarUnscheduledTitle: "Rooms without a schedule",
+    calendarScheduleAction: "Schedule",
     mediatorGenerateQuestions: "Generate question options",
     mediatorSendQuestion: "Send to party",
     mediatorEditQuestion: "Edit question",
@@ -491,6 +559,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     adminConsole: "Адмін-панель",
     mediatorConsole: "Панель медіатора",
     navRooms: "Кімнати",
+    navCalendar: "Календар",
     navMediators: "Медіатори",
     navSettings: "Налаштування",
     logout: "Вийти",
@@ -563,6 +632,10 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     saveMediator: "Зберегти зміни",
     tableActions: "Дії",
     openCard: "Відкрити",
+    tableRowsPerPage: "Рядків на сторінці",
+    tablePageOf: "Сторінка {page} з {pages}",
+    tablePreviousPage: "Назад",
+    tableNextPage: "Далі",
     settingsTitle: "Налаштування",
     settingsSubtitle: "Налаштування платформи та адміністративні параметри.",
     tabCredentials: "Облікові дані",
@@ -663,6 +736,16 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     activityLogEmpty: "Активність ще не зафіксована.",
     scheduleSectionTitle: "Розклад сесії",
     scheduleDateTimeLabel: "Запланований старт",
+    scheduleDateLabel: "Дата",
+    scheduleHourLabel: "Година",
+    scheduleMinutesLabel: "Хвилини",
+    scheduleDurationLabel: "Тривалість",
+    scheduleDurationOption: (minutes) => {
+      if (minutes === 30) return "30 хвилин";
+      if (minutes === 60) return "1 година";
+      if (minutes % 60 === 0) return `${minutes / 60} години`;
+      return `${minutes / 60} години`;
+    },
     scheduleSave: "Зберегти розклад",
     scheduleSaved: "Розклад збережено",
     scheduleNotSet: "Ще не заплановано",
@@ -674,9 +757,31 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     scheduleDisabledHint: "Обидві сторони мають завершити тести, питання про конфлікт і AI-аналіз перед плануванням.",
     scheduleStartRequiresReadyHint:
       "Можна планувати зараз. Сторони все одно мають завершити тести, питання про конфлікт і AI-аналіз, перш ніж сесія зможе початися.",
+    tableScheduledTime: "Запланований час",
+    tablePreparationStatus: "Статус",
+    tableStatusReady: "Готово",
+    tableStatusNotReady: "Не готово",
     scheduleOpenLobby: "Відкрити лобі перед сесією",
     scheduleOpenSession: "Відкрити живу сесію",
     scheduleError: "Не вдалося зберегти розклад",
+    calendarTitle: "Календар сесій",
+    calendarSubtitle: "Переглядайте заплановані сесії та змінюйте розклад прямо з календаря.",
+    calendarToday: "Сьогодні",
+    calendarViewDay: "День",
+    calendarViewWeek: "Тиждень",
+    calendarViewMonth: "Місяць",
+    calendarSelectSession: "Оберіть сесію",
+    calendarSelectSessionHint: "Натисніть сесію в календарі або в списку, щоб переглянути й змінити розклад.",
+    calendarEditSession: "Змінити розклад",
+    calendarDragHint:
+      "Перетягніть, щоб перенести, змініть розмір для тривалості, або натисніть слот/день для вибраної сесії, потім збережіть.",
+    calendarSessionStartedHint: "Ця сесія вже почалася, тому розклад змінити не можна.",
+    calendarOpenRoom: "Відкрити кімнату",
+    calendarUpcomingTitle: "Найближчі сесії",
+    calendarNoSessions: "Тут немає запланованих сесій.",
+    calendarStartedBadge: "Розпочато",
+    calendarUnscheduledTitle: "Кімнати без розкладу",
+    calendarScheduleAction: "Запланувати",
     mediatorGenerateQuestions: "Згенерувати варіанти запитань",
     mediatorSendQuestion: "Надіслати стороні",
     mediatorEditQuestion: "Редагувати запитання",

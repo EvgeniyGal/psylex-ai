@@ -8,7 +8,10 @@ import { useLocale } from "@/components/locale-provider";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { cn } from "@/lib/utils";
 
-const navItems = [{ href: "/mediator/rooms", key: "navRooms" as const, icon: "gavel" }];
+const navItems = [
+  { href: "/mediator/rooms", key: "navRooms" as const, icon: "gavel" },
+  { href: "/mediator/calendar", key: "navCalendar" as const, icon: "calendar_month" },
+];
 
 export function MediatorSidebar() {
   const pathname = usePathname();

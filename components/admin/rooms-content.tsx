@@ -3,10 +3,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type PaginationState,
+  type SortingState,
+} from "@tanstack/react-table";
 import { useLocale } from "@/components/locale-provider";
+import { formatDateTime } from "@/lib/format-datetime";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
 import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
-import { compareStringsStable } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type UserRow = {
   id: string;
@@ -27,27 +39,31 @@ type RoomRow = {
   createdAt: Date;
   createdByUserId?: string | null;
   mediatorTitle?: string | null;
+  scheduledStartAt?: Date | string | null;
+  preparationReady?: boolean;
 };
 
-type SortKey = "title" | "description" | "jurisdiction" | "mediator";
-type SortDir = "asc" | "desc";
 type RoomListTab = "admin" | "mediator";
 
 type RoomTableRow = RoomRow & {
   partyATitle: string;
   partyBTitle: string;
   mediatorTitle: string;
+  jurisdictionLabel: string;
+  scheduledStartAt: Date | null;
+  preparationReady: boolean;
+  statusLabel: string;
 };
 
-function SortIcon({ active, direction }: { active: boolean; direction: SortDir }) {
-  if (!active) {
+function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
+  if (!sorted) {
     return (
       <span className="material-symbols-outlined text-[16px] text-on-surface-variant/40">unfold_more</span>
     );
   }
   return (
     <span className="material-symbols-outlined text-[16px] text-tertiary">
-      {direction === "asc" ? "arrow_upward" : "arrow_downward"}
+      {sorted === "asc" ? "arrow_upward" : "arrow_downward"}
     </span>
   );
 }
@@ -68,10 +84,12 @@ export function RoomsContent({
   const { admin, locale } = useLocale();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<RoomListTab>("admin");
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("title");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const formatJurisdiction = (room: RoomRow) => formatRoomJurisdiction(room, locale);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([{ id: "title", desc: false }]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const tableRows = useMemo<RoomTableRow[]>(() => {
     return roomRows.map((room) => {
@@ -79,6 +97,10 @@ export function RoomsContent({
         participantsByRoom.find((item) => item.roomId === room.id)?.users ?? [];
       const partyA = participants.find((p) => p.role === "party_a");
       const partyB = participants.find((p) => p.role === "party_b");
+      const preparationReady = !!room.preparationReady;
+      const scheduledRaw = room.scheduledStartAt ? new Date(room.scheduledStartAt) : null;
+      const scheduledStartAt =
+        scheduledRaw && !Number.isNaN(scheduledRaw.getTime()) ? scheduledRaw : null;
 
       return {
         ...room,
@@ -86,9 +108,20 @@ export function RoomsContent({
         partyATitle: partyA?.title ?? "",
         partyBTitle: partyB?.title ?? "",
         mediatorTitle: room.mediatorTitle ?? admin.unknownMediator,
+        jurisdictionLabel: formatRoomJurisdiction(room, locale),
+        scheduledStartAt,
+        preparationReady,
+        statusLabel: preparationReady ? admin.tableStatusReady : admin.tableStatusNotReady,
       };
     });
-  }, [roomRows, participantsByRoom, admin.unknownMediator]);
+  }, [
+    roomRows,
+    participantsByRoom,
+    admin.unknownMediator,
+    admin.tableStatusReady,
+    admin.tableStatusNotReady,
+    locale,
+  ]);
 
   const tabRows = useMemo(() => {
     if (!showRoomTabs) return tableRows;
@@ -98,63 +131,124 @@ export function RoomsContent({
     return tableRows.filter((row) => !!row.createdByUserId);
   }, [tableRows, showRoomTabs, activeTab]);
 
-  const filteredRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return tabRows;
+  const showMediatorColumn = showRoomTabs && activeTab === "mediator";
 
-    return tabRows.filter((row) => {
+  const columns = useMemo<ColumnDef<RoomTableRow>[]>(() => {
+    const defs: ColumnDef<RoomTableRow>[] = [];
+
+    if (showMediatorColumn) {
+      defs.push({
+        accessorKey: "mediatorTitle",
+        id: "mediator",
+        header: admin.mediatorTitleLabel,
+        cell: ({ getValue }) => (
+          <span className="text-body-sm text-on-surface">{String(getValue() ?? "")}</span>
+        ),
+      });
+    }
+
+    defs.push(
+      {
+        accessorKey: "title",
+        header: admin.roomTitleLabel,
+        cell: ({ getValue }) => (
+          <span className="font-display text-body-md font-semibold text-on-surface">
+            {String(getValue() ?? "")}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "description",
+        header: admin.roomDescriptionLabel,
+        cell: ({ getValue }) => (
+          <span className="block max-w-xs truncate text-body-sm text-on-surface-variant">
+            {String(getValue() ?? "")}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "jurisdictionLabel",
+        id: "jurisdiction",
+        header: admin.jurisdictionLabel,
+        cell: ({ getValue }) => (
+          <span className="text-body-sm text-on-surface">{String(getValue() ?? "")}</span>
+        ),
+      },
+      {
+        accessorKey: "scheduledStartAt",
+        id: "scheduled",
+        header: admin.tableScheduledTime,
+        sortingFn: (rowA, rowB) => {
+          const a = rowA.original.scheduledStartAt?.getTime() ?? 0;
+          const b = rowB.original.scheduledStartAt?.getTime() ?? 0;
+          return a - b;
+        },
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-body-sm text-on-surface">
+            {row.original.scheduledStartAt
+              ? formatDateTime(row.original.scheduledStartAt, locale)
+              : admin.scheduleNotSet}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "preparationReady",
+        id: "status",
+        header: admin.tablePreparationStatus,
+        sortingFn: (rowA, rowB) =>
+          Number(rowA.original.preparationReady) - Number(rowB.original.preparationReady),
+        cell: ({ row }) => {
+          const ready = row.original.preparationReady;
+          return (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-md px-2.5 py-1 text-label-md font-semibold",
+                ready
+                  ? "bg-success/15 text-success"
+                  : "bg-error/15 text-error",
+              )}
+            >
+              {ready ? admin.tableStatusReady : admin.tableStatusNotReady}
+            </span>
+          );
+        },
+      },
+    );
+
+    return defs;
+  }, [admin, locale, showMediatorColumn]);
+
+  const table = useReactTable({
+    data: tabRows,
+    columns,
+    state: { sorting, globalFilter, pagination },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const query = String(filterValue ?? "").trim().toLowerCase();
+      if (!query) return true;
       const haystack = [
-        row.title,
-        row.description,
-        row.partyATitle,
-        row.partyBTitle,
-        row.mediatorTitle,
-        formatJurisdiction(row),
+        row.original.title,
+        row.original.description,
+        row.original.partyATitle,
+        row.original.partyBTitle,
+        row.original.mediatorTitle,
+        row.original.jurisdictionLabel,
+        row.original.statusLabel,
+        row.original.scheduledStartAt
+          ? formatDateTime(row.original.scheduledStartAt, locale)
+          : admin.scheduleNotSet,
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(query);
-    });
-  }, [tabRows, search, locale]);
-
-  const sortedRows = useMemo(() => {
-    const rows = [...filteredRows];
-    const multiplier = sortDir === "asc" ? 1 : -1;
-
-    rows.sort((a, b) => {
-      const value = (row: RoomTableRow) => {
-        if (sortKey === "jurisdiction") return formatJurisdiction(row);
-        if (sortKey === "mediator") return row.mediatorTitle;
-        return row[sortKey];
-      };
-
-      const compare = compareStringsStable(value(a), value(b));
-      if (compare !== 0) return compare * multiplier;
-      return compareStringsStable(a.id, b.id) * multiplier;
-    });
-
-    return rows;
-  }, [filteredRows, sortKey, sortDir, locale]);
-
-  const onSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir("asc");
-  };
-
-  const showMediatorColumn = showRoomTabs && activeTab === "mediator";
-
-  const columns: { key: SortKey; label: string }[] = [
-    ...(showMediatorColumn
-      ? [{ key: "mediator" as const, label: admin.mediatorTitleLabel }]
-      : []),
-    { key: "title", label: admin.roomTitleLabel },
-    { key: "description", label: admin.roomDescriptionLabel },
-    { key: "jurisdiction", label: admin.jurisdictionLabel },
-  ];
+    },
+  });
 
   const emptyMessage = () => {
     if (showRoomTabs) {
@@ -164,6 +258,12 @@ export function RoomsContent({
   };
 
   const showCreate = showCreateButton && (!showRoomTabs || activeTab === "admin");
+  const visibleRows = table.getRowModel().rows;
+  const filteredCount = table.getFilteredRowModel().rows.length;
+  const pageCount = Math.max(1, table.getPageCount());
+  const pageLabel = admin.tablePageOf
+    .replace("{page}", String(table.getState().pagination.pageIndex + 1))
+    .replace("{pages}", String(pageCount));
 
   return (
     <section className="space-y-stack-lg">
@@ -195,9 +295,9 @@ export function RoomsContent({
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setSearch("");
-                setSortKey("title");
-                setSortDir("asc");
+                setGlobalFilter("");
+                setSorting([{ id: "title", desc: false }]);
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
               }}
               type="button"
             >
@@ -217,76 +317,125 @@ export function RoomsContent({
             </span>
             <input
               className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setGlobalFilter(event.target.value);
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              }}
               placeholder={admin.searchPlaceholder}
               type="search"
-              value={search}
+              value={globalFilter}
             />
           </div>
 
           <div className="custom-scrollbar overflow-x-auto rounded-xl border border-outline-variant/10 bg-surface-container-low/30">
             <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-outline-variant/10 bg-surface-container-highest/40">
-                  {columns.map((column) => (
-                    <th className="px-4 py-3" key={column.key}>
-                      <button
-                        className="flex w-full items-center gap-1 font-display text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
-                        onClick={() => onSort(column.key)}
-                        type="button"
-                      >
-                        <span>{column.label}</span>
-                        <SortIcon active={sortKey === column.key} direction={sortDir} />
-                      </button>
-                    </th>
-                  ))}
-                  <th className="w-0 whitespace-nowrap px-4 py-3">
-                    <span className="sr-only">{admin.tableActions}</span>
-                  </th>
-                </tr>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr
+                    className="border-b border-outline-variant/10 bg-surface-container-highest/40"
+                    key={headerGroup.id}
+                  >
+                    {headerGroup.headers.map((header) => (
+                      <th className="px-4 py-3" key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <button
+                            className="flex w-full items-center gap-1 font-display text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
+                            onClick={header.column.getToggleSortingHandler()}
+                            type="button"
+                          >
+                            <span>
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                            </span>
+                            <SortIcon sorted={header.column.getIsSorted()} />
+                          </button>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
               </thead>
               <tbody>
-                {sortedRows.length === 0 ? (
+                {visibleRows.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-on-surface-variant" colSpan={columns.length + 1}>
+                    <td
+                      className="px-4 py-8 text-center text-on-surface-variant"
+                      colSpan={columns.length}
+                    >
                       {admin.noSearchResults}
                     </td>
                   </tr>
                 ) : (
-                  sortedRows.map((room) => (
+                  visibleRows.map((row) => (
                     <tr
-                      className="border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
-                      key={room.id}
+                      className={cn(
+                        "cursor-pointer border-b border-outline-variant/10 transition-colors last:border-b-0",
+                        "hover:bg-surface-container-high/60 focus-visible:bg-surface-container-high/60 focus-visible:outline-none",
+                      )}
+                      key={row.id}
+                      onClick={() => router.push(`${basePath}/${row.original.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          router.push(`${basePath}/${row.original.id}`);
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
                     >
-                      {showMediatorColumn ? (
-                        <td className="px-4 py-3 text-body-sm text-on-surface">{room.mediatorTitle}</td>
-                      ) : null}
-                      <td className="px-4 py-3 font-display text-body-md font-semibold text-on-surface">
-                        {room.title}
-                      </td>
-                      <td className="max-w-xs truncate px-4 py-3 text-body-sm text-on-surface-variant">
-                        {room.description}
-                      </td>
-                      <td className="px-4 py-3 text-body-sm text-on-surface">
-                        {formatJurisdiction(room)}
-                      </td>
-                      <td className="w-0 whitespace-nowrap px-4 py-3">
-                        <button
-                          className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
-                          onClick={() => router.push(`${basePath}/${room.id}`)}
-                          title={admin.openCard}
-                          type="button"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">open_in_new</span>
-                          <span className="sr-only">{admin.openCard}</span>
-                        </button>
-                      </td>
+                      {row.getVisibleCells().map((cell) => (
+                        <td className="px-4 py-3" key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+
+          {filteredCount > 0 ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label className="flex items-center gap-2 text-body-sm text-on-surface-variant">
+                <span>{admin.tableRowsPerPage}</span>
+                <select
+                  className="rounded-md border border-hair bg-paper px-2 py-1.5 text-sm text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
+                  onChange={(event) => {
+                    table.setPageSize(Number(event.target.value));
+                  }}
+                  value={table.getState().pagination.pageSize}
+                >
+                  {[10, 25, 50].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex items-center gap-3">
+                <p className="text-body-sm text-on-surface-variant">{pageLabel}</p>
+                <div className="flex gap-2">
+                  <button
+                    className="rounded-lg border border-outline-variant/30 px-3 py-1.5 text-body-sm text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!table.getCanPreviousPage()}
+                    onClick={() => table.previousPage()}
+                    type="button"
+                  >
+                    {admin.tablePreviousPage}
+                  </button>
+                  <button
+                    className="rounded-lg border border-outline-variant/30 px-3 py-1.5 text-body-sm text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!table.getCanNextPage()}
+                    onClick={() => table.nextPage()}
+                    type="button"
+                  >
+                    {admin.tableNextPage}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </section>

@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { rooms } from "@/drizzle/schema";
 import { setPartyNotification } from "@/lib/mediator-session/notifications";
 import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
+import {
+  DEFAULT_SCHEDULE_DURATION_MINUTES,
+  isScheduleDurationOption,
+  isScheduleMinuteOption,
+} from "@/lib/mediator-session/schedule-options";
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { getSideReadiness } from "@/lib/dispute-intake";
 import { isPostIntakePipelineComplete } from "@/lib/pipeline/gate";
@@ -14,6 +19,7 @@ export type MediatorSchedulingReadiness = {
   pipelineComplete: boolean;
   canSchedule: boolean;
   scheduledStartAt: string | null;
+  mediationDurationMinutes: number;
   mediationStarted: boolean;
 };
 
@@ -42,6 +48,7 @@ export async function getMediatorSchedulingReadiness(
     pipelineComplete,
     canSchedule,
     scheduledStartAt: room.scheduledStartAt?.toISOString() ?? null,
+    mediationDurationMinutes: room.mediationDurationMinutes ?? DEFAULT_SCHEDULE_DURATION_MINUTES,
     mediationStarted: !!room.mediationStartedAt,
   };
 }
@@ -50,6 +57,7 @@ export async function scheduleMediatorSession(params: {
   roomId: string;
   mediatorUserId: string;
   scheduledStartAt: Date;
+  durationMinutes: number;
 }) {
   const [room] = await db.select().from(rooms).where(eq(rooms.id, params.roomId)).limit(1);
   if (!room || room.createdByUserId !== params.mediatorUserId) {
@@ -65,11 +73,18 @@ export async function scheduleMediatorSession(params: {
   if (params.scheduledStartAt.getTime() <= Date.now()) {
     throw new Error("Scheduled time must be in the future.");
   }
+  if (!isScheduleMinuteOption(params.scheduledStartAt.getUTCMinutes())) {
+    throw new Error("Start minutes must be 00, 15, 30, or 45.");
+  }
+  if (!isScheduleDurationOption(params.durationMinutes)) {
+    throw new Error("Invalid session duration.");
+  }
 
   await db
     .update(rooms)
     .set({
       scheduledStartAt: params.scheduledStartAt,
+      mediationDurationMinutes: params.durationMinutes,
       partyAMediationStartClickedAt: null,
       partyBMediationStartClickedAt: null,
       mediatorMediationStartClickedAt: null,
@@ -80,13 +95,20 @@ export async function scheduleMediatorSession(params: {
     roomId: params.roomId,
     type: "session_scheduled",
     targetRole: "all",
-    payload: { scheduledStartAt: params.scheduledStartAt.toISOString() },
+    payload: {
+      scheduledStartAt: params.scheduledStartAt.toISOString(),
+      durationMinutes: params.durationMinutes,
+    },
   });
 
   await logPipelineEvent({
     roomId: params.roomId,
     agentKey: "mediation",
     eventType: "agent_completed",
-    payload: { step: "session_scheduled", scheduledStartAt: params.scheduledStartAt.toISOString() },
+    payload: {
+      step: "session_scheduled",
+      scheduledStartAt: params.scheduledStartAt.toISOString(),
+      durationMinutes: params.durationMinutes,
+    },
   });
 }

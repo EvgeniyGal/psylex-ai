@@ -35,12 +35,17 @@ export async function fetchMediatorSchedulingReadiness(roomId: string) {
   return getMediatorSchedulingReadiness(roomId);
 }
 
-export async function saveMediatorSchedule(roomId: string, scheduledStartAtIso: string) {
+export async function saveMediatorSchedule(
+  roomId: string,
+  scheduledStartAtIso: string,
+  durationMinutes: number,
+) {
   const userId = await requireMediator();
   await scheduleSession({
     roomId,
     mediatorUserId: userId,
     scheduledStartAt: new Date(scheduledStartAtIso),
+    durationMinutes,
   });
   revalidatePath(`/mediator/rooms/${roomId}`);
   revalidatePath(`/mediator/rooms/${roomId}/lobby`);
