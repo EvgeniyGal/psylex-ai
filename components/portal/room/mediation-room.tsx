@@ -74,7 +74,7 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
       const next = await fetchMediationRoomState();
       if (next) setState(next);
     } catch {
-      // ignore transient realtime/poll errors
+      // ignore transient realtime errors
     }
   }, []);
 

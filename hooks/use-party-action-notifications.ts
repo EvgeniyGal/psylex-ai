@@ -29,6 +29,8 @@ function messageForType(
       return t.modeBNotifyQuestion;
     case "options_ready":
       return t.modeBNotifyOptions;
+    case "compromise_pending":
+      return t.modeBWaitingCompromisePublish;
     case "compromise_ready":
       return t.modeBNotifyCompromise;
     case "agreement_ready":

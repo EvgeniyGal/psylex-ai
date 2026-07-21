@@ -181,17 +181,19 @@ export function SessionSchedulingSection({
       <div className="flex flex-wrap gap-3">
         {!readOnly && scheduledStartAt && !started ? (
           <Link
-            className="inline-flex items-center gap-1 text-body-sm font-semibold text-tertiary hover:underline"
+            className="btn-secondary inline-flex items-center gap-2 px-5 py-2.5 text-body-sm font-semibold"
             href={`/mediator/rooms/${roomId}/lobby`}
           >
+            <span className="material-symbols-outlined text-[20px]">meeting_room</span>
             {admin.scheduleOpenLobby}
           </Link>
         ) : null}
         {!readOnly && started ? (
           <Link
-            className="inline-flex items-center gap-1 text-body-sm font-semibold text-tertiary hover:underline"
+            className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-body-sm font-semibold shadow-sm"
             href={`/mediator/rooms/${roomId}/session`}
           >
+            <span className="material-symbols-outlined text-[20px]">videocam</span>
             {admin.scheduleOpenSession}
           </Link>
         ) : null}

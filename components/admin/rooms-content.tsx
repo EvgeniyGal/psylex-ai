@@ -40,6 +40,7 @@ type RoomRow = {
   createdByUserId?: string | null;
   mediatorTitle?: string | null;
   scheduledStartAt?: Date | string | null;
+  mediationStartedAt?: Date | string | null;
   preparationReady?: boolean;
 };
 
@@ -51,6 +52,7 @@ type RoomTableRow = RoomRow & {
   mediatorTitle: string;
   jurisdictionLabel: string;
   scheduledStartAt: Date | null;
+  mediationStartedAt: Date | null;
   preparationReady: boolean;
   statusLabel: string;
 };
@@ -101,6 +103,9 @@ export function RoomsContent({
       const scheduledRaw = room.scheduledStartAt ? new Date(room.scheduledStartAt) : null;
       const scheduledStartAt =
         scheduledRaw && !Number.isNaN(scheduledRaw.getTime()) ? scheduledRaw : null;
+      const startedRaw = room.mediationStartedAt ? new Date(room.mediationStartedAt) : null;
+      const mediationStartedAt =
+        startedRaw && !Number.isNaN(startedRaw.getTime()) ? startedRaw : null;
 
       return {
         ...room,
@@ -110,6 +115,7 @@ export function RoomsContent({
         mediatorTitle: room.mediatorTitle ?? admin.unknownMediator,
         jurisdictionLabel: formatRoomJurisdiction(room, locale),
         scheduledStartAt,
+        mediationStartedAt,
         preparationReady,
         statusLabel: preparationReady ? admin.tableStatusReady : admin.tableStatusNotReady,
       };
@@ -132,6 +138,7 @@ export function RoomsContent({
   }, [tableRows, showRoomTabs, activeTab]);
 
   const showMediatorColumn = showRoomTabs && activeTab === "mediator";
+  const showSessionActions = basePath.startsWith("/mediator");
 
   const columns = useMemo<ColumnDef<RoomTableRow>[]>(() => {
     const defs: ColumnDef<RoomTableRow>[] = [];
@@ -215,8 +222,44 @@ export function RoomsContent({
       },
     );
 
+    if (showSessionActions) {
+      defs.push({
+        id: "sessionAction",
+        header: admin.tableSessionAction,
+        enableSorting: false,
+        cell: ({ row }) => {
+          const room = row.original;
+          if (room.mediationStartedAt) {
+            return (
+              <Link
+                className="btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 text-label-md"
+                href={`${basePath}/${room.id}/session`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <span className="material-symbols-outlined text-[18px]">videocam</span>
+                {admin.scheduleOpenSession}
+              </Link>
+            );
+          }
+          if (room.scheduledStartAt) {
+            return (
+              <Link
+                className="btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-label-md"
+                href={`${basePath}/${room.id}/lobby`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <span className="material-symbols-outlined text-[18px]">meeting_room</span>
+                {admin.scheduleOpenLobby}
+              </Link>
+            );
+          }
+          return <span className="text-body-sm text-on-surface-variant">—</span>;
+        },
+      });
+    }
+
     return defs;
-  }, [admin, locale, showMediatorColumn]);
+  }, [admin, basePath, locale, showMediatorColumn, showSessionActions]);
 
   const table = useReactTable({
     data: tabRows,
@@ -337,7 +380,7 @@ export function RoomsContent({
                   >
                     {headerGroup.headers.map((header) => (
                       <th className="px-4 py-3" key={header.id}>
-                        {header.isPlaceholder ? null : (
+                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
                           <button
                             className="flex w-full items-center gap-1 font-display text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
                             onClick={header.column.getToggleSortingHandler()}
@@ -348,6 +391,10 @@ export function RoomsContent({
                             </span>
                             <SortIcon sorted={header.column.getIsSorted()} />
                           </button>
+                        ) : (
+                          <span className="font-display text-label-md text-on-surface-variant">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </span>
                         )}
                       </th>
                     ))}

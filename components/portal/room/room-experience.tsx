@@ -44,7 +44,7 @@ export function RoomExperience({
           router.refresh();
         })
         .catch(() => {
-          // retry via realtime / safety poll
+          // retry via realtime
         });
     },
     {

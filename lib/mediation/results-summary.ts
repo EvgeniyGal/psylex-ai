@@ -8,11 +8,32 @@ import {
   formatLegislationSections,
   type LegislationContentSection,
 } from "@/lib/mediation/legislation-summary";
-import type { getMediationRoomState } from "@/lib/mediation/orchestrator";
+import type { PartyRole } from "@/lib/participant-roles";
 import { getRoomPartiesForPipeline } from "@/lib/pipeline/gate";
 import { portalCopy } from "@/lib/portal-i18n";
 
-type MediationState = NonNullable<Awaited<ReturnType<typeof getMediationRoomState>>>;
+export type MediationResultsSummaryInput = {
+  room: {
+    id: string;
+    selectedOptionId: string | null;
+    draftAgreement: unknown;
+  };
+  options: Array<{
+    id: string;
+    description: string;
+    legalNorms?: string | null;
+    fulfillmentProbability?: string | null;
+    refusalRisks?: string | null;
+  }>;
+  compromise: {
+    id: string;
+    description: string;
+    legalNorms?: string | null;
+    fulfillmentProbability?: string | null;
+    refusalRisks?: string | null;
+  } | null;
+  viewerRole: PartyRole;
+};
 
 export type MediationResultsSummary = {
   psychodynamicProfile: string;
@@ -24,7 +45,7 @@ export type MediationResultsSummary = {
   terms: string[];
 };
 
-function findSelectedOption(state: MediationState) {
+function findSelectedOption(state: MediationResultsSummaryInput) {
   const selectedId = state.room.selectedOptionId;
   if (!selectedId) return null;
 
@@ -35,7 +56,7 @@ function findSelectedOption(state: MediationState) {
 }
 
 export async function buildMediationResultsSummary(
-  state: MediationState,
+  state: MediationResultsSummaryInput,
   locale: Locale = "en",
 ): Promise<MediationResultsSummary> {
   const draft = state.room.draftAgreement as {

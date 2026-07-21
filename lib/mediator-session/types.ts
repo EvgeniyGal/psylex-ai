@@ -20,6 +20,7 @@ export type PartyNotificationType =
   | "session_started"
   | "question_received"
   | "options_ready"
+  | "compromise_pending"
   | "compromise_ready"
   | "agreement_ready"
   | "session_completed";

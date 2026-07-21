@@ -196,6 +196,7 @@ export type AdminCopy = {
   tableStatusNotReady: string;
   scheduleOpenLobby: string;
   scheduleOpenSession: string;
+  tableSessionAction: string;
   scheduleError: string;
   calendarTitle: string;
   calendarSubtitle: string;
@@ -449,6 +450,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     tableStatusNotReady: "Not ready",
     scheduleOpenLobby: "Open pre-session lobby",
     scheduleOpenSession: "Open live session",
+    tableSessionAction: "Session",
     scheduleError: "Could not save schedule",
     calendarTitle: "Session calendar",
     calendarSubtitle: "Review scheduled sessions and reschedule directly from the calendar.",
@@ -775,6 +777,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     tableStatusNotReady: "Не готово",
     scheduleOpenLobby: "Відкрити лобі перед сесією",
     scheduleOpenSession: "Відкрити живу сесію",
+    tableSessionAction: "Сесія",
     scheduleError: "Не вдалося зберегти розклад",
     calendarTitle: "Календар сесій",
     calendarSubtitle: "Переглядайте заплановані сесії та змінюйте розклад прямо з календаря.",

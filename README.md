@@ -69,12 +69,12 @@ node scripts/migrate-selfhosted-to-cloud.mjs
 
 ## Supabase Realtime
 
-Live updates prefer push, not polling:
+Live updates use push, not polling:
 
-1. **Supabase Realtime WebSocket** (`postgres_changes`) — primary when `NEXT_PUBLIC_SUPABASE_URL` is `https://`
-2. **Postgres LISTEN/NOTIFY + SSE** (`/api/realtime/room/[roomId]`) — fallback if WS is slow/unavailable
+1. **Postgres LISTEN/NOTIFY + SSE** (`/api/realtime/room/[roomId]`) — always on (works with NextAuth)
+2. **Supabase Realtime WebSocket** (`postgres_changes`) — additive when `NEXT_PUBLIC_SUPABASE_URL` is configured
 
-On each change the client refetches authoritative state via Next.js server actions (no full state over the wire).
+SSE stays active even if the WebSocket reports subscribed but RLS blocks event delivery. Changes are debounced before refetching authoritative state via server actions.
 
 Tables watched:
 

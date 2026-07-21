@@ -26,6 +26,7 @@ import {
   mediationOptionsSchema,
   mediationQuestionCandidatesSchema,
 } from "@/lib/mediation/schemas";
+import { buildMediationResultsSummary } from "@/lib/mediation/results-summary";
 import type { DraftAgreement, MediationOption, MediationPhase } from "@/lib/mediation/types";
 import { setPartyNotification } from "@/lib/mediator-session/notifications";
 import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
@@ -461,6 +462,12 @@ export async function castMediatorPartyVote(userId: string, optionId: string) {
     })
     .where(eq(rooms.id, room.id));
 
+  await setPartyNotification({
+    roomId: room.id,
+    type: "compromise_pending",
+    targetRole: "all",
+  });
+
   const discrepancyRoom = await loadRoom(room.id);
   if (discrepancyRoom) await generateCompromiseDraft(discrepancyRoom);
   return loadRoom(room.id);
@@ -720,8 +727,17 @@ async function buildSessionState(
     partyHasUnansweredQuestion(messages, viewerUserId, partyA.id, partyB.id);
 
   const canReply = pendingQuestion;
+  const peerHasVoted =
+    viewerKind === "party" &&
+    (role === "party_a" ? !!room.partyBVoteOptionId : role === "party_b" ? !!room.partyAVoteOptionId : false);
+  const awaitingCompromisePublish =
+    room.mediationPhase === "voting_discrepancy" && !compromise;
 
-  return {
+  const mappedOptions = options.map(mapOption);
+  const mappedCompromise = compromise ? mapOption(compromise) : null;
+  const draftAgreement = room.draftAgreement as DraftAgreement | null;
+
+  const statePayload = {
     room: {
       id: room.id,
       title: room.title,
@@ -739,6 +755,8 @@ async function buildSessionState(
             ? room.partyAVoteOptionId
             : null
         : null,
+      peerHasVoted,
+      awaitingCompromisePublish,
       partyAVote: viewerKind === "mediator" ? room.partyAVoteOptionId : undefined,
       partyBVote: viewerKind === "mediator" ? room.partyBVoteOptionId : undefined,
       selfCompromiseVote:
@@ -773,13 +791,13 @@ async function buildSessionState(
       partyNotification: room.partyNotification,
     },
     messages: viewerMessages,
-    options: options.map(mapOption),
-    compromise: compromise ? mapOption(compromise) : null,
+    options: mappedOptions,
+    compromise: mappedCompromise,
     compromiseDraft:
       viewerKind === "mediator" && compromiseDraft ? mapOption(compromiseDraft) : null,
     compromisePublished: !!compromise,
     questionCandidates: viewerKind === "mediator" ? candidates : emptyCandidates(),
-    draftAgreement: room.draftAgreement as DraftAgreement | null,
+    draftAgreement,
     profiles:
       viewerKind === "mediator"
         ? {
@@ -798,6 +816,25 @@ async function buildSessionState(
     viewerRole: role,
     viewerKind,
   };
+
+  if (room.mediationPhase === "completed" && role) {
+    const resultsSummary = await buildMediationResultsSummary(
+      {
+        room: {
+          id: room.id,
+          selectedOptionId: room.selectedOptionId,
+          draftAgreement,
+        },
+        options: mappedOptions,
+        compromise: mappedCompromise,
+        viewerRole: role,
+      },
+      locale,
+    );
+    return { ...statePayload, resultsSummary };
+  }
+
+  return { ...statePayload, resultsSummary: null };
 }
 
 export type MediatorSessionRoomState = NonNullable<
