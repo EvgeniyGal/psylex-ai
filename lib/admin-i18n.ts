@@ -223,6 +223,8 @@ export type AdminCopy = {
   mediatorSelectCandidate: string;
   mediatorCompromiseDraft: string;
   mediatorProfilesTitle: string;
+  mediatorMessageKinds: Record<string, string>;
+  mediatorMessageToParty: string;
   activityLogSourcePipeline: string;
   activityLogSourceMilestone: string;
   activityLogEvents: Record<string, string>;
@@ -475,6 +477,16 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorSelectCandidate: "Select a question",
     mediatorCompromiseDraft: "Compromise draft",
     mediatorProfilesTitle: "Party profiles",
+    mediatorMessageKinds: {
+      mediation_system: "Notice",
+      mediation_opening: "Opening",
+      mediation_question: "Question",
+      mediation_summary: "Summary",
+      mediation_moderation: "Moderation",
+      mediation_nudge: "Nudge",
+      mediation_options: "Options",
+    },
+    mediatorMessageToParty: "to",
     activityLogSourcePipeline: "Pipeline",
     activityLogSourceMilestone: "Milestone",
     activityLogEvents: {
@@ -791,6 +803,16 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorSelectCandidate: "Оберіть запитання",
     mediatorCompromiseDraft: "Чернетка компромісу",
     mediatorProfilesTitle: "Профілі сторін",
+    mediatorMessageKinds: {
+      mediation_system: "Повідомлення",
+      mediation_opening: "Відкриття",
+      mediation_question: "Запитання",
+      mediation_summary: "Підсумок",
+      mediation_moderation: "Модерація",
+      mediation_nudge: "Нагадування",
+      mediation_options: "Варіанти",
+    },
+    mediatorMessageToParty: "до",
     activityLogSourcePipeline: "Пайплайн",
     activityLogSourceMilestone: "Етап",
     activityLogEvents: {

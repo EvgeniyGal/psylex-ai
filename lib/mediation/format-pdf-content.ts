@@ -6,7 +6,7 @@ import type { users as usersTable } from "@/drizzle/schema";
 
 type UserRow = typeof usersTable.$inferSelect;
 
-const profileLabels: Record<
+export const psychodynamicProfileLabels: Record<
   Locale,
   {
     unavailable: string;
@@ -31,6 +31,8 @@ const profileLabels: Record<
     relational: "Стосункові патерни",
   },
 };
+
+const profileLabels = psychodynamicProfileLabels;
 
 export function formatPsychodynamicProfile(
   profile: PsychodynamicProfile | null | undefined,

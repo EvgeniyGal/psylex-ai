@@ -17,14 +17,71 @@ import { useRoomRealtime } from "@/hooks/use-room-realtime";
 import type { MediatorSessionRoomState } from "@/lib/mediator-session/orchestrator";
 import type { PartyRole } from "@/lib/participant-roles";
 import type { MediationOption } from "@/lib/mediation/types";
+import { psychodynamicProfileLabels } from "@/lib/mediation/format-pdf-content";
+import type { PsychodynamicProfile } from "@/lib/pipeline/schemas";
+import { psychodynamicProfileSchema } from "@/lib/pipeline/schemas";
+import type { Locale } from "@/lib/i18n";
+import type { AdminCopy } from "@/lib/admin-i18n";
+import { resolveLocalizedSystemMessage } from "@/lib/mediation/system-messages";
 
 type MediatorSessionRoomProps = {
   roomId: string;
   initialState: MediatorSessionRoomState;
 };
 
+type SessionMessage = MediatorSessionRoomState["messages"][number];
+
+function partyDisplayName(
+  role: PartyRole | null | undefined,
+  profiles: MediatorSessionRoomState["profiles"],
+  roles: Record<string, string>,
+) {
+  if (!role) return null;
+  const roleLabel = roles[role] ?? role;
+  const title =
+    role === "party_a" ? profiles?.partyA.title : role === "party_b" ? profiles?.partyB.title : null;
+  if (title && title.trim() && title !== roleLabel) {
+    return `${roleLabel} · ${title}`;
+  }
+  return roleLabel;
+}
+
+function formatMessageMeta(
+  message: SessionMessage,
+  admin: AdminCopy,
+  labels: {
+    agent: string;
+    system: string;
+    roles: Record<string, string>;
+  },
+  profiles: MediatorSessionRoomState["profiles"],
+) {
+  const kindLabel = message.messageKind
+    ? (admin.mediatorMessageKinds[message.messageKind] ?? null)
+    : null;
+
+  if (message.senderType === "participant") {
+    return (
+      partyDisplayName(message.senderPartyRole, profiles, labels.roles) ??
+      labels.roles.party_a ??
+      "Participant"
+    );
+  }
+
+  if (message.senderType === "system") {
+    return kindLabel ? `${labels.system} · ${kindLabel}` : labels.system;
+  }
+
+  const base = kindLabel ? `${labels.agent} · ${kindLabel}` : labels.agent;
+  const addressee = partyDisplayName(message.addresseePartyRole, profiles, labels.roles);
+  if (addressee && (message.messageKind === "mediation_question" || message.messageKind === "mediation_moderation" || message.messageKind === "mediation_nudge")) {
+    return `${base} · ${admin.mediatorMessageToParty} ${addressee}`;
+  }
+  return base;
+}
+
 export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoomProps) {
-  const { admin, portal: t } = useLocale();
+  const { admin, portal: t, locale } = useLocale();
   const [state, setState] = useState(initialState);
   const [pending, startTransition] = useTransition();
   const [selectedParty, setSelectedParty] = useState<PartyRole>("party_a");
@@ -153,15 +210,26 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
           </h3>
           {state.profiles ? (
             <>
-              <ProfileCard title={state.profiles.partyA.title} profile={state.profiles.partyA.psychodynamic} />
-              <ProfileCard title={state.profiles.partyB.title} profile={state.profiles.partyB.psychodynamic} />
+              <ProfileCard
+                locale={locale}
+                profile={state.profiles.partyA.psychodynamic}
+                title={state.profiles.partyA.title}
+              />
+              <ProfileCard
+                locale={locale}
+                profile={state.profiles.partyB.psychodynamic}
+                title={state.profiles.partyB.title}
+              />
             </>
           ) : null}
         </aside>
 
         <div className="glass-panel flex min-h-[28rem] flex-col rounded-xl p-4">
           <p className="mb-3 text-body-sm text-on-surface-variant">
-            {t.mediationPhaseLabel}: {state.room.phase ?? "—"}
+            {t.mediationPhaseLabel}:{" "}
+            {state.room.phase
+              ? (t.mediationPhases[state.room.phase] ?? state.room.phase)
+              : "—"}
           </p>
           <div className="flex-1 space-y-3 overflow-y-auto">
             {state.messages.map((message) => (
@@ -170,10 +238,22 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
                 key={message.id}
               >
                 <p className="mb-1 text-label-md uppercase text-on-surface-variant">
-                  {message.senderType}
-                  {message.messageKind ? ` · ${message.messageKind}` : ""}
+                  {formatMessageMeta(
+                    message,
+                    admin,
+                    {
+                      agent: t.mediationAgent,
+                      system: t.mediationSystem,
+                      roles: t.roles,
+                    },
+                    state.profiles,
+                  )}
                 </p>
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap">
+                  {message.messageKind === "mediation_system"
+                    ? resolveLocalizedSystemMessage(message.content, locale)
+                    : message.content}
+                </p>
               </div>
             ))}
           </div>
@@ -293,13 +373,65 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
   );
 }
 
-function ProfileCard({ title, profile }: { title: string; profile: unknown }) {
+function parsePsychodynamicProfile(profile: unknown): PsychodynamicProfile | null {
+  const parsed = psychodynamicProfileSchema.safeParse(profile);
+  return parsed.success ? parsed.data : null;
+}
+
+function ProfileCard({
+  title,
+  profile,
+  locale,
+}: {
+  title: string;
+  profile: unknown;
+  locale: Locale;
+}) {
+  const labels = psychodynamicProfileLabels[locale];
+  const parsed = parsePsychodynamicProfile(profile);
+
   return (
     <div className="rounded-md border border-hair bg-paper/70 p-3">
-      <p className="mb-1 font-semibold text-body-sm text-on-surface">{title}</p>
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-[11px] text-on-surface-variant">
-        {profile ? JSON.stringify(profile, null, 2) : "—"}
-      </pre>
+      <p className="mb-2 font-semibold text-body-sm text-on-surface">{title}</p>
+      <div className="max-h-56 space-y-2 overflow-auto text-body-sm text-on-surface-variant">
+        {parsed ? (
+          <>
+            {parsed.summary ? (
+              <p className="whitespace-pre-wrap text-on-surface">{parsed.summary}</p>
+            ) : null}
+            {parsed.traits.length > 0 ? (
+              <ProfileSection items={parsed.traits} label={labels.traits} />
+            ) : null}
+            {parsed.attachmentStyle ? (
+              <p>
+                <span className="font-semibold text-on-surface">{labels.attachment}: </span>
+                {parsed.attachmentStyle}
+              </p>
+            ) : null}
+            {parsed.defenseMechanisms && parsed.defenseMechanisms.length > 0 ? (
+              <ProfileSection items={parsed.defenseMechanisms} label={labels.defense} />
+            ) : null}
+            {parsed.relationalPatterns && parsed.relationalPatterns.length > 0 ? (
+              <ProfileSection items={parsed.relationalPatterns} label={labels.relational} />
+            ) : null}
+          </>
+        ) : (
+          <p>{labels.unavailable}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileSection({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div>
+      <p className="mb-1 font-semibold text-on-surface">{label}</p>
+      <ul className="list-disc space-y-0.5 pl-4">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }

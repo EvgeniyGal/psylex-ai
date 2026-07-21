@@ -16,21 +16,48 @@ export const mediationRoundSummarySchema = adaptedMessageSchema;
 export const mediationModerationSchema = adaptedMessageSchema;
 export const mediationNudgeSchema = adaptedMessageSchema;
 
-const questionCandidateSchema = z.object({
-  id: z.string(),
-  canonicalContent: z.string(),
-  partyA: z.string(),
-  partyB: z.string(),
-});
+const questionCandidateSchema = z.preprocess(
+  (val) => {
+    if (!val || typeof val !== "object" || Array.isArray(val)) return val;
+    const obj = val as Record<string, unknown>;
+    return {
+      id: obj.id ?? obj.candidateId,
+      canonicalContent: obj.canonicalContent ?? obj.canonical ?? obj.content,
+      partyA: obj.partyA ?? obj.party_a ?? obj.forPartyA,
+      partyB: obj.partyB ?? obj.party_b ?? obj.forPartyB,
+    };
+  },
+  z.object({
+    id: z.string(),
+    canonicalContent: z.string(),
+    partyA: z.string(),
+    partyB: z.string(),
+  }),
+);
 
-export const mediationQuestionCandidatesSchema = z.object({
-  partyA: z.object({
-    candidates: z.array(questionCandidateSchema).length(3),
-  }),
-  partyB: z.object({
-    candidates: z.array(questionCandidateSchema).length(3),
-  }),
-});
+const partyCandidatesBlockSchema = z.preprocess((val) => {
+  if (Array.isArray(val)) return { candidates: val };
+  if (val && typeof val === "object") {
+    const obj = val as Record<string, unknown>;
+    if (Array.isArray(obj.candidates)) return obj;
+    if (Array.isArray(obj.questions)) return { candidates: obj.questions };
+  }
+  return val;
+}, z.object({
+  candidates: z.array(questionCandidateSchema).length(3),
+}));
+
+export const mediationQuestionCandidatesSchema = z.preprocess((val) => {
+  if (!val || typeof val !== "object" || Array.isArray(val)) return val;
+  const obj = val as Record<string, unknown>;
+  return {
+    partyA: obj.partyA ?? obj.party_a,
+    partyB: obj.partyB ?? obj.party_b,
+  };
+}, z.object({
+  partyA: partyCandidatesBlockSchema,
+  partyB: partyCandidatesBlockSchema,
+}));
 
 const mediationOptionSchema = z.object({
   id: z.string(),
@@ -81,7 +108,7 @@ export const mediationModeInstructions: Record<MediationAgentMode, string> = {
   dialogue_question:
     'Run mode "dialogue_question". Ask one structured question to the addressee party. Include "addressee": "party_a" | "party_b".',
   question_candidates:
-    'Run mode "question_candidates". Generate exactly three candidate questions for party_a and exactly three for party_b. Tailor each candidate using psychodynamic profiles, emotional triggers, interests, and legal analysis. Each candidate must include canonicalContent, partyA, and partyB adapted text plus a stable id string.',
+    'Run mode "question_candidates". Return JSON with this exact shape: {"partyA":{"candidates":[{"id":"a1","canonicalContent":"...","partyA":"...","partyB":"..."},{"id":"a2",...},{"id":"a3",...}]},"partyB":{"candidates":[{"id":"b1","canonicalContent":"...","partyA":"...","partyB":"..."},{"id":"b2",...},{"id":"b3",...}]}}. Generate exactly three candidates under partyA.candidates (questions intended for party_a) and exactly three under partyB.candidates (questions intended for party_b). Tailor each using psychodynamic profiles, emotional triggers, interests, and legal analysis. partyA/partyB fields on each candidate are adapted wording for each party; do not return arrays at the partyA/partyB roots.',
   round_summary:
     'Run mode "round_summary". Summarize what was heard from both parties this round.',
   moderation_redirect:

@@ -213,7 +213,8 @@ export function MediatorPartyRoom({
           header={
             <div className="px-4 py-3">
               <p className="font-display text-label-md uppercase text-on-surface-variant">
-                {t.mediationPhaseLabel}: {phase ?? "—"}
+                {t.mediationPhaseLabel}:{" "}
+                {phase ? (t.mediationPhases[phase] ?? phase) : "—"}
               </p>
             </div>
           }

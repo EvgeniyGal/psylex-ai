@@ -115,6 +115,7 @@ type PortalCopy = {
   mediationActionFailed: string;
   mediationOptionsTitle: string;
   mediationOptionsReady: string;
+  modeBSessionStarted: string;
   mediationOptionLabel: string;
   mediationYourSelection: string;
   mediationPartySelected: string;
@@ -336,6 +337,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationOptionsTitle: "Solution options",
     mediationOptionsReady:
       "Solution options are ready. Please review and vote independently.",
+    modeBSessionStarted:
+      "Mediator-facilitated session started. The mediator will guide the dialogue.",
     mediationOptionLabel: "Option {n}",
     mediationYourSelection: "Your selection",
     mediationPartySelected: "{party} selected",
@@ -573,6 +576,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationOptionsTitle: "Варіанти рішення",
     mediationOptionsReady:
       "Варіанти рішення готові. Перегляньте їх і проголосуйте незалежно.",
+    modeBSessionStarted:
+      "Сесію під керівництвом медіатора розпочато. Медіатор вестиме діалог.",
     mediationOptionLabel: "Варіант {n}",
     mediationYourSelection: "Ваш вибір",
     mediationPartySelected: "{party} обрала",

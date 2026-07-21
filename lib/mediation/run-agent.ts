@@ -49,9 +49,17 @@ export async function runMediationAgent<T extends z.ZodType>(params: RunMediatio
   let raw = await callModel();
   try {
     return params.schema.parse(parseJsonFromModelResponse(raw));
-  } catch {
-    raw = await callModel("Respond with valid JSON only matching the required schema.");
-    return params.schema.parse(parseJsonFromModelResponse(raw));
+  } catch (firstError) {
+    const shapeHint =
+      params.mode === "question_candidates"
+        ? 'Required JSON shape: {"partyA":{"candidates":[{id,canonicalContent,partyA,partyB} x3]},"partyB":{"candidates":[{id,canonicalContent,partyA,partyB} x3]}}. partyA and partyB must be objects with a candidates array, not arrays themselves.'
+        : "Respond with valid JSON only matching the required schema.";
+    raw = await callModel(shapeHint);
+    try {
+      return params.schema.parse(parseJsonFromModelResponse(raw));
+    } catch {
+      throw firstError instanceof Error ? firstError : new Error("Mediation agent returned invalid JSON.");
+    }
   }
 }
 

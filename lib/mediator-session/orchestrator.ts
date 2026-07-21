@@ -12,9 +12,12 @@ import {
   insertSystemMessage,
   isMessageVisibleToViewer,
   listRoomMessages,
+  partyHasUnansweredQuestion,
+  resolveAgentMessageTargetUserId,
   resolveMessageForViewer,
   toPartyAdaptations,
 } from "@/lib/mediation/messages";
+import { resolveLocalizedSystemMessage } from "@/lib/mediation/system-messages";
 import { runMediationAgent } from "@/lib/mediation/run-agent";
 import {
   mediationAgreementDraftSchema,
@@ -33,6 +36,8 @@ import type {
 import { logPipelineEvent } from "@/lib/pipeline/log-event";
 import { getRoomPartiesForPipeline, isPostIntakePipelineComplete } from "@/lib/pipeline/gate";
 import type { PartyRole } from "@/lib/participant-roles";
+import type { Locale } from "@/lib/i18n";
+import { portalCopy } from "@/lib/portal-i18n";
 
 type RoomRow = typeof rooms.$inferSelect;
 
@@ -89,9 +94,19 @@ export async function startMediatorSession(roomId: string) {
 
   if (!claimed) return;
 
+  const { partyA, partyB } = await getRoomPartiesForPipeline(roomId);
+  const partyALocale: Locale = partyA?.preferredLocale === "uk" ? "uk" : "en";
+  const partyBLocale: Locale = partyB?.preferredLocale === "uk" ? "uk" : "en";
+  const canonical = portalCopy.en.modeBSessionStarted;
+
   await insertSystemMessage({
     roomId,
-    content: "Mediator-facilitated session started. The mediator will guide the dialogue.",
+    content: canonical,
+    canonicalContent: canonical,
+    adaptations: {
+      party_a: portalCopy[partyALocale].modeBSessionStarted,
+      party_b: portalCopy[partyBLocale].modeBSessionStarted,
+    },
   });
 
   await logPipelineEvent({
@@ -204,7 +219,7 @@ export async function sendMediatorQuestion(params: {
     .update(rooms)
     .set({
       mediatorQuestionCandidates: nextCandidates,
-      mediationActiveParty: params.partyRole,
+      // Mode B: parties answer independently — do not lock a single active party.
       mediationTurnDeadlineAt: null,
       mediationTurnNudged: false,
     })
@@ -227,8 +242,18 @@ export async function submitMediatorPartyReply(userId: string, content: string) 
   if (room.mediationPhase !== "dialogue") throw new Error("Dialogue is not active.");
 
   const role = partyRoleFromUser(participant.user);
-  if (room.mediationActiveParty && room.mediationActiveParty !== role) {
-    throw new Error("Not your turn.");
+  const { partyA, partyB } = await getRoomPartiesForPipeline(room.id);
+  if (!partyA || !partyB) throw new Error("Parties not found.");
+
+  const messages = await listRoomMessages(room.id);
+  const hasPending = partyHasUnansweredQuestion(
+    messages,
+    userId,
+    partyA.id,
+    partyB.id,
+  );
+  if (!hasPending) {
+    throw new Error("No open question to answer.");
   }
 
   const trimmed = content.trim();
@@ -259,11 +284,6 @@ export async function submitMediatorPartyReply(userId: string, content: string) 
     userId,
     content: trimmed,
   });
-
-  await db
-    .update(rooms)
-    .set({ mediationActiveParty: null, mediationTurnDeadlineAt: null })
-    .where(eq(rooms.id, room.id));
 
   return { moderated: false as const };
 }
@@ -620,17 +640,38 @@ async function buildSessionState(
     partyBUserId: partyB?.id ?? "",
   };
 
+  const roleForUserId = (userId: string | null | undefined): PartyRole | null => {
+    if (!userId) return null;
+    if (partyA?.id === userId) return "party_a";
+    if (partyB?.id === userId) return "party_b";
+    return null;
+  };
+
   const viewerMessages =
     viewerKind === "mediator"
-      ? messages.map((message) => ({
-          id: message.id,
-          senderType: message.senderType,
-          messageKind: message.messageKind,
-          content: message.canonicalContent ?? message.content,
-          createdAt: message.createdAt.toISOString(),
-          isOwn: false,
-          addresseeUserId: message.participantUserId,
-        }))
+      ? messages.map((message) => {
+          const addresseeUserId =
+            message.senderType === "agent" && partyA?.id && partyB?.id
+              ? resolveAgentMessageTargetUserId(message, messages, partyA.id, partyB.id)
+              : message.participantUserId;
+          return {
+            id: message.id,
+            senderType: message.senderType,
+            messageKind: message.messageKind,
+            content:
+              message.messageKind === "mediation_system"
+                ? resolveLocalizedSystemMessage(
+                    message.canonicalContent ?? message.content,
+                    locale,
+                  )
+                : (message.canonicalContent ?? message.content),
+            createdAt: message.createdAt.toISOString(),
+            isOwn: false,
+            addresseeUserId,
+            senderPartyRole: roleForUserId(message.senderUserId),
+            addresseePartyRole: roleForUserId(addresseeUserId),
+          };
+        })
       : messages
           .filter((message) =>
             partyA?.id && partyB?.id
@@ -645,6 +686,8 @@ async function buildSessionState(
             createdAt: message.createdAt.toISOString(),
             isOwn: message.senderUserId === viewerUserId,
             addresseeUserId: message.participantUserId,
+            senderPartyRole: roleForUserId(message.senderUserId),
+            addresseePartyRole: roleForUserId(message.participantUserId),
           }));
 
   const mapOption = (option: MediationOption) => ({
@@ -668,15 +711,15 @@ async function buildSessionState(
     room.mediationPhase === "agreement" ||
     room.mediationPhase === "completed";
 
-  const canReply =
-    viewerKind === "party" &&
-    room.mediationPhase === "dialogue" &&
-    (!room.mediationActiveParty || room.mediationActiveParty === role);
-
   const pendingQuestion =
     viewerKind === "party" &&
+    !!role &&
+    !!partyA?.id &&
+    !!partyB?.id &&
     room.mediationPhase === "dialogue" &&
-    room.mediationActiveParty === role;
+    partyHasUnansweredQuestion(messages, viewerUserId, partyA.id, partyB.id);
+
+  const canReply = pendingQuestion;
 
   return {
     room: {
@@ -684,7 +727,7 @@ async function buildSessionState(
       title: room.title,
       phase: room.mediationPhase,
       round: room.mediationRound,
-      activeParty: room.mediationActiveParty,
+      activeParty: null,
       mediationStartedAt:
         (room.mediatorSessionStartedAt ?? room.mediationStartedAt)!.toISOString(),
       scheduledStartAt: room.scheduledStartAt?.toISOString() ?? null,

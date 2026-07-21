@@ -4,8 +4,10 @@ import { roomMessages } from "@/drizzle/schema";
 import { resolveAdaptedText } from "@/lib/mediation/assemble-input";
 import type { MediationMessageKind, PartyAdaptations } from "@/lib/mediation/types";
 import type { Locale } from "@/lib/i18n";
-import { portalCopy } from "@/lib/portal-i18n";
 import type { PartyRole } from "@/lib/participant-roles";
+import { resolveLocalizedSystemMessage } from "@/lib/mediation/system-messages";
+
+export { resolveLocalizedSystemMessage } from "@/lib/mediation/system-messages";
 
 export async function listRoomMessages(roomId: string) {
   return db
@@ -149,6 +151,15 @@ function resolveTargetUserId(
   return inferQuestionAddresseeUserId(message, allMessages, partyAUserId, partyBUserId);
 }
 
+export function resolveAgentMessageTargetUserId(
+  message: RoomMessageRow,
+  allMessages: RoomMessageRow[],
+  partyAUserId: string,
+  partyBUserId: string,
+) {
+  return resolveTargetUserId(message, allMessages, partyAUserId, partyBUserId);
+}
+
 export function isMessageVisibleToViewer(
   message: RoomMessageRow,
   viewerUserId: string,
@@ -216,7 +227,35 @@ export function resolveMessageForViewer(
     return adapted;
   }
   if (message.messageKind === "mediation_system" && viewerPreferredLocale) {
-    return portalCopy[viewerLocale(viewerPreferredLocale)].mediationOptionsReady;
+    return resolveLocalizedSystemMessage(
+      message.canonicalContent ?? message.content,
+      viewerLocale(viewerPreferredLocale),
+    );
   }
   return message.content;
+}
+
+/** True when the party has an unanswered mediation question addressed to them. */
+export function partyHasUnansweredQuestion(
+  messages: RoomMessageRow[],
+  partyUserId: string,
+  partyAUserId: string,
+  partyBUserId: string,
+) {
+  const questionsForParty = messages.filter((message) => {
+    if (message.messageKind !== "mediation_question") return false;
+    const target = resolveTargetUserId(message, messages, partyAUserId, partyBUserId);
+    return target === partyUserId;
+  });
+  if (questionsForParty.length === 0) return false;
+
+  const latestQuestion = questionsForParty[questionsForParty.length - 1]!;
+  const latestQuestionAt = latestQuestion.createdAt.getTime();
+
+  return !messages.some(
+    (message) =>
+      message.senderType === "participant" &&
+      message.senderUserId === partyUserId &&
+      message.createdAt.getTime() > latestQuestionAt,
+  );
 }
