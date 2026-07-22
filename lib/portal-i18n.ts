@@ -127,6 +127,7 @@ type PortalCopy = {
   mediationVoteRecorded: string;
   mediationOtherChose: string;
   mediationVotesDiscrepancy: string;
+  mediationVotesDiscrepancyPending: string;
   mediationCompromiseTitle: string;
   mediationCompromiseGenerating: string;
   mediationAcceptCompromise: string;
@@ -350,6 +351,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationVoteRecorded: "Your vote has been recorded. Waiting for the other party.",
     mediationOtherChose: "The other party selected option",
     mediationVotesDiscrepancy: "The parties selected different options. Review the compromise proposal below.",
+    mediationVotesDiscrepancyPending:
+      "The parties selected different options. A compromise is being prepared for both sides.",
     mediationCompromiseTitle: "Compromise option",
     mediationCompromiseGenerating: "Votes differ — the AI mediator is generating a compromise option...",
     mediationAcceptCompromise: "Accept compromise",
@@ -589,6 +592,8 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     mediationVoteRecorded: "Ваш голос зафіксовано. Очікуємо іншу сторону.",
     mediationOtherChose: "Інша сторона обрала варіант",
     mediationVotesDiscrepancy: "Сторони обрали різні варіанти. Перегляньте компромісну пропозицію нижче.",
+    mediationVotesDiscrepancyPending:
+      "Сторони обрали різні варіанти. Для обох сторін готується компромісна пропозиція.",
     mediationCompromiseTitle: "Компромісний варіант",
     mediationCompromiseGenerating: "Голоси розійшлися — AI-медіатор формує компромісний варіант...",
     mediationAcceptCompromise: "Прийняти компроміс",

@@ -16,6 +16,7 @@ import { MediationCountdown } from "@/components/portal/mediation-countdown";
 import { FlowReviewNext } from "@/components/portal/flow-review-next";
 import { MediationOptionsPanel } from "@/components/portal/room/mediation-options-panel";
 import { MediationCompromisePanel } from "@/components/portal/room/mediation-compromise-panel";
+import { MediationVotesDiscrepancyNotice } from "@/components/portal/room/mediation-votes-discrepancy-notice";
 import { MediationResultsPanel } from "@/components/portal/room/mediation-results-panel";
 import {
   MediationChat,
@@ -500,16 +501,24 @@ export function MediationRoom({ initialState, viewerRole, onPhaseChange, review 
               {isCompromiseGenerating ? (
                 <motion.div
                   key="compromise-generating"
-                  className="flex items-center gap-3 rounded-xl border border-med-line bg-med-fill/25 p-4"
+                  className="space-y-3"
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <TypingIndicator />
-                  <p className="text-body-sm font-medium text-on-surface-variant">
-                    {t.mediationCompromiseGenerating}
-                  </p>
+                  <MediationVotesDiscrepancyNotice
+                    options={state.options}
+                    partyAVoteOptionId={state.room.partyAVoteOptionId ?? null}
+                    partyBVoteOptionId={state.room.partyBVoteOptionId ?? null}
+                    pending
+                  />
+                  <div className="flex items-center gap-3 rounded-xl border border-med-line bg-med-fill/25 p-4">
+                    <TypingIndicator />
+                    <p className="text-body-sm font-medium text-on-surface-variant">
+                      {t.mediationCompromiseGenerating}
+                    </p>
+                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>

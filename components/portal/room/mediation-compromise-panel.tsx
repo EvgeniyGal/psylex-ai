@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useLocale } from "@/components/locale-provider";
 import type { MediationOptionView } from "@/components/portal/room/mediation-options-panel";
+import { MediationVotesDiscrepancyNotice } from "@/components/portal/room/mediation-votes-discrepancy-notice";
 import { fadeInUp, scaleIn } from "@/lib/motion";
 import type { MediationPhase } from "@/lib/mediation/types";
 import { cn } from "@/lib/utils";
@@ -22,20 +23,6 @@ type MediationCompromisePanelProps = {
   onAccept?: () => void;
   onReject?: () => void;
 };
-
-function optionLabel(template: string, index: number) {
-  return template.replace("{n}", String(index + 1));
-}
-
-function resolveOptionLabel(
-  options: MediationOptionView[],
-  optionId: string | null,
-  labelTemplate: string,
-) {
-  if (!optionId) return "—";
-  const index = options.findIndex((option) => option.id === optionId);
-  return index >= 0 ? optionLabel(labelTemplate, index) : optionId;
-}
 
 function compromiseVoteLabel(
   vote: boolean | null | undefined,
@@ -82,19 +69,12 @@ export function MediationCompromisePanel({
       initial="hidden"
       animate="visible"
     >
-      <motion.div
-        className="rounded-xl border border-med-line bg-med-fill/25 p-4"
-        variants={fadeInUp}
-      >
-        <p className="text-body-sm text-on-surface-variant">{t.mediationVotesDiscrepancy}</p>
-        <div className="mt-2 flex flex-wrap gap-2 text-body-sm text-on-surface">
-          <span className="rounded-full border border-party-a/30 bg-party-a-fill/40 px-2.5 py-1">
-            {t.roles.party_a}: {resolveOptionLabel(options, partyAVoteOptionId, t.mediationOptionLabel)}
-          </span>
-          <span className="rounded-full border border-party-b/30 bg-party-b-fill/40 px-2.5 py-1">
-            {t.roles.party_b}: {resolveOptionLabel(options, partyBVoteOptionId, t.mediationOptionLabel)}
-          </span>
-        </div>
+      <motion.div variants={fadeInUp}>
+        <MediationVotesDiscrepancyNotice
+          options={options}
+          partyAVoteOptionId={partyAVoteOptionId}
+          partyBVoteOptionId={partyBVoteOptionId}
+        />
       </motion.div>
 
       <motion.article

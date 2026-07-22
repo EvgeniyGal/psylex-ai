@@ -15,6 +15,7 @@ import { PartyActionBanner } from "@/components/portal/party-action-banner";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { MediationOptionsPanel } from "@/components/portal/room/mediation-options-panel";
 import { MediationCompromisePanel } from "@/components/portal/room/mediation-compromise-panel";
+import { MediationVotesDiscrepancyNotice } from "@/components/portal/room/mediation-votes-discrepancy-notice";
 import { MediationResultsPanel } from "@/components/portal/room/mediation-results-panel";
 import { MediationChat, MediationChatComposer } from "@/components/portal/room/mediation-chat";
 import { Spinner } from "@/components/ui/spinner";
@@ -279,9 +280,21 @@ export function MediatorPartyRoom({
             ) : null}
 
             {awaitingCompromisePublish ? (
-              <div className="glass-panel rounded-xl p-4 text-body-sm text-on-surface-variant">
-                <Spinner className="mb-2" size="sm" />
-                {t.modeBWaitingCompromisePublish}
+              <div className="space-y-3">
+                <MediationVotesDiscrepancyNotice
+                  options={state.options}
+                  partyAVoteOptionId={
+                    viewerRole === "party_a" ? state.room.selfVote : state.room.otherVote
+                  }
+                  partyBVoteOptionId={
+                    viewerRole === "party_b" ? state.room.selfVote : state.room.otherVote
+                  }
+                  pending
+                />
+                <div className="glass-panel rounded-xl p-4 text-body-sm text-on-surface-variant">
+                  <Spinner className="mb-2" size="sm" />
+                  {t.modeBWaitingCompromisePublish}
+                </div>
               </div>
             ) : null}
 
