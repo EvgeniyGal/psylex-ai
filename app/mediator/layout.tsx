@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
@@ -6,6 +7,10 @@ import { users } from "@/drizzle/schema";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getUserOnboardingStatus } from "@/lib/onboarding";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+};
 
 export default async function MediatorLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);

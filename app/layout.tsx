@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, Newsreader } from "next/font/google";
 import { AppProviders } from "@/components/app-providers";
 import { ConditionalSiteFooter } from "@/components/conditional-site-footer";
 import { NavigationProgress } from "@/components/navigation-progress";
+import { buildPageMetadata, getSiteUrl, siteConfig } from "@/lib/seo";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -20,12 +21,32 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "PsyLex - Professional Legal Resolution",
-  description: "PsyLex MVP first look",
-  icons: {
-    icon: "/logo.webp",
-    apple: "/logo.webp",
+  metadataBase: new URL(getSiteUrl()),
+  ...buildPageMetadata({ path: "/" }),
+  title: {
+    default: `${siteConfig.name} - ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
   },
+  icons: {
+    icon: [{ url: "/logo.webp", type: "image/webp" }],
+    apple: [{ url: "/logo.webp", type: "image/webp" }],
+    shortcut: "/logo.webp",
+  },
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F7F5F0" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1A18" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "light",
 };
 
 export default function RootLayout({

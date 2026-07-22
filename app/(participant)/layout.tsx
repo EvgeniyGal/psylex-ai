@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { ParticipantFlowProgressProvider } from "@/components/portal/participant-flow-progress-provider";
@@ -7,6 +8,10 @@ import { users } from "@/drizzle/schema";
 import { getParticipantFlowProgressForUser } from "@/lib/participant-flow-progress";
 import type { ParticipantFlowStepId } from "@/lib/participant-flow";
 import { isPartyRole } from "@/lib/participant-roles";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+};
 
 async function resolveMaxReachedStep(): Promise<ParticipantFlowStepId> {
   const session = await getServerSession(authOptions);
