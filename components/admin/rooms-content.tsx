@@ -260,6 +260,9 @@ export function RoomsContent({
         enableSorting: false,
         cell: ({ row }) => {
           const room = row.original;
+          if (room.sessionComplete) {
+            return <span className="text-body-sm text-on-surface-variant">—</span>;
+          }
           if (room.mediationStartedAt) {
             return (
               <Link
@@ -273,6 +276,19 @@ export function RoomsContent({
             );
           }
           if (room.scheduledStartAt) {
+            if (!room.preparationReady) {
+              return (
+                <span
+                  aria-disabled="true"
+                  className="btn-secondary inline-flex cursor-not-allowed items-center gap-1.5 px-3 py-1.5 text-label-md opacity-40"
+                  onClick={(event) => event.stopPropagation()}
+                  title={admin.tableStatusNotReady}
+                >
+                  <span className="material-symbols-outlined text-[18px]">meeting_room</span>
+                  {admin.scheduleOpenLobby}
+                </span>
+              );
+            }
             return (
               <Link
                 className="btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-label-md"

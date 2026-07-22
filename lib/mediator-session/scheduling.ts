@@ -21,6 +21,8 @@ export type MediatorSchedulingReadiness = {
   scheduledStartAt: string | null;
   mediationDurationMinutes: number;
   mediationStarted: boolean;
+  sessionComplete: boolean;
+  mediationCompletedAt: string | null;
 };
 
 export async function getMediatorSchedulingReadiness(
@@ -50,6 +52,8 @@ export async function getMediatorSchedulingReadiness(
     scheduledStartAt: room.scheduledStartAt?.toISOString() ?? null,
     mediationDurationMinutes: room.mediationDurationMinutes ?? DEFAULT_SCHEDULE_DURATION_MINUTES,
     mediationStarted: !!room.mediationStartedAt,
+    sessionComplete: !!room.mediationCompletedAt || room.mediationPhase === "completed",
+    mediationCompletedAt: room.mediationCompletedAt?.toISOString() ?? null,
   };
 }
 

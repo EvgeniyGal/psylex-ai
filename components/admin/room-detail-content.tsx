@@ -285,34 +285,13 @@ export function RoomDetailContent({
         <SessionSchedulingSection
           initialDurationMinutes={room.mediationDurationMinutes}
           initialScheduledStartAt={room.scheduledStartAt?.toISOString() ?? null}
+          mediationCompletedAt={room.mediationCompletedAt?.toISOString() ?? null}
           mediationStarted={!!room.mediationStartedAt}
           partyUserIds={[partyA?.id, partyB?.id].filter((id): id is string => Boolean(id))}
           readOnly={readOnly && basePath.startsWith("/admin")}
           roomId={room.id}
+          sessionComplete={!!room.mediationCompletedAt || room.mediationPhase === "completed"}
         />
-      ) : null}
-
-      {room.mediationStartedAt ? (
-        <div className="glass-panel space-y-3 rounded-xl p-6">
-          <h4 className="font-display text-headline-md text-on-surface">{admin.mediationStatusTitle}</h4>
-          <p className="text-body-sm text-on-surface-variant">
-            {admin.mediationPhaseLabel}:{" "}
-            <span className="text-on-surface">{room.mediationPhase ?? admin.mediationNotStarted}</span>
-          </p>
-          <p className="text-body-sm text-on-surface-variant">
-            {admin.mediationRoundLabel}: {room.mediationRound}
-          </p>
-          {room.selectedOptionId ? (
-            <p className="text-body-sm text-on-surface-variant">
-              {admin.mediationSelectedOption}: {room.selectedOptionId}
-            </p>
-          ) : null}
-          {room.mediationCompletedAt ? (
-            <p className="text-body-sm text-on-surface-variant">
-              {admin.mediationCompletedAt}: {formatDateTime(room.mediationCompletedAt, locale)}
-            </p>
-          ) : null}
-        </div>
       ) : null}
 
       <div className="glass-panel space-y-3 rounded-xl p-6">

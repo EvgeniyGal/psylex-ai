@@ -16,6 +16,7 @@ import {
 } from "@/hooks/use-scheduled-session-clock";
 import { formatDateTime } from "@/lib/format-datetime";
 import type { MediatorHandshakeState } from "@/lib/mediator-session/handshake";
+import { cn } from "@/lib/utils";
 
 type MediatorSessionLobbyProps = {
   roomId: string;
@@ -23,6 +24,17 @@ type MediatorSessionLobbyProps = {
   initialHandshake: MediatorHandshakeState;
   partyUserIds?: string[];
 };
+
+function ClickStatusRow({ label, clicked }: { label: string; clicked: boolean }) {
+  return (
+    <li className="flex items-center justify-between gap-3 text-body-sm">
+      <span className="text-on-surface-variant">{label}</span>
+      <span className={cn("font-semibold", clicked ? "text-success" : "text-error")}>
+        {clicked ? "✓" : "…"}
+      </span>
+    </li>
+  );
+}
 
 export function MediatorSessionLobby({
   roomId,
@@ -35,19 +47,24 @@ export function MediatorSessionLobby({
   const [pending, startTransition] = useTransition();
   const [handshake, setHandshake] = useState(initialHandshake);
 
+  const applyHandshake = useCallback(
+    (next: MediatorHandshakeState) => {
+      setHandshake(next);
+      if (next.status === "started") {
+        router.push(`/mediator/rooms/${roomId}/session`);
+      }
+    },
+    [roomId, router],
+  );
+
   const refresh = useCallback(async () => {
     try {
       const next = await fetchMediatorLobbyHandshake(roomId);
-      if (next) {
-        setHandshake(next);
-        if (next.status === "started") {
-          router.push(`/mediator/rooms/${roomId}/session`);
-        }
-      }
+      if (next) applyHandshake(next);
     } catch {
       /* ignore */
     }
-  }, [roomId, router]);
+  }, [applyHandshake, roomId]);
 
   useRoomRealtime(roomId, () => {
     void refresh();
@@ -66,19 +83,14 @@ export function MediatorSessionLobby({
 
   const onStart = () => {
     startTransition(async () => {
-      const next = await clickMediatorStartMediation(roomId);
-      setHandshake(next);
-      if (next.status === "started") {
-        router.push(`/mediator/rooms/${roomId}/session`);
+      try {
+        const next = await clickMediatorStartMediation(roomId);
+        applyHandshake(next);
+      } catch {
+        await refresh();
       }
     });
   };
-
-  const waitingLabels = [
-    !handshake.partyAClicked ? t.modeBWaitingPartyA : null,
-    !handshake.partyBClicked ? t.modeBWaitingPartyB : null,
-    !handshake.mediatorClicked ? t.modeBWaitingMediator : null,
-  ].filter(Boolean);
 
   const showStartWindowCountdown =
     handshake.status === "too_early" && msUntilStartWindow !== null && msUntilStartWindow > 0;
@@ -87,6 +99,8 @@ export function MediatorSessionLobby({
       (handshake.status === "waiting" && handshake.selfClicked)) &&
     msUntilStart !== null &&
     msUntilStart > 0;
+  const showParticipantStatus =
+    handshake.status === "waiting" || handshake.status === "countdown" || handshake.status === "idle";
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
@@ -127,12 +141,16 @@ export function MediatorSessionLobby({
           </>
         ) : null}
 
-        {handshake.status === "waiting" && waitingLabels.length > 0 ? (
-          <ul className="space-y-1 text-body-sm text-on-surface-variant">
-            {waitingLabels.map((label) => (
-              <li key={label}>{label}</li>
-            ))}
+        {showParticipantStatus ? (
+          <ul className="space-y-2 rounded-md bg-surface-container-low/60 p-3">
+            <ClickStatusRow clicked={handshake.partyAClicked} label={t.roles.party_a} />
+            <ClickStatusRow clicked={handshake.partyBClicked} label={t.roles.party_b} />
+            <ClickStatusRow clicked={handshake.mediatorClicked} label={t.roles.mediator} />
           </ul>
+        ) : null}
+
+        {handshake.selfClicked && handshake.status === "waiting" ? (
+          <p className="text-body-sm text-success">{t.modeBSelfClicked}</p>
         ) : null}
 
         <div className="space-y-2">
@@ -145,7 +163,7 @@ export function MediatorSessionLobby({
             {pending ? <Spinner className="text-white" size="sm" /> : null}
             {t.mediationStart}
           </button>
-          {handshake.scheduledStartAt && handshake.status !== "started" ? (
+          {handshake.status === "too_early" ? (
             <p className="text-body-sm text-on-surface-variant">{t.modeBStartAvailableHint}</p>
           ) : null}
         </div>

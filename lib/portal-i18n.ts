@@ -75,6 +75,7 @@ type PortalCopy = {
   modeBWaitingMediator: string;
   modeBWaitingPartyA: string;
   modeBWaitingPartyB: string;
+  modeBSelfClicked: string;
   modeBAllReadyCountdown: string;
   modeBActionRequired: string;
   modeBNotifyScheduled: string;
@@ -296,6 +297,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     modeBWaitingMediator: "Waiting for the mediator",
     modeBWaitingPartyA: "Waiting for Party A",
     modeBWaitingPartyB: "Waiting for Party B",
+    modeBSelfClicked: "You clicked Start Mediation.",
     modeBAllReadyCountdown: "Everyone is ready. Session starts at the scheduled time.",
     modeBActionRequired: "Action required",
     modeBNotifyScheduled: "A mediation session has been scheduled.",
@@ -537,6 +539,7 @@ export const portalCopy: Record<Locale, PortalCopy> = {
     modeBWaitingMediator: "Очікуємо медіатора",
     modeBWaitingPartyA: "Очікуємо сторону A",
     modeBWaitingPartyB: "Очікуємо сторону B",
+    modeBSelfClicked: "Ви натиснули «Почати медіацію».",
     modeBAllReadyCountdown: "Усі готові. Сесія почнеться у запланований час.",
     modeBActionRequired: "Потрібна дія",
     modeBNotifyScheduled: "Сесію медіації заплановано.",

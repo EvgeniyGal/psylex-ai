@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { clickStartMediation, runPostIntakePipelineForRoom } from "@/app/dispute-intake/actions";
-import { getMediatorPartyHandshakeAction } from "@/app/mediator/rooms/party-actions";
+import { runPostIntakePipelineForRoom } from "@/app/dispute-intake/actions";
+import {
+  clickMediatorPartyStartMediation,
+  getMediatorPartyHandshakeAction,
+} from "@/app/mediator/rooms/party-actions";
 import { PartyActionBanner } from "@/components/portal/party-action-banner";
 import { PortalPageShell } from "@/components/portal/portal-page-shell";
 import { Spinner } from "@/components/ui/spinner";
@@ -19,6 +22,7 @@ import type { MediatorHandshakeState } from "@/lib/mediator-session/handshake";
 import type { PartyNotification } from "@/lib/mediator-session/types";
 import type { PartyRole } from "@/lib/participant-roles";
 import type { ParticipantFlowStepId } from "@/lib/participant-flow";
+import { cn } from "@/lib/utils";
 
 type PartyMediatorLobbyProps = {
   roomId: string;
@@ -30,6 +34,17 @@ type PartyMediatorLobbyProps = {
   bothReady: boolean;
   partyUserIds?: string[];
 };
+
+function ClickStatusRow({ label, clicked }: { label: string; clicked: boolean }) {
+  return (
+    <li className="flex items-center justify-between gap-3 text-body-sm">
+      <span className="text-on-surface-variant">{label}</span>
+      <span className={cn("font-semibold", clicked ? "text-success" : "text-error")}>
+        {clicked ? "✓" : "…"}
+      </span>
+    </li>
+  );
+}
 
 export function PartyMediatorLobby({
   roomId,
@@ -52,20 +67,27 @@ export function PartyMediatorLobby({
     viewerRole,
   });
 
-  const refresh = useCallback(async () => {
-    try {
-      const next = await getMediatorPartyHandshakeAction();
-      if (!next) return;
+  const applyHandshake = useCallback(
+    (next: MediatorHandshakeState & { partyNotification?: PartyNotification | null }) => {
       const { partyNotification, ...hs } = next;
       setHandshake(hs);
       if (partyNotification) setNotification(partyNotification);
       if (hs.status === "started") {
         router.push("/room");
       }
+    },
+    [router],
+  );
+
+  const refresh = useCallback(async () => {
+    try {
+      const next = await getMediatorPartyHandshakeAction();
+      if (!next) return;
+      applyHandshake(next);
     } catch {
       /* ignore */
     }
-  }, [router]);
+  }, [applyHandshake]);
 
   useRoomRealtime(roomId, () => {
     void refresh();
@@ -90,16 +112,15 @@ export function PartyMediatorLobby({
 
   const onStart = () => {
     startTransition(async () => {
-      await clickStartMediation();
-      await refresh();
+      try {
+        const next = await clickMediatorPartyStartMediation();
+        if (next) applyHandshake(next);
+        else await refresh();
+      } catch {
+        await refresh();
+      }
     });
   };
-
-  const waitingLabels = [
-    !handshake.partyAClicked ? t.modeBWaitingPartyA : null,
-    !handshake.partyBClicked ? t.modeBWaitingPartyB : null,
-    !handshake.mediatorClicked ? t.modeBWaitingMediator : null,
-  ].filter(Boolean);
 
   const showStartWindowCountdown =
     handshake.status === "too_early" && msUntilStartWindow !== null && msUntilStartWindow > 0;
@@ -108,6 +129,8 @@ export function PartyMediatorLobby({
       (handshake.status === "waiting" && handshake.selfClicked)) &&
     msUntilStart !== null &&
     msUntilStart > 0;
+  const showParticipantStatus =
+    handshake.status === "waiting" || handshake.status === "countdown" || handshake.status === "idle";
 
   return (
     <PortalPageShell flowStep={flowStep}>
@@ -143,16 +166,16 @@ export function PartyMediatorLobby({
             </>
           ) : null}
 
-          {handshake.status === "waiting" && waitingLabels.length > 0 ? (
-            <ul className="space-y-1 text-body-sm text-on-surface-variant">
-              {waitingLabels.map((label) => (
-                <li key={label}>{label}</li>
-              ))}
+          {showParticipantStatus ? (
+            <ul className="space-y-2 rounded-md bg-surface-container-low/60 p-3">
+              <ClickStatusRow clicked={handshake.partyAClicked} label={t.roles.party_a} />
+              <ClickStatusRow clicked={handshake.partyBClicked} label={t.roles.party_b} />
+              <ClickStatusRow clicked={handshake.mediatorClicked} label={t.roles.mediator} />
             </ul>
           ) : null}
 
-          {handshake.selfClicked && handshake.status !== "started" ? (
-            <p className="text-body-sm text-success">{t.mediationHandshakeWaiting}</p>
+          {handshake.selfClicked && handshake.status === "waiting" ? (
+            <p className="text-body-sm text-success">{t.modeBSelfClicked}</p>
           ) : null}
 
           <div className="space-y-2">
@@ -165,7 +188,7 @@ export function PartyMediatorLobby({
               {pending ? <Spinner className="text-white" size="sm" /> : null}
               {t.mediationStart}
             </button>
-            {handshake.scheduledStartAt && handshake.status !== "started" ? (
+            {handshake.status === "too_early" ? (
               <p className="text-body-sm text-on-surface-variant">{t.modeBStartAvailableHint}</p>
             ) : null}
           </div>

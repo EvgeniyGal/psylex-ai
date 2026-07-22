@@ -304,12 +304,6 @@ export async function recordMediatorStartClick(
 
   if (!existing) {
     await db.update(rooms).set(patch).where(eq(rooms.id, roomId));
-    await setPartyNotification({
-      roomId,
-      type: "peer_ready",
-      targetRole: "all",
-      payload: { clickedBy: viewer },
-    });
   }
 
   const updated = await loadRoomHandshake(roomId);
@@ -356,7 +350,7 @@ export async function getMediatorHandshakeForParty(userId: string): Promise<Medi
       .where(eq(rooms.id, viewer.roomId))
       .limit(1);
     const existing = current?.partyNotification as { type?: string } | null;
-    if (existing?.type !== "start_window_open" && existing?.type !== "peer_ready") {
+    if (existing?.type !== "start_window_open") {
       await setPartyNotification({
         roomId: viewer.roomId,
         type: "start_window_open",

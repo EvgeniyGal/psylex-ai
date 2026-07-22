@@ -29,6 +29,8 @@ type SessionSchedulingSectionProps = {
   initialScheduledStartAt?: string | null;
   initialDurationMinutes?: number;
   mediationStarted?: boolean;
+  sessionComplete?: boolean;
+  mediationCompletedAt?: string | null;
   partyUserIds?: string[];
 };
 
@@ -38,6 +40,8 @@ export function SessionSchedulingSection({
   initialScheduledStartAt = null,
   initialDurationMinutes = DEFAULT_SCHEDULE_DURATION_MINUTES,
   mediationStarted = false,
+  sessionComplete = false,
+  mediationCompletedAt = null,
   partyUserIds = [],
 }: SessionSchedulingSectionProps) {
   const { admin, locale } = useLocale();
@@ -55,6 +59,8 @@ export function SessionSchedulingSection({
   const [pipelineComplete, setPipelineComplete] = useState(false);
   const [canSchedule, setCanSchedule] = useState(false);
   const [started, setStarted] = useState(mediationStarted);
+  const [complete, setComplete] = useState(sessionComplete);
+  const [completedAt, setCompletedAt] = useState(mediationCompletedAt);
 
   const scheduleIso = useMemo(
     () => partsToIso({ date, hour, minute }),
@@ -81,6 +87,8 @@ export function SessionSchedulingSection({
           }
         }
         setStarted(data.mediationStarted);
+        setComplete(data.sessionComplete);
+        setCompletedAt(data.mediationCompletedAt);
       })
       .catch(() => {
         /* ignore */
@@ -123,13 +131,21 @@ export function SessionSchedulingSection({
 
   return (
     <div className="glass-panel space-y-4 rounded-xl p-6">
-      <h4 className="font-display text-headline-md text-on-surface">{admin.scheduleSectionTitle}</h4>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h4 className="font-display text-headline-md text-on-surface">{admin.scheduleSectionTitle}</h4>
+        {complete ? (
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-tertiary/15 px-2.5 py-1 text-label-md font-semibold text-tertiary">
+            <span className="material-symbols-outlined text-[18px]">check_circle</span>
+            {admin.scheduleSessionComplete}
+          </span>
+        ) : null}
+      </div>
 
       {readOnly ? null : (
         <div className="space-y-2 rounded-md bg-surface-container-low/60 p-3">
-          {readinessRow(admin.scheduleReadinessPartyA, partyAReady)}
-          {readinessRow(admin.scheduleReadinessPartyB, partyBReady)}
-          {readinessRow(admin.scheduleReadinessPipeline, pipelineComplete)}
+          {readinessRow(admin.scheduleReadinessPartyA, complete || partyAReady)}
+          {readinessRow(admin.scheduleReadinessPartyB, complete || partyBReady)}
+          {readinessRow(admin.scheduleReadinessPipeline, complete || pipelineComplete)}
         </div>
       )}
 
@@ -147,6 +163,14 @@ export function SessionSchedulingSection({
               {admin.scheduleDurationOption(durationMinutes)}
             </p>
           </div>
+          {complete && completedAt ? (
+            <div>
+              <p className="mb-1 text-body-sm text-on-surface-variant">{admin.mediationCompletedAt}</p>
+              <p className="text-body-md text-on-surface">
+                {formatDateTime(new Date(completedAt), locale)}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : (
         <>
@@ -180,15 +204,26 @@ export function SessionSchedulingSection({
 
       <div className="flex flex-wrap gap-3">
         {!readOnly && scheduledStartAt && !started ? (
-          <Link
-            className="btn-secondary inline-flex items-center gap-2 px-5 py-2.5 text-body-sm font-semibold"
-            href={`/mediator/rooms/${roomId}/lobby`}
-          >
-            <span className="material-symbols-outlined text-[20px]">meeting_room</span>
-            {admin.scheduleOpenLobby}
-          </Link>
+          partyAReady && partyBReady && pipelineComplete ? (
+            <Link
+              className="btn-secondary inline-flex items-center gap-2 px-5 py-2.5 text-body-sm font-semibold"
+              href={`/mediator/rooms/${roomId}/lobby`}
+            >
+              <span className="material-symbols-outlined text-[20px]">meeting_room</span>
+              {admin.scheduleOpenLobby}
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="btn-secondary inline-flex cursor-not-allowed items-center gap-2 px-5 py-2.5 text-body-sm font-semibold opacity-40"
+              title={admin.scheduleDisabledHint}
+            >
+              <span className="material-symbols-outlined text-[20px]">meeting_room</span>
+              {admin.scheduleOpenLobby}
+            </span>
+          )
         ) : null}
-        {!readOnly && started ? (
+        {!readOnly && started && !complete ? (
           <Link
             className="btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-body-sm font-semibold shadow-sm"
             href={`/mediator/rooms/${roomId}/session`}

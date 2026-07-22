@@ -22,7 +22,7 @@ function messageForType(
     case "start_window_open":
       return t.modeBNotifyStartWindow;
     case "peer_ready":
-      return t.modeBNotifyPeerReady;
+      return null;
     case "session_started":
       return t.modeBNotifySessionStarted;
     case "question_received":

@@ -61,6 +61,22 @@ export async function getMediatorPartyHandshakeAction() {
   };
 }
 
+export async function clickMediatorPartyStartMediation() {
+  const userId = await requirePartyUserId();
+  const [user] = await db
+    .select({ roomId: users.roomId, role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!user?.roomId || !isPartyRole(user.role)) {
+    throw new Error("Unauthorized");
+  }
+
+  const { recordMediatorStartClick } = await import("@/lib/mediator-session/handshake");
+  await recordMediatorStartClick(user.roomId, user.role);
+  return getMediatorPartyHandshakeAction();
+}
+
 export async function fetchMediatorPartyRoomState() {
   const userId = await requirePartyUserId();
   return getMediatorSessionRoomState(userId);
