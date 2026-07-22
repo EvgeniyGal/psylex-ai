@@ -36,7 +36,8 @@ npm run db:migrate
 ```
 
 Migration `0020_supabase_realtime` adds `rooms`, `room_messages`, `users`, and `user_test_completions` to the `supabase_realtime` publication.  
-Migration `0022_realtime_replica_identity` sets `REPLICA IDENTITY FULL` so filtered UPDATE/DELETE events work.
+Migration `0022_realtime_replica_identity` sets `REPLICA IDENTITY FULL` so filtered UPDATE/DELETE events work.  
+Migration `0025_row_level_security` enables RLS on all public tables and blocks Supabase `anon` / PostgREST access (app uses Drizzle via `DATABASE_URL`). See [docs/security-rls.md](docs/security-rls.md).
 
 6. Create admin user manually in DB (example):
 
