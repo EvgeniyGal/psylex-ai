@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -15,6 +15,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useLocale } from "@/components/locale-provider";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatDateTime } from "@/lib/format-datetime";
 import type { RoomJurisdiction } from "@/lib/room/jurisdiction";
 import { formatRoomJurisdiction } from "@/lib/room/jurisdiction";
@@ -90,12 +91,17 @@ export function RoomsContent({
   const { admin, locale } = useLocale();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<RoomListTab>("admin");
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const globalFilter = useDebouncedValue(searchQuery, 300);
   const [sorting, setSorting] = useState<SortingState>([{ id: "title", desc: false }]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
+
+  useEffect(() => {
+    setPagination((prev) => (prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 }));
+  }, [globalFilter]);
 
   const tableRows = useMemo<RoomTableRow[]>(() => {
     return roomRows.map((room) => {
@@ -291,7 +297,6 @@ export function RoomsContent({
     columns,
     state: { sorting, globalFilter, pagination },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -367,7 +372,7 @@ export function RoomsContent({
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setGlobalFilter("");
+                setSearchQuery("");
                 setSorting([{ id: "title", desc: false }]);
                 setPagination((prev) => ({ ...prev, pageIndex: 0 }));
               }}
@@ -389,13 +394,10 @@ export function RoomsContent({
             </span>
             <input
               className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
-              onChange={(event) => {
-                setGlobalFilter(event.target.value);
-                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-              }}
+              onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={admin.searchPlaceholder}
               type="search"
-              value={globalFilter}
+              value={searchQuery}
             />
           </div>
 

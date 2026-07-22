@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   flexRender,
@@ -16,6 +16,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useLocale } from "@/components/locale-provider";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatCredentials, localizeRole } from "@/lib/credentials";
 import { cn } from "@/lib/utils";
 
@@ -44,12 +45,17 @@ function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
 export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
   const { admin } = useLocale();
   const router = useRouter();
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const globalFilter = useDebouncedValue(searchQuery, 300);
   const [sorting, setSorting] = useState<SortingState>([{ id: "title", desc: false }]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
+
+  useEffect(() => {
+    setPagination((prev) => (prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 }));
+  }, [globalFilter]);
 
   const onCopyCredentials = async (mediator: MediatorRow) => {
     const text = formatCredentials({
@@ -111,7 +117,6 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
     columns,
     state: { sorting, globalFilter, pagination },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -162,13 +167,10 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
             </span>
             <input
               className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
-              onChange={(event) => {
-                setGlobalFilter(event.target.value);
-                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-              }}
+              onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={admin.searchPlaceholder}
               type="search"
-              value={globalFilter}
+              value={searchQuery}
             />
           </div>
 
