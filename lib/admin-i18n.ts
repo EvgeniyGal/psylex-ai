@@ -194,6 +194,7 @@ export type AdminCopy = {
   tablePreparationStatus: string;
   tableStatusReady: string;
   tableStatusNotReady: string;
+  tableStatusComplete: string;
   scheduleOpenLobby: string;
   scheduleOpenSession: string;
   tableSessionAction: string;
@@ -448,6 +449,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     tablePreparationStatus: "Status",
     tableStatusReady: "Ready",
     tableStatusNotReady: "Not ready",
+    tableStatusComplete: "Complete",
     scheduleOpenLobby: "Open pre-session lobby",
     scheduleOpenSession: "Open live session",
     tableSessionAction: "Session",
@@ -775,6 +777,7 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     tablePreparationStatus: "Статус",
     tableStatusReady: "Готово",
     tableStatusNotReady: "Не готово",
+    tableStatusComplete: "Завершено",
     scheduleOpenLobby: "Відкрити лобі перед сесією",
     scheduleOpenSession: "Відкрити живу сесію",
     tableSessionAction: "Сесія",

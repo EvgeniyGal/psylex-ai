@@ -4,9 +4,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type PaginationState,
+  type SortingState,
+} from "@tanstack/react-table";
 import { useLocale } from "@/components/locale-provider";
 import { formatCredentials, localizeRole } from "@/lib/credentials";
-import { compareStringsStable } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type MediatorRow = {
   id: string;
@@ -17,18 +28,15 @@ type MediatorRow = {
   description: string;
 };
 
-type SortKey = "title" | "description";
-type SortDir = "asc" | "desc";
-
-function SortIcon({ active, direction }: { active: boolean; direction: SortDir }) {
-  if (!active) {
+function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
+  if (!sorted) {
     return (
       <span className="material-symbols-outlined text-[16px] text-on-surface-variant/40">unfold_more</span>
     );
   }
   return (
     <span className="material-symbols-outlined text-[16px] text-tertiary">
-      {direction === "asc" ? "arrow_upward" : "arrow_downward"}
+      {sorted === "asc" ? "arrow_upward" : "arrow_downward"}
     </span>
   );
 }
@@ -36,43 +44,12 @@ function SortIcon({ active, direction }: { active: boolean; direction: SortDir }
 export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
   const { admin } = useLocale();
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("title");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
-
-  const filteredRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return mediators;
-
-    return mediators.filter((mediator) => {
-      const haystack = [mediator.title, mediator.description, mediator.login].join(" ").toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [mediators, search]);
-
-  const sortedRows = useMemo(() => {
-    const rows = [...filteredRows];
-    const multiplier = sortDir === "asc" ? 1 : -1;
-
-    rows.sort((a, b) => {
-      const aVal = a[sortKey].toLowerCase();
-      const bVal = b[sortKey].toLowerCase();
-      const compare = compareStringsStable(aVal, bVal);
-      if (compare !== 0) return compare * multiplier;
-      return compareStringsStable(a.id, b.id) * multiplier;
-    });
-
-    return rows;
-  }, [filteredRows, sortKey, sortDir]);
-
-  const onSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir("asc");
-  };
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([{ id: "title", desc: false }]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const onCopyCredentials = async (mediator: MediatorRow) => {
     const text = formatCredentials({
@@ -87,17 +64,82 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
     toast.success(admin.copyCredentials);
   };
 
-  const columns: { key: SortKey; label: string }[] = [
-    { key: "title", label: admin.titleLabel },
-    { key: "description", label: admin.descriptionLabel },
-  ];
+  const columns = useMemo<ColumnDef<MediatorRow>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: admin.titleLabel,
+        cell: ({ getValue }) => (
+          <span className="font-display text-body-md font-semibold text-on-surface">
+            {String(getValue() ?? "")}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "description",
+        header: admin.descriptionLabel,
+        cell: ({ getValue }) => (
+          <span className="block max-w-xs truncate text-body-sm text-on-surface-variant">
+            {String(getValue() ?? "")}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: admin.tableActions,
+        enableSorting: false,
+        cell: ({ row }) => (
+          <button
+            className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant/30 px-3 py-1.5 text-label-md text-on-surface transition-colors hover:bg-surface-container-high"
+            onClick={(event) => {
+              event.stopPropagation();
+              void onCopyCredentials(row.original);
+            }}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">key</span>
+            {admin.copyCredentials}
+          </button>
+        ),
+      },
+    ],
+    [admin],
+  );
+
+  const table = useReactTable({
+    data: mediators,
+    columns,
+    state: { sorting, globalFilter, pagination },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const query = String(filterValue ?? "").trim().toLowerCase();
+      if (!query) return true;
+      const haystack = [row.original.title, row.original.description, row.original.login]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    },
+  });
+
+  const visibleRows = table.getRowModel().rows;
+  const filteredCount = table.getFilteredRowModel().rows.length;
+  const pageCount = Math.max(1, table.getPageCount());
+  const pageLabel = admin.tablePageOf
+    .replace("{page}", String(table.getState().pagination.pageIndex + 1))
+    .replace("{pages}", String(pageCount));
 
   return (
     <section className="space-y-stack-lg">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <h3 className="mb-2 font-display text-display-lg text-on-surface">{admin.mediatorsTitle}</h3>
-          <p className="text-body-md text-on-surface-variant">{admin.mediatorsSubtitle}</p>
+          <h3 className="mb-2 font-display text-headline-lg text-on-surface">{admin.mediatorsTitle}</h3>
+          <p className="max-w-xl text-on-surface-variant">{admin.mediatorsSubtitle}</p>
         </div>
         <Link
           className="btn-primary flex items-center gap-2 px-8 py-3 active:translate-y-px"
@@ -120,81 +162,129 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
             </span>
             <input
               className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setGlobalFilter(event.target.value);
+                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              }}
               placeholder={admin.searchPlaceholder}
               type="search"
-              value={search}
+              value={globalFilter}
             />
           </div>
 
           <div className="custom-scrollbar overflow-x-auto rounded-xl border border-outline-variant/10 bg-surface-container-low/30">
             <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-outline-variant/10 bg-surface-container-highest/40">
-                  {columns.map((column) => (
-                    <th className="px-4 py-3" key={column.key}>
-                      <button
-                        className="flex w-full items-center gap-1 font-display text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
-                        onClick={() => onSort(column.key)}
-                        type="button"
-                      >
-                        <span>{column.label}</span>
-                        <SortIcon active={sortKey === column.key} direction={sortDir} />
-                      </button>
-                    </th>
-                  ))}
-                  <th className="w-0 whitespace-nowrap px-4 py-3">
-                    <span className="sr-only">{admin.tableActions}</span>
-                  </th>
-                </tr>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr
+                    className="border-b border-outline-variant/10 bg-surface-container-highest/40"
+                    key={headerGroup.id}
+                  >
+                    {headerGroup.headers.map((header) => (
+                      <th className="px-4 py-3" key={header.id}>
+                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                          <button
+                            className="flex w-full items-center gap-1 font-display text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
+                            onClick={header.column.getToggleSortingHandler()}
+                            type="button"
+                          >
+                            <span>
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                            </span>
+                            <SortIcon sorted={header.column.getIsSorted()} />
+                          </button>
+                        ) : (
+                          <span className="font-display text-label-md text-on-surface-variant">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </span>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
               </thead>
               <tbody>
-                {sortedRows.length === 0 ? (
+                {visibleRows.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-8 text-center text-on-surface-variant" colSpan={columns.length + 1}>
+                    <td
+                      className="px-4 py-8 text-center text-on-surface-variant"
+                      colSpan={columns.length}
+                    >
                       {admin.noSearchResults}
                     </td>
                   </tr>
                 ) : (
-                  sortedRows.map((mediator) => (
+                  visibleRows.map((row) => (
                     <tr
-                      className="border-b border-outline-variant/10 transition-colors last:border-b-0 hover:bg-surface-container-high/60"
-                      key={mediator.id}
+                      className={cn(
+                        "cursor-pointer border-b border-outline-variant/10 transition-colors last:border-b-0",
+                        "hover:bg-surface-container-high/60 focus-visible:bg-surface-container-high/60 focus-visible:outline-none",
+                      )}
+                      key={row.id}
+                      onClick={() => router.push(`/admin/mediators/${row.original.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          router.push(`/admin/mediators/${row.original.id}`);
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
                     >
-                      <td className="px-4 py-3 font-display text-body-md font-semibold text-on-surface">
-                        {mediator.title}
-                      </td>
-                      <td className="max-w-xs truncate px-4 py-3 text-body-sm text-on-surface-variant">
-                        {mediator.description}
-                      </td>
-                      <td className="w-0 whitespace-nowrap px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
-                            onClick={() => router.push(`/admin/mediators/${mediator.id}`)}
-                            title={admin.openCard}
-                            type="button"
-                          >
-                            <span className="material-symbols-outlined text-[20px]">open_in_new</span>
-                            <span className="sr-only">{admin.openCard}</span>
-                          </button>
-                          <button
-                            className="flex items-center justify-center rounded-lg border border-outline-variant/30 p-2 text-on-surface transition-colors hover:border-[#c9ced6] hover:text-ink"
-                            onClick={() => onCopyCredentials(mediator)}
-                            title={admin.copyCredentials}
-                            type="button"
-                          >
-                            <span className="material-symbols-outlined text-[20px]">key</span>
-                            <span className="sr-only">{admin.copyCredentials}</span>
-                          </button>
-                        </div>
-                      </td>
+                      {row.getVisibleCells().map((cell) => (
+                        <td className="px-4 py-3" key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+
+          {filteredCount > 0 ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <label className="flex items-center gap-2 text-body-sm text-on-surface-variant">
+                <span>{admin.tableRowsPerPage}</span>
+                <select
+                  className="rounded-md border border-hair bg-paper px-2 py-1.5 text-sm text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
+                  onChange={(event) => {
+                    table.setPageSize(Number(event.target.value));
+                  }}
+                  value={table.getState().pagination.pageSize}
+                >
+                  {[10, 25, 50].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex items-center gap-3">
+                <p className="text-body-sm text-on-surface-variant">{pageLabel}</p>
+                <div className="flex gap-2">
+                  <button
+                    className="rounded-lg border border-outline-variant/30 px-3 py-1.5 text-body-sm text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!table.getCanPreviousPage()}
+                    onClick={() => table.previousPage()}
+                    type="button"
+                  >
+                    {admin.tablePreviousPage}
+                  </button>
+                  <button
+                    className="rounded-lg border border-outline-variant/30 px-3 py-1.5 text-body-sm text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!table.getCanNextPage()}
+                    onClick={() => table.nextPage()}
+                    type="button"
+                  >
+                    {admin.tableNextPage}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </section>

@@ -41,6 +41,8 @@ type RoomRow = {
   mediatorTitle?: string | null;
   scheduledStartAt?: Date | string | null;
   mediationStartedAt?: Date | string | null;
+  mediationCompletedAt?: Date | string | null;
+  mediationPhase?: string | null;
   preparationReady?: boolean;
 };
 
@@ -53,8 +55,10 @@ type RoomTableRow = RoomRow & {
   jurisdictionLabel: string;
   scheduledStartAt: Date | null;
   mediationStartedAt: Date | null;
+  sessionComplete: boolean;
   preparationReady: boolean;
   statusLabel: string;
+  statusRank: number;
 };
 
 function SortIcon({ sorted }: { sorted: false | "asc" | "desc" }) {
@@ -106,6 +110,17 @@ export function RoomsContent({
       const startedRaw = room.mediationStartedAt ? new Date(room.mediationStartedAt) : null;
       const mediationStartedAt =
         startedRaw && !Number.isNaN(startedRaw.getTime()) ? startedRaw : null;
+      const completedRaw = room.mediationCompletedAt ? new Date(room.mediationCompletedAt) : null;
+      const mediationCompletedAt =
+        completedRaw && !Number.isNaN(completedRaw.getTime()) ? completedRaw : null;
+      const sessionComplete =
+        !!mediationCompletedAt || room.mediationPhase === "completed";
+      const statusLabel = sessionComplete
+        ? admin.tableStatusComplete
+        : preparationReady
+          ? admin.tableStatusReady
+          : admin.tableStatusNotReady;
+      const statusRank = sessionComplete ? 2 : preparationReady ? 1 : 0;
 
       return {
         ...room,
@@ -116,8 +131,10 @@ export function RoomsContent({
         jurisdictionLabel: formatRoomJurisdiction(room, locale),
         scheduledStartAt,
         mediationStartedAt,
+        sessionComplete,
         preparationReady,
-        statusLabel: preparationReady ? admin.tableStatusReady : admin.tableStatusNotReady,
+        statusLabel,
+        statusRank,
       };
     });
   }, [
@@ -126,6 +143,7 @@ export function RoomsContent({
     admin.unknownMediator,
     admin.tableStatusReady,
     admin.tableStatusNotReady,
+    admin.tableStatusComplete,
     locale,
   ]);
 
@@ -139,6 +157,8 @@ export function RoomsContent({
 
   const showMediatorColumn = showRoomTabs && activeTab === "mediator";
   const showSessionActions = basePath.startsWith("/mediator");
+  // Mode A (admin-created rooms) does not schedule sessions.
+  const showScheduledColumn = showSessionActions || (showRoomTabs && activeTab === "mediator");
 
   const columns = useMemo<ColumnDef<RoomTableRow>[]>(() => {
     const defs: ColumnDef<RoomTableRow>[] = [];
@@ -181,7 +201,10 @@ export function RoomsContent({
           <span className="text-body-sm text-on-surface">{String(getValue() ?? "")}</span>
         ),
       },
-      {
+    );
+
+    if (showScheduledColumn) {
+      defs.push({
         accessorKey: "scheduledStartAt",
         id: "scheduled",
         header: admin.tableScheduledTime,
@@ -197,30 +220,32 @@ export function RoomsContent({
               : admin.scheduleNotSet}
           </span>
         ),
-      },
-      {
-        accessorKey: "preparationReady",
-        id: "status",
-        header: admin.tablePreparationStatus,
-        sortingFn: (rowA, rowB) =>
-          Number(rowA.original.preparationReady) - Number(rowB.original.preparationReady),
-        cell: ({ row }) => {
-          const ready = row.original.preparationReady;
-          return (
-            <span
-              className={cn(
-                "inline-flex items-center rounded-md px-2.5 py-1 text-label-md font-semibold",
-                ready
+      });
+    }
+
+    defs.push({
+      accessorKey: "statusRank",
+      id: "status",
+      header: admin.tablePreparationStatus,
+      sortingFn: (rowA, rowB) => rowA.original.statusRank - rowB.original.statusRank,
+      cell: ({ row }) => {
+        const { sessionComplete, preparationReady, statusLabel } = row.original;
+        return (
+          <span
+            className={cn(
+              "inline-flex items-center rounded-md px-2.5 py-1 text-label-md font-semibold",
+              sessionComplete
+                ? "bg-tertiary/15 text-tertiary"
+                : preparationReady
                   ? "bg-success/15 text-success"
                   : "bg-error/15 text-error",
-              )}
-            >
-              {ready ? admin.tableStatusReady : admin.tableStatusNotReady}
-            </span>
-          );
-        },
+            )}
+          >
+            {statusLabel}
+          </span>
+        );
       },
-    );
+    });
 
     if (showSessionActions) {
       defs.push({
@@ -259,7 +284,7 @@ export function RoomsContent({
     }
 
     return defs;
-  }, [admin, basePath, locale, showMediatorColumn, showSessionActions]);
+  }, [admin, basePath, locale, showMediatorColumn, showScheduledColumn, showSessionActions]);
 
   const table = useReactTable({
     data: tabRows,
@@ -283,9 +308,13 @@ export function RoomsContent({
         row.original.mediatorTitle,
         row.original.jurisdictionLabel,
         row.original.statusLabel,
-        row.original.scheduledStartAt
-          ? formatDateTime(row.original.scheduledStartAt, locale)
-          : admin.scheduleNotSet,
+        ...(showScheduledColumn
+          ? [
+              row.original.scheduledStartAt
+                ? formatDateTime(row.original.scheduledStartAt, locale)
+                : admin.scheduleNotSet,
+            ]
+          : []),
       ]
         .join(" ")
         .toLowerCase();
