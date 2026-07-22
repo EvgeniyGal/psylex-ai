@@ -36,29 +36,20 @@ export function WelcomeScreen({ role, review = false }: WelcomeScreenProps) {
           animate="visible"
         >
           <div className="space-y-stack-md">
-            <motion.div
-              className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-md border border-hair bg-surface-container"
-              variants={fadeInUp}
-            >
+            <motion.div className="space-y-stack-sm text-center" variants={fadeInUp}>
               <span
-                className="material-symbols-outlined breathe text-3xl text-law"
+                className="material-symbols-outlined mb-2 text-5xl text-tertiary"
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
                 psychology
               </span>
+              <h1 className="font-display text-display-lg text-ink">
+                {roleCopy.welcomeTitle}
+              </h1>
+              <p className="mx-auto max-w-xl text-body-lg text-ink-soft">
+                {roleCopy.welcomeBody}
+              </p>
             </motion.div>
-            <motion.h1
-              className="font-display text-display-lg text-ink"
-              variants={fadeInUp}
-            >
-              {roleCopy.welcomeTitle}
-            </motion.h1>
-            <motion.p
-              className="mx-auto max-w-xl text-body-lg text-ink-soft"
-              variants={fadeInUp}
-            >
-              {roleCopy.welcomeBody}
-            </motion.p>
           </div>
 
           <motion.div className="pt-8" variants={fadeInUp}>
