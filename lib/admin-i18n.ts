@@ -227,6 +227,12 @@ export type AdminCopy = {
   mediatorQuestionCandidates: string;
   mediatorSelectCandidate: string;
   mediatorCompromiseDraft: string;
+  mediatorCompromiseCanonical: string;
+  mediatorCompromisePartyA: string;
+  mediatorCompromisePartyB: string;
+  mediatorCompromiseLegalNorms: string;
+  mediatorCompromiseFulfillment: string;
+  mediatorCompromiseRefusalRisks: string;
   mediatorProfilesTitle: string;
   mediatorMessageKinds: Record<string, string>;
   mediatorMessageToParty: string;
@@ -486,6 +492,12 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorQuestionCandidates: "Question candidates",
     mediatorSelectCandidate: "Select a question",
     mediatorCompromiseDraft: "Compromise draft",
+    mediatorCompromiseCanonical: "Canonical description (mediator view)",
+    mediatorCompromisePartyA: "Text for Party A",
+    mediatorCompromisePartyB: "Text for Party B",
+    mediatorCompromiseLegalNorms: "Legal information (not advice)",
+    mediatorCompromiseFulfillment: "Fulfillment likelihood",
+    mediatorCompromiseRefusalRisks: "Risks if refused",
     mediatorProfilesTitle: "Party profiles",
     mediatorMessageKinds: {
       mediation_system: "Notice",
@@ -817,6 +829,12 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     mediatorQuestionCandidates: "Варіанти запитань",
     mediatorSelectCandidate: "Оберіть запитання",
     mediatorCompromiseDraft: "Чернетка компромісу",
+    mediatorCompromiseCanonical: "Канонічний опис (для медіатора)",
+    mediatorCompromisePartyA: "Текст для сторони A",
+    mediatorCompromisePartyB: "Текст для сторони B",
+    mediatorCompromiseLegalNorms: "Правова інформація (не порада)",
+    mediatorCompromiseFulfillment: "Ймовірність виконання",
+    mediatorCompromiseRefusalRisks: "Ризики відмови",
     mediatorProfilesTitle: "Профілі сторін",
     mediatorMessageKinds: {
       mediation_system: "Повідомлення",

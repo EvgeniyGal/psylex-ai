@@ -105,18 +105,27 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
   });
 
   useEffect(() => {
-    if (state.compromiseDraft && !state.compromisePublished) {
-      setCompromiseEdit({
-        id: state.compromiseDraft.id,
-        canonicalDescription: state.compromiseDraft.canonicalDescription,
-        legalNorms: state.compromiseDraft.legalNorms,
-        fulfillmentProbability: state.compromiseDraft.fulfillmentProbability,
-        refusalRisks: state.compromiseDraft.refusalRisks,
-        partyA: state.compromiseDraft.partyA,
-        partyB: state.compromiseDraft.partyB,
-      });
+    if (!state.compromiseDraft || state.compromisePublished) {
+      if (state.compromisePublished) setCompromiseEdit(null);
+      return;
     }
+    setCompromiseEdit((prev) => {
+      if (prev?.id === state.compromiseDraft!.id) return prev;
+      return {
+        id: state.compromiseDraft!.id,
+        canonicalDescription: state.compromiseDraft!.canonicalDescription,
+        legalNorms: state.compromiseDraft!.legalNorms,
+        fulfillmentProbability: state.compromiseDraft!.fulfillmentProbability,
+        refusalRisks: state.compromiseDraft!.refusalRisks,
+        partyA: state.compromiseDraft!.partyA ?? "",
+        partyB: state.compromiseDraft!.partyB ?? "",
+      };
+    });
   }, [state.compromiseDraft, state.compromisePublished]);
+
+  const canGenerateQuestions =
+    (state.room.phase === "opening" || state.room.phase === "dialogue") &&
+    (state.options?.length ?? 0) === 0;
 
   const candidates =
     selectedParty === "party_a"
@@ -124,6 +133,7 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
       : state.questionCandidates.party_b;
 
   const onSelectCandidate = (id: string) => {
+    if (!canGenerateQuestions) return;
     setSelectedCandidateId(id);
     const candidate = candidates.find((c) => c.id === id);
     if (!candidate) return;
@@ -280,8 +290,8 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
           </div>
 
           <button
-            className="btn-primary flex w-full items-center justify-center gap-2 px-3 py-2 text-body-sm disabled:opacity-60"
-            disabled={pending || state.room.phase === "completed"}
+            className="btn-primary flex w-full items-center justify-center gap-2 px-3 py-2 text-body-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={pending || !canGenerateQuestions}
             onClick={onGenerateQuestions}
             type="button"
           >
@@ -298,11 +308,12 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
             ) : (
               candidates.map((candidate) => (
                 <button
-                  className={`block w-full rounded-md border px-3 py-2 text-left text-body-sm ${
+                  className={`block w-full rounded-md border px-3 py-2 text-left text-body-sm disabled:cursor-not-allowed disabled:opacity-60 ${
                     selectedCandidateId === candidate.id
                       ? "border-law bg-law/10"
                       : "border-hair bg-paper"
                   }`}
+                  disabled={!canGenerateQuestions}
                   key={candidate.id}
                   onClick={() => onSelectCandidate(candidate.id)}
                   type="button"
@@ -313,7 +324,7 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
             )}
           </div>
 
-          {selectedCandidateId ? (
+          {selectedCandidateId && canGenerateQuestions ? (
             <div className="space-y-2">
               <label className="text-body-sm text-on-surface-variant">{admin.mediatorEditQuestion}</label>
               <textarea
@@ -343,26 +354,67 @@ export function MediatorSessionRoom({ roomId, initialState }: MediatorSessionRoo
           </button>
 
           {state.room.phase === "voting_discrepancy" && compromiseEdit && !state.compromisePublished ? (
-            <div className="space-y-2 border-t border-hair pt-3">
+            <div className="space-y-3 border-t border-hair pt-3">
               <p className="text-label-md uppercase text-on-surface-variant">
                 {admin.mediatorCompromiseDraft}
               </p>
-              <textarea
-                className="w-full rounded-md border border-hair bg-paper px-3 py-2 text-body-sm"
-                onChange={(event) =>
-                  setCompromiseEdit((prev) =>
-                    prev ? { ...prev, canonicalDescription: event.target.value, partyA: event.target.value, partyB: event.target.value } : prev,
-                  )
-                }
-                rows={4}
-                value={compromiseEdit.canonicalDescription}
-              />
+
+              {(
+                [
+                  {
+                    key: "canonicalDescription" as const,
+                    label: admin.mediatorCompromiseCanonical,
+                    rows: 3,
+                  },
+                  {
+                    key: "partyA" as const,
+                    label: admin.mediatorCompromisePartyA,
+                    rows: 3,
+                  },
+                  {
+                    key: "partyB" as const,
+                    label: admin.mediatorCompromisePartyB,
+                    rows: 3,
+                  },
+                  {
+                    key: "legalNorms" as const,
+                    label: admin.mediatorCompromiseLegalNorms,
+                    rows: 2,
+                  },
+                  {
+                    key: "fulfillmentProbability" as const,
+                    label: admin.mediatorCompromiseFulfillment,
+                    rows: 2,
+                  },
+                  {
+                    key: "refusalRisks" as const,
+                    label: admin.mediatorCompromiseRefusalRisks,
+                    rows: 2,
+                  },
+                ] as const
+              ).map((field) => (
+                <label className="block space-y-1" key={field.key}>
+                  <span className="text-body-sm text-on-surface-variant">{field.label}</span>
+                  <textarea
+                    className="w-full rounded-md border border-ink/25 bg-surface-variant px-3 py-2 text-body-sm text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
+                    onChange={(event) =>
+                      setCompromiseEdit((prev) =>
+                        prev ? { ...prev, [field.key]: event.target.value } : prev,
+                      )
+                    }
+                    rows={field.rows}
+                    value={compromiseEdit[field.key]}
+                  />
+                </label>
+              ))}
+
               <button
-                className="btn-primary flex w-full items-center justify-center gap-2 px-3 py-2 text-body-sm"
+                className="btn-primary flex w-full items-center justify-center gap-2 px-3 py-2 text-body-sm disabled:opacity-60"
                 disabled={pending}
                 onClick={onPublishCompromise}
                 type="button"
               >
+                {pending ? <Spinner className="text-white" size="sm" /> : null}
                 {admin.mediatorPublishCompromise}
               </button>
             </div>
