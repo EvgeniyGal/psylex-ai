@@ -166,7 +166,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
               search
             </span>
             <input
-              className="w-full rounded-md border border-hair bg-paper py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
+              className="w-full rounded-md border border-ink/25 bg-surface-container py-2.5 pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft focus:border-law focus:outline-none focus:ring-1 focus:ring-law"
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={admin.searchPlaceholder}
               type="search"
@@ -174,12 +174,12 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
             />
           </div>
 
-          <div className="custom-scrollbar overflow-x-auto rounded-xl border border-outline-variant/10 bg-surface-container-low/30">
+          <div className="custom-scrollbar overflow-x-auto rounded-xl border border-ink/30 bg-surface-container-low/30">
             <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr
-                    className="border-b border-outline-variant/10 bg-surface-container-highest/40"
+                    className="border-b border-ink/30 bg-surface-container-highest/40"
                     key={headerGroup.id}
                   >
                     {headerGroup.headers.map((header) => (
@@ -219,7 +219,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                   visibleRows.map((row) => (
                     <tr
                       className={cn(
-                        "cursor-pointer border-b border-outline-variant/10 transition-colors last:border-b-0",
+                        "cursor-pointer border-b border-ink/25 transition-colors last:border-b-0",
                         "hover:bg-surface-container-high/60 focus-visible:bg-surface-container-high/60 focus-visible:outline-none",
                       )}
                       key={row.id}
