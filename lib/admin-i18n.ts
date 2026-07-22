@@ -86,6 +86,8 @@ export type AdminCopy = {
   testsSubtitle: string;
   openaiApiKeyLabel: string;
   airtableApiKeyLabel: string;
+  showApiKey: string;
+  hideApiKey: string;
   testUrlLabel: string;
   testPersonalityType: string;
   testFaceFear: string;
@@ -333,6 +335,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testsSubtitle: "Configure links to personality and conflict assessment tests.",
     openaiApiKeyLabel: "OpenAI API key",
     airtableApiKeyLabel: "Airtable API key",
+    showApiKey: "Show key",
+    hideApiKey: "Hide key",
     testUrlLabel: "Test URL",
     testPersonalityType: "What is my personality type",
     testFaceFear: "Face to face with fear",
@@ -660,6 +664,8 @@ export const adminCopy: Record<Locale, AdminCopy> = {
     testsSubtitle: "Налаштуйте посилання на тести особистості та конфліктів.",
     openaiApiKeyLabel: "OpenAI API ключ",
     airtableApiKeyLabel: "Airtable API ключ",
+    showApiKey: "Показати ключ",
+    hideApiKey: "Приховати ключ",
     testUrlLabel: "Посилання на тест",
     testPersonalityType: "Який мій тип характеру",
     testFaceFear: "Віч-на-віч зі страхом",

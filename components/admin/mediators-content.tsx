@@ -174,19 +174,19 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
             />
           </div>
 
-          <div className="custom-scrollbar overflow-x-auto rounded-xl border border-ink/30 bg-surface-container-low/30">
+          <div className="custom-scrollbar overflow-x-auto rounded-xl border border-ink/30 bg-surface-variant">
             <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr
-                    className="border-b border-ink/30 bg-surface-container-highest/40"
+                    className="border-b border-ink/30 bg-ink/[0.08]"
                     key={headerGroup.id}
                   >
                     {headerGroup.headers.map((header) => (
                       <th className="px-4 py-3" key={header.id}>
                         {header.isPlaceholder ? null : header.column.getCanSort() ? (
                           <button
-                            className="flex w-full items-center gap-1 font-display text-label-md text-on-surface-variant transition-colors hover:text-on-surface"
+                            className="flex w-full items-center gap-1 font-display text-body-md font-semibold text-on-surface-variant transition-colors hover:text-on-surface"
                             onClick={header.column.getToggleSortingHandler()}
                             type="button"
                           >
@@ -196,7 +196,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                             <SortIcon sorted={header.column.getIsSorted()} />
                           </button>
                         ) : (
-                          <span className="font-display text-label-md text-on-surface-variant">
+                          <span className="font-display text-body-md font-semibold text-on-surface-variant">
                             {flexRender(header.column.columnDef.header, header.getContext())}
                           </span>
                         )}
@@ -207,7 +207,7 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
               </thead>
               <tbody>
                 {visibleRows.length === 0 ? (
-                  <tr>
+                  <tr className="bg-surface-container">
                     <td
                       className="px-4 py-8 text-center text-on-surface-variant"
                       colSpan={columns.length}
@@ -219,8 +219,8 @@ export function MediatorsContent({ mediators }: { mediators: MediatorRow[] }) {
                   visibleRows.map((row) => (
                     <tr
                       className={cn(
-                        "cursor-pointer border-b border-ink/25 transition-colors last:border-b-0",
-                        "hover:bg-surface-container-high/60 focus-visible:bg-surface-container-high/60 focus-visible:outline-none",
+                        "cursor-pointer border-b border-ink/25 bg-surface-container transition-colors last:border-b-0",
+                        "hover:bg-law-fill/60 focus-visible:bg-law-fill/60 focus-visible:outline-none",
                       )}
                       key={row.id}
                       onClick={() => router.push(`/admin/mediators/${row.original.id}`)}

@@ -22,7 +22,9 @@ export type PlatformSettingsRow = {
 };
 
 const inputClass =
-  "w-full rounded-md border border-hair bg-paper px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
+  "w-full rounded-md border border-ink/25 bg-surface-variant px-3 py-2 text-ink focus:border-law focus:outline-none focus:ring-1 focus:ring-law";
+
+const secretInputClass = `${inputClass} pr-12`;
 
 const tabs = ["credentials", "tests", "prompts", "rag"] as const;
 type SettingsTab = (typeof tabs)[number];
@@ -36,6 +38,8 @@ type SettingsContentProps = {
 export function SettingsContent({ settings, documents, prompts }: SettingsContentProps) {
   const { admin } = useLocale();
   const [activeTab, setActiveTab] = useState<SettingsTab>("credentials");
+  const [showOpenaiKey, setShowOpenaiKey] = useState(false);
+  const [showAirtableKey, setShowAirtableKey] = useState(false);
   const [credentialsPending, startCredentialsTransition] = useTransition();
   const [testsPending, startTestsTransition] = useTransition();
 
@@ -102,23 +106,49 @@ export function SettingsContent({ settings, documents, prompts }: SettingsConten
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.openaiApiKeyLabel}</label>
-                <input
-                  className={inputClass}
-                  defaultValue={settings.openaiApiKey}
-                  name="openaiApiKey"
-                  placeholder="sk-..."
-                  type="password"
-                />
+                <div className="relative">
+                  <input
+                    autoComplete="off"
+                    className={secretInputClass}
+                    defaultValue={settings.openaiApiKey}
+                    name="openaiApiKey"
+                    placeholder="sk-..."
+                    type={showOpenaiKey ? "text" : "password"}
+                  />
+                  <button
+                    aria-label={showOpenaiKey ? admin.hideApiKey : admin.showApiKey}
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper hover:text-ink"
+                    onClick={() => setShowOpenaiKey((visible) => !visible)}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showOpenaiKey ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-body-sm text-on-surface-variant">{admin.airtableApiKeyLabel}</label>
-                <input
-                  className={inputClass}
-                  defaultValue={settings.airtableApiKey}
-                  name="airtableApiKey"
-                  placeholder="pat..."
-                  type="password"
-                />
+                <div className="relative">
+                  <input
+                    autoComplete="off"
+                    className={secretInputClass}
+                    defaultValue={settings.airtableApiKey}
+                    name="airtableApiKey"
+                    placeholder="pat..."
+                    type={showAirtableKey ? "text" : "password"}
+                  />
+                  <button
+                    aria-label={showAirtableKey ? admin.hideApiKey : admin.showApiKey}
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper hover:text-ink"
+                    onClick={() => setShowAirtableKey((visible) => !visible)}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showAirtableKey ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
             <button
