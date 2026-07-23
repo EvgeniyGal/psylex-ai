@@ -12,7 +12,8 @@ import {
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = SSE_MAX_DURATION_SEC;
+/** Must be a literal for Next.js segment config extraction (matches SSE_MAX_DURATION_SEC). */
+export const maxDuration = 60;
 
 type RouteContext = {
   params: Promise<{ roomId: string }>;
