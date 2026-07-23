@@ -176,7 +176,9 @@ export async function sendMediatorQuestion(params: {
   editedText?: string;
 }) {
   const room = await assertMediatorOwnsRoom(params.roomId, params.mediatorUserId);
-  if (room.mediationPhase !== "dialogue") throw new Error("Dialogue is not active.");
+  if (room.mediationPhase !== "dialogue" && room.mediationPhase !== "opening") {
+    throw new Error("Dialogue is not active.");
+  }
 
   const stored = (room.mediatorQuestionCandidates as MediatorQuestionCandidates | null) ?? {
     party_a: [],

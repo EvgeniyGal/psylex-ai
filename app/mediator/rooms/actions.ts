@@ -84,13 +84,19 @@ export async function sendMediatorQuestionAction(params: {
   editedText?: string;
 }) {
   const userId = await requireMediator();
-  await sendMediatorQuestion({
-    roomId: params.roomId,
-    mediatorUserId: userId,
-    partyRole: params.partyRole,
-    candidateId: params.candidateId,
-    editedText: params.editedText,
-  });
+  try {
+    await sendMediatorQuestion({
+      roomId: params.roomId,
+      mediatorUserId: userId,
+      partyRole: params.partyRole,
+      candidateId: params.candidateId,
+      editedText: params.editedText,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to send question.";
+    console.error("sendMediatorQuestionAction failed:", message, error);
+    throw new Error(message);
+  }
   return getMediatorConsoleSessionState(userId, params.roomId);
 }
 

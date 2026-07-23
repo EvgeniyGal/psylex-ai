@@ -7,6 +7,9 @@ import {
 } from "@/lib/supabase/browser-client";
 
 const DEBOUNCE_MS = 150;
+const POLL_INTERVAL_MS = 2_500;
+const SSE_RETRY_BASE_MS = 2_000;
+const SSE_RETRY_MAX_MS = 30_000;
 
 export type RoomRealtimeOptions = {
   watchUsers?: boolean;
@@ -14,39 +17,118 @@ export type RoomRealtimeOptions = {
   enabled?: boolean;
 };
 
-function openRoomSse(roomId: string, onEvent: () => void) {
-  const source = new EventSource(`/api/realtime/room/${encodeURIComponent(roomId)}`);
-  const handle = () => onEvent();
-  source.addEventListener("room", handle);
-  source.addEventListener("ready", () => {
-    // connected; no refetch required until a change lands
-  });
-  source.onerror = () => {
-    // EventSource auto-reconnects; do not start interval polling
+function openPolling(onEvent: () => void, intervalMs = POLL_INTERVAL_MS) {
+  const id = window.setInterval(onEvent, intervalMs);
+  return () => window.clearInterval(id);
+}
+
+/**
+ * Opens EventSource with manual reconnect + backoff.
+ * On sustained failure, falls back to polling so we do not hammer the
+ * session pooler with LISTEN reconnect storms (which starve Server Actions).
+ */
+function openSseWithFallback(
+  url: string,
+  eventName: string,
+  onEvent: () => void,
+) {
+  let cancelled = false;
+  let source: EventSource | null = null;
+  let retryId: number | undefined;
+  let pollCleanup: (() => void) | null = null;
+  let attempt = 0;
+  let sawReady = false;
+
+  const clearRetry = () => {
+    if (retryId !== undefined) {
+      window.clearTimeout(retryId);
+      retryId = undefined;
+    }
   };
-  return () => {
-    source.removeEventListener("room", handle);
+
+  const stopSource = () => {
+    if (!source) return;
+    source.onerror = null;
     source.close();
+    source = null;
+  };
+
+  const startPolling = () => {
+    if (pollCleanup || cancelled) return;
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[realtime] SSE unavailable; falling back to polling", url);
+    }
+    pollCleanup = openPolling(onEvent);
+  };
+
+  const connect = () => {
+    if (cancelled) return;
+    stopSource();
+
+    const next = new EventSource(url);
+    source = next;
+
+    const handle = () => onEvent();
+    next.addEventListener(eventName, handle);
+    next.addEventListener("ready", () => {
+      sawReady = true;
+      attempt = 0;
+      if (pollCleanup) {
+        pollCleanup();
+        pollCleanup = null;
+      }
+    });
+
+    next.onerror = () => {
+      // Stop native EventSource reconnect — it opens new LISTENs without bound.
+      stopSource();
+      if (cancelled) return;
+
+      attempt += 1;
+      if (!sawReady || attempt >= 3) {
+        startPolling();
+      }
+
+      const delay = Math.min(
+        SSE_RETRY_BASE_MS * 2 ** Math.min(attempt - 1, 4),
+        SSE_RETRY_MAX_MS,
+      );
+      clearRetry();
+      retryId = window.setTimeout(connect, delay);
+    };
+  };
+
+  connect();
+
+  return () => {
+    cancelled = true;
+    clearRetry();
+    stopSource();
+    if (pollCleanup) pollCleanup();
   };
 }
 
+function openRoomSse(roomId: string, onEvent: () => void) {
+  return openSseWithFallback(
+    `/api/realtime/room/${encodeURIComponent(roomId)}`,
+    "room",
+    onEvent,
+  );
+}
+
 function openUserSse(userId: string, onEvent: () => void) {
-  const source = new EventSource(`/api/realtime/user/${encodeURIComponent(userId)}`);
-  const handle = () => onEvent();
-  source.addEventListener("user", handle);
-  source.onerror = () => {
-    // EventSource auto-reconnects
-  };
-  return () => {
-    source.removeEventListener("user", handle);
-    source.close();
-  };
+  return openSseWithFallback(
+    `/api/realtime/user/${encodeURIComponent(userId)}`,
+    "user",
+    onEvent,
+  );
 }
 
 /**
  * Live room updates via:
- * 1. Postgres LISTEN/NOTIFY SSE (always on — reliable with app auth)
- * 2. Supabase Realtime WebSocket when configured (additive; may be silent under RLS)
+ * 1. Postgres LISTEN/NOTIFY SSE (preferred — reliable with app auth)
+ * 2. Short polling fallback when SSE cannot hold a pooler slot
+ * 3. Supabase Realtime WebSocket when configured (additive; may be silent under RLS)
  *
  * Events are debounced so dual delivery does not double-refresh.
  */
@@ -76,8 +158,6 @@ export function useRoomRealtime(
 
     const cleanups: Array<() => void> = [];
 
-    // Always subscribe to app-auth SSE so updates work even when Supabase WS
-    // reports SUBSCRIBED but RLS blocks postgres_changes delivery.
     cleanups.push(openRoomSse(roomId, schedule));
     if (process.env.NODE_ENV === "development") {
       console.info("[realtime] Postgres SSE listening for room", roomId);
@@ -141,7 +221,7 @@ export function useRoomRealtime(
             if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
               if (process.env.NODE_ENV === "development") {
                 console.warn(
-                  "[realtime] Supabase WS unavailable; SSE remains active",
+                  "[realtime] Supabase WS unavailable; SSE/polling remains active",
                   status,
                   err?.message ?? err,
                 );
@@ -155,7 +235,7 @@ export function useRoomRealtime(
           });
         } catch (error) {
           if (process.env.NODE_ENV === "development") {
-            console.warn("[realtime] Supabase subscribe skipped; SSE remains active", error);
+            console.warn("[realtime] Supabase subscribe skipped; SSE/polling remains active", error);
           }
         }
       }
@@ -211,7 +291,7 @@ export function useDeadlineRefresh(
 }
 
 /**
- * Live user updates (SSE always on; Supabase WS additive when available).
+ * Live user updates (SSE preferred; polling fallback; Supabase WS additive).
  */
 export function useUserRealtime(
   userId: string | null | undefined,
@@ -265,7 +345,7 @@ export function useUserRealtime(
               if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
                 if (process.env.NODE_ENV === "development") {
                   console.warn(
-                    "[realtime] Supabase user channel unavailable; SSE remains active",
+                    "[realtime] Supabase user channel unavailable; SSE/polling remains active",
                     err?.message ?? err,
                   );
                 }
@@ -278,7 +358,7 @@ export function useUserRealtime(
           });
         } catch (error) {
           if (process.env.NODE_ENV === "development") {
-            console.warn("[realtime] Supabase user subscribe skipped; SSE remains active", error);
+            console.warn("[realtime] Supabase user subscribe skipped; SSE/polling remains active", error);
           }
         }
       }
