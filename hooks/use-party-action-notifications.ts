@@ -3,13 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocale } from "@/components/locale-provider";
-import type { PartyNotification } from "@/lib/mediator-session/types";
+import type { PartyNotification, PartyNotificationType } from "@/lib/mediator-session/types";
 import type { PartyRole } from "@/lib/participant-roles";
 
 type UsePartyActionNotificationsParams = {
   notification: PartyNotification | null | undefined;
   viewerRole: PartyRole | "mediator";
   enabled?: boolean;
+  /**
+   * When true, do not show (and clear) the "start window open" banner —
+   * e.g. viewer already clicked Start, or lobby is in waiting/countdown.
+   */
+  startWindowConsumed?: boolean;
 };
 
 function messageForType(
@@ -46,10 +51,19 @@ export function usePartyActionNotifications({
   notification,
   viewerRole,
   enabled = true,
+  startWindowConsumed = false,
 }: UsePartyActionNotificationsParams) {
   const { portal: t } = useLocale();
   const seenRef = useRef<string | null>(null);
+  const [bannerType, setBannerType] = useState<PartyNotificationType | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (startWindowConsumed && bannerType === "start_window_open") {
+      setBanner(null);
+      setBannerType(null);
+    }
+  }, [bannerType, startWindowConsumed]);
 
   useEffect(() => {
     if (!enabled || !notification) return;
@@ -58,13 +72,25 @@ export function usePartyActionNotifications({
     const target = notification.targetRole ?? "all";
     if (target !== "all" && target !== viewerRole) return;
 
+    if (notification.type === "start_window_open" && startWindowConsumed) {
+      seenRef.current = notification.id;
+      return;
+    }
+
     seenRef.current = notification.id;
     const message = messageForType(notification.type, t);
     if (!message) return;
 
     toast.message(message);
+    setBannerType(notification.type);
     setBanner(message);
-  }, [enabled, notification, t, viewerRole]);
+  }, [enabled, notification, startWindowConsumed, t, viewerRole]);
 
-  return { banner, clearBanner: () => setBanner(null) };
+  return {
+    banner,
+    clearBanner: () => {
+      setBanner(null);
+      setBannerType(null);
+    },
+  };
 }

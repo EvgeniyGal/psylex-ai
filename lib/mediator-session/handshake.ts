@@ -2,7 +2,10 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { rooms, users } from "@/drizzle/schema";
 import { START_BUTTON_LEAD_MS } from "@/lib/mediator-session/constants";
-import { setPartyNotification } from "@/lib/mediator-session/notifications";
+import {
+  clearPartyNotificationIfType,
+  setPartyNotification,
+} from "@/lib/mediator-session/notifications";
 import { isMediatorFacilitatedRoom } from "@/lib/mediator-session/room-mode";
 import { getSideReadiness } from "@/lib/dispute-intake";
 import { isPostIntakePipelineComplete } from "@/lib/pipeline/gate";
@@ -304,6 +307,8 @@ export async function recordMediatorStartClick(
 
   if (!existing) {
     await db.update(rooms).set(patch).where(eq(rooms.id, roomId));
+    // "You can now click Start" is obsolete once anyone has clicked.
+    await clearPartyNotificationIfType(roomId, "start_window_open");
   }
 
   const updated = await loadRoomHandshake(roomId);
@@ -357,6 +362,13 @@ export async function getMediatorHandshakeForParty(userId: string): Promise<Medi
         targetRole: "all",
       });
     }
+  } else if (
+    state.status === "waiting" ||
+    state.status === "countdown" ||
+    state.status === "started"
+  ) {
+    // Rooms already stuck with a stale banner after clicks / countdown.
+    await clearPartyNotificationIfType(viewer.roomId, "start_window_open");
   }
 
   return state;

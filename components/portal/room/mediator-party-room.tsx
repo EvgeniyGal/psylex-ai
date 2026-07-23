@@ -51,6 +51,8 @@ export function MediatorPartyRoom({
     notification,
     viewerRole,
     enabled: !review,
+    // Past the lobby — never re-surface the "click Start Mediation" hint.
+    startWindowConsumed: true,
   });
 
   const refresh = useCallback(async () => {

@@ -26,3 +26,23 @@ export async function setPartyNotification(params: {
 
   return notification;
 }
+
+/** Clears the room notification when it still matches the given type (e.g. stale start_window_open). */
+export async function clearPartyNotificationIfType(
+  roomId: string,
+  type: PartyNotificationType,
+) {
+  const [current] = await db
+    .select({ partyNotification: rooms.partyNotification })
+    .from(rooms)
+    .where(eq(rooms.id, roomId))
+    .limit(1);
+
+  const existing = current?.partyNotification as PartyNotification | null;
+  if (!existing || existing.type !== type) return;
+
+  await db
+    .update(rooms)
+    .set({ partyNotification: null })
+    .where(eq(rooms.id, roomId));
+}

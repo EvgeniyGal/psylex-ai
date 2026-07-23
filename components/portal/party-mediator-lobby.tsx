@@ -65,13 +65,18 @@ export function PartyMediatorLobby({
   const { banner, clearBanner } = usePartyActionNotifications({
     notification,
     viewerRole,
+    startWindowConsumed:
+      handshake.selfClicked ||
+      handshake.status === "waiting" ||
+      handshake.status === "countdown" ||
+      handshake.status === "started",
   });
 
   const applyHandshake = useCallback(
     (next: MediatorHandshakeState & { partyNotification?: PartyNotification | null }) => {
       const { partyNotification, ...hs } = next;
       setHandshake(hs);
-      if (partyNotification) setNotification(partyNotification);
+      if (partyNotification !== undefined) setNotification(partyNotification);
       if (hs.status === "started") {
         router.push("/room");
       }
